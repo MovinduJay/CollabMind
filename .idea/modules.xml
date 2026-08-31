@@ -3,7 +3,6 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/.idea/CollabMind.iml" filepath="$PROJECT_DIR$/.idea/CollabMind.iml" />
-      <module fileurl="file://$PROJECT_DIR$/chat-core.iml" filepath="$PROJECT_DIR$/chat-core.iml" />
     </modules>
   </component>
 </project>
