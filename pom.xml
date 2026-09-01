@@ -15,6 +15,7 @@
     <modules>
         <module>services/chat-core</module>
         <module>services/identity-service</module>
+        <module>services/realtime-gateway</module>
     </modules>
 
 </project>
