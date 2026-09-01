@@ -16,6 +16,8 @@
         <module>services/chat-core</module>
         <module>services/identity-service</module>
         <module>services/realtime-gateway</module>
+        <module>services/ai-orchestrator</module>
+
     </modules>
 
 </project>

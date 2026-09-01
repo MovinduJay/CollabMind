@@ -5,6 +5,8 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="64296f3a-d178-4690-a0c3-b0da2f7d7a57" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/compiler.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/compiler.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/encodings.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/encodings.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/pom.xml" afterDir="false" />
     </list>
@@ -38,9 +40,10 @@
     &quot;accountId&quot;: &quot;b3d54cf8-3273-4f44-af93-f1585bf1659c&quot;
   }
 }</component>
-  <component name="KubernetesApiProvider"><![CDATA[{
-  "isMigrated": true
-}]]></component>
+  <component name="KubernetesApiPersistence">{}</component>
+  <component name="KubernetesApiProvider">{
+  &quot;isMigrated&quot;: true
+}</component>
   <component name="PhpWorkspaceProjectConfiguration" interpreter_name="D:\xampp\php\php.exe" />
   <component name="ProjectColorInfo">{
   &quot;associatedIndex&quot;: 0
@@ -59,10 +62,11 @@
     "RequestMappingsPanelWidth1": "75",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "SHARE_PROJECT_CONFIGURATION_FILES": "true",
+    "Spring Boot.AiOrchestratorApplication.executor": "Run",
     "Spring Boot.ChatCoreApplication.executor": "Run",
     "Spring Boot.IdentityServiceApplication.executor": "Run",
     "Spring Boot.RealtimeGatewayApplication.executor": "Run",
-    "git-widget-placeholder": "realtime-gateway",
+    "git-widget-placeholder": "ai-orchestrator",
     "kotlin-language-version-configured": "true",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
@@ -83,7 +87,7 @@
       </set>
     </option>
   </component>
-  <component name="RunManager" selected="Spring Boot.RealtimeGatewayApplication">
+  <component name="RunManager" selected="Spring Boot.AiOrchestratorApplication">
     <configuration name="RealtimeGatewayApplication" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
       <option name="MAIN_CLASS_NAME" value="org.collabmind.realtime.RealtimeGatewayApplication" />
       <module name="realtime-gateway" />
@@ -93,6 +97,13 @@
           <option name="ENABLED" value="true" />
         </pattern>
       </extension>
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="AiOrchestratorApplication" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" nameIsGenerated="true">
+      <module name="ai-orchestrator" />
+      <option name="SPRING_BOOT_MAIN_CLASS" value="org.collabmind.ai.AiOrchestratorApplication" />
       <method v="2">
         <option name="Make" enabled="true" />
       </method>
@@ -144,7 +155,7 @@
       <workItem from="1788029932280" duration="4619000" />
       <workItem from="1788170025510" duration="1049000" />
       <workItem from="1788187154292" duration="1985000" />
-      <workItem from="1788189221045" duration="6357000" />
+      <workItem from="1788189221045" duration="7866000" />
     </task>
     <servers />
   </component>
