@@ -4,7 +4,22 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="64296f3a-d178-4690-a0c3-b0da2f7d7a57" name="Changes" comment="" />
+    <list default="true" id="64296f3a-d178-4690-a0c3-b0da2f7d7a57" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/services/identity-service/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/services/identity-service/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/services/identity-service/src/main/java/org/collabmind/identity/auth/application/AuthService.java" beforeDir="false" afterPath="$PROJECT_DIR$/services/identity-service/src/main/java/org/collabmind/identity/auth/application/AuthService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/services/identity-service/src/main/java/org/collabmind/identity/auth/domain/UserAccount.java" beforeDir="false" afterPath="$PROJECT_DIR$/services/identity-service/src/main/java/org/collabmind/identity/auth/domain/UserAccount.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/services/identity-service/src/main/java/org/collabmind/identity/auth/infrastructure/UserAccountRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/services/identity-service/src/main/java/org/collabmind/identity/auth/infrastructure/UserAccountRepository.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/services/identity-service/src/main/java/org/collabmind/identity/auth/web/AuthController.java" beforeDir="false" afterPath="$PROJECT_DIR$/services/identity-service/src/main/java/org/collabmind/identity/auth/web/AuthController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/services/identity-service/src/main/java/org/collabmind/identity/auth/web/AuthResponse.java" beforeDir="false" afterPath="$PROJECT_DIR$/services/identity-service/src/main/java/org/collabmind/identity/auth/web/AuthResponse.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/services/identity-service/src/main/java/org/collabmind/identity/auth/web/LoginRequest.java" beforeDir="false" afterPath="$PROJECT_DIR$/services/identity-service/src/main/java/org/collabmind/identity/auth/web/LoginRequest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/services/identity-service/src/main/java/org/collabmind/identity/auth/web/RegisterRequest.java" beforeDir="false" afterPath="$PROJECT_DIR$/services/identity-service/src/main/java/org/collabmind/identity/auth/web/RegisterRequest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/services/identity-service/src/main/java/org/collabmind/identity/common/config/SecurityConfig.java" beforeDir="false" afterPath="$PROJECT_DIR$/services/identity-service/src/main/java/org/collabmind/identity/common/config/SecurityConfig.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/services/identity-service/src/main/java/org/collabmind/identity/security/JwtService.java" beforeDir="false" afterPath="$PROJECT_DIR$/services/identity-service/src/main/java/org/collabmind/identity/security/JwtService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/services/identity-service/src/main/java/org/collabmind/identity/security/PasswordConfig.java" beforeDir="false" afterPath="$PROJECT_DIR$/services/identity-service/src/main/java/org/collabmind/identity/security/PasswordConfig.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/services/identity-service/src/main/resources/application.properties" beforeDir="false" afterPath="$PROJECT_DIR$/services/identity-service/src/main/resources/application.properties" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/services/identity-service/target/classes/application.properties" beforeDir="false" afterPath="$PROJECT_DIR$/services/identity-service/target/classes/application.properties" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -82,7 +97,7 @@
       </set>
     </option>
   </component>
-  <component name="RunManager" selected="Spring Boot.AiOrchestratorApplication">
+  <component name="RunManager" selected="Spring Boot.IdentityServiceApplication">
     <configuration name="RealtimeGatewayApplication" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
       <option name="MAIN_CLASS_NAME" value="org.collabmind.realtime.RealtimeGatewayApplication" />
       <module name="realtime-gateway" />
