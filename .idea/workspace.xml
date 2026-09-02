@@ -4,7 +4,17 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="64296f3a-d178-4690-a0c3-b0da2f7d7a57" name="Changes" comment="" />
+    <list default="true" id="64296f3a-d178-4690-a0c3-b0da2f7d7a57" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/services/chat-core/src/main/java/org/collabmind/chatcore/conversation/application/ConversationService.java" beforeDir="false" afterPath="$PROJECT_DIR$/services/chat-core/src/main/java/org/collabmind/chatcore/conversation/application/ConversationService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/services/chat-core/src/main/java/org/collabmind/chatcore/conversation/domain/Conversation.java" beforeDir="false" afterPath="$PROJECT_DIR$/services/chat-core/src/main/java/org/collabmind/chatcore/conversation/domain/Conversation.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/services/chat-core/src/main/java/org/collabmind/chatcore/conversation/infrastructure/ConversationRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/services/chat-core/src/main/java/org/collabmind/chatcore/conversation/infrastructure/ConversationRepository.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/services/chat-core/src/main/java/org/collabmind/chatcore/conversation/web/ConversationController.java" beforeDir="false" afterPath="$PROJECT_DIR$/services/chat-core/src/main/java/org/collabmind/chatcore/conversation/web/ConversationController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/services/chat-core/src/main/java/org/collabmind/chatcore/conversation/web/ConversationResponse.java" beforeDir="false" afterPath="$PROJECT_DIR$/services/chat-core/src/main/java/org/collabmind/chatcore/conversation/web/ConversationResponse.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/services/chat-core/src/main/java/org/collabmind/chatcore/conversation/web/CreateConversationRequest.java" beforeDir="false" afterPath="$PROJECT_DIR$/services/chat-core/src/main/java/org/collabmind/chatcore/conversation/web/CreateConversationRequest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/services/chat-core/src/main/java/org/collabmind/chatcore/membership/domain/ConversationMember.java" beforeDir="false" afterPath="$PROJECT_DIR$/services/chat-core/src/main/java/org/collabmind/chatcore/membership/domain/ConversationMember.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/services/chat-core/src/main/java/org/collabmind/chatcore/membership/infrastructure/ConversationMemberRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/services/chat-core/src/main/java/org/collabmind/chatcore/membership/infrastructure/ConversationMemberRepository.java" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -48,30 +58,30 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "Application.RealtimeGatewayApplication.executor": "Run",
-    "RequestMappingsPanelOrder0": "0",
-    "RequestMappingsPanelOrder1": "1",
-    "RequestMappingsPanelWidth0": "75",
-    "RequestMappingsPanelWidth1": "75",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "SHARE_PROJECT_CONFIGURATION_FILES": "true",
-    "Spring Boot.AiOrchestratorApplication.executor": "Run",
-    "Spring Boot.ChatCoreApplication.executor": "Run",
-    "Spring Boot.IdentityServiceApplication.executor": "Run",
-    "Spring Boot.RealtimeGatewayApplication.executor": "Run",
-    "git-widget-placeholder": "feature/chat-core-bootstrap",
-    "kotlin-language-version-configured": "true",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "run.configurations.included.in.services": "true",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;Application.RealtimeGatewayApplication.executor&quot;: &quot;Run&quot;,
+    &quot;RequestMappingsPanelOrder0&quot;: &quot;0&quot;,
+    &quot;RequestMappingsPanelOrder1&quot;: &quot;1&quot;,
+    &quot;RequestMappingsPanelWidth0&quot;: &quot;75&quot;,
+    &quot;RequestMappingsPanelWidth1&quot;: &quot;75&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
+    &quot;Spring Boot.AiOrchestratorApplication.executor&quot;: &quot;Run&quot;,
+    &quot;Spring Boot.ChatCoreApplication.executor&quot;: &quot;Run&quot;,
+    &quot;Spring Boot.IdentityServiceApplication.executor&quot;: &quot;Run&quot;,
+    &quot;Spring Boot.RealtimeGatewayApplication.executor&quot;: &quot;Run&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;feature/chat-core-bootstrap&quot;,
+    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;run.configurations.included.in.services&quot;: &quot;true&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
-}]]></component>
+}</component>
   <component name="RunDashboard">
     <option name="configurationTypes">
       <set>
