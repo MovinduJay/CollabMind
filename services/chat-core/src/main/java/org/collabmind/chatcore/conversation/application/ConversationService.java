@@ -8,6 +8,7 @@ import org.collabmind.chatcore.membership.domain.ConversationMember;
 import org.collabmind.chatcore.membership.infrastructure.ConversationMemberRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.collabmind.chatcore.common.exception.ConversationNotFoundException;
 
 import java.util.UUID;
 
@@ -48,7 +49,7 @@ public class ConversationService {
     @Transactional
     public ConversationResponse joinConversation(UUID conversationId, UUID userId) {
         Conversation conversation = conversationRepository.findById(conversationId)
-                .orElseThrow(() -> new IllegalArgumentException("Conversation not found"));
+                .orElseThrow(() -> new ConversationNotFoundException(conversationId));
 
         boolean alreadyMember = memberRepository.existsByConversationIdAndUserId(
                 conversationId,

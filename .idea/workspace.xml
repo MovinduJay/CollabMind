@@ -4,7 +4,10 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="64296f3a-d178-4690-a0c3-b0da2f7d7a57" name="Changes" comment="" />
+    <list default="true" id="64296f3a-d178-4690-a0c3-b0da2f7d7a57" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/services/chat-core/src/main/java/org/collabmind/chatcore/conversation/application/ConversationService.java" beforeDir="false" afterPath="$PROJECT_DIR$/services/chat-core/src/main/java/org/collabmind/chatcore/conversation/application/ConversationService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/services/chat-core/src/main/java/org/collabmind/chatcore/messaging/application/MessageService.java" beforeDir="false" afterPath="$PROJECT_DIR$/services/chat-core/src/main/java/org/collabmind/chatcore/messaging/application/MessageService.java" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />

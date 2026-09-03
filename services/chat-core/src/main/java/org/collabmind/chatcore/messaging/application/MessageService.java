@@ -10,6 +10,8 @@ import org.collabmind.chatcore.messaging.web.SendMessageRequest;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.collabmind.chatcore.common.exception.ConversationNotFoundException;
+import org.collabmind.chatcore.common.exception.UserNotConversationMemberException;
 
 import java.util.List;
 import java.util.UUID;
@@ -52,8 +54,7 @@ public class MessageService {
         }
 
         Conversation conversation = conversationRepository.findByIdForUpdate(conversationId)
-                .orElseThrow(() -> new IllegalArgumentException("Conversation not found"));
-
+                .orElseThrow(() -> new ConversationNotFoundException(conversationId));
         long sequenceNumber = conversation.allocateNextSequence();
 
         Message message = Message.userMessage(
