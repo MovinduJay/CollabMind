@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CollabMind WebSocket Test</title>
+</head>
+<body>
+<h2>CollabMind WebSocket Test</h2>
+
+<button onclick="sendPing()">Send PING</button>
+<button onclick="sendBroadcast()">Send BROADCAST_TEST</button>
+
+<pre id="output"></pre>
+
+<script>
+    const output = document.getElementById("output");
+    const userId = crypto.randomUUID();
+
+    const socket = new WebSocket(`ws://localhost:8083/ws/chat?userId=${userId}`);
+
+    function log(message) {
+        output.textContent += message + "\n";
+        console.log(message);
+    }
+
+    socket.onopen = () => {
+        log("Connected to realtime-gateway");
+
+        socket.send(JSON.stringify({
+            commandId: crypto.randomUUID(),
+            commandType: "PING",
+            conversationId: null,
+            payload: {}
+        }));
+    };
+
+    socket.onmessage = (event) => {
+        log("Server event: " + event.data);
+    };
+
+    socket.onerror = (error) => {
+        log("WebSocket error. Check if realtime-gateway is running on port 8083.");
+        console.error(error);
+    };
+
+    socket.onclose = () => {
+        log("Connection closed");
+    };
+
+    function sendPing() {
+        socket.send(JSON.stringify({
+            commandId: crypto.randomUUID(),
+            commandType: "PING",
+            conversationId: null,
+            payload: {}
+        }));
+    }
+
+    function sendBroadcast() {
+        socket.send(JSON.stringify({
+            commandId: crypto.randomUUID(),
+            commandType: "BROADCAST_TEST",
+            conversationId: "test-room",
+            payload: {
+                message: "Hello from CollabMind WebSocket test"
+            }
+        }));
+    }
+</script>
+</body>
+</html>
