@@ -4,7 +4,16 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="64296f3a-d178-4690-a0c3-b0da2f7d7a57" name="Changes" comment="" />
+    <list default="true" id="64296f3a-d178-4690-a0c3-b0da2f7d7a57" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/services/realtime-gateway/src/main/java/org/collabmind/realtime/websocket/application/RealtimeFanoutService.java" beforeDir="false" afterPath="$PROJECT_DIR$/services/realtime-gateway/src/main/java/org/collabmind/realtime/websocket/application/RealtimeFanoutService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/services/realtime-gateway/src/main/java/org/collabmind/realtime/websocket/config/WebSocketConfig.java" beforeDir="false" afterPath="$PROJECT_DIR$/services/realtime-gateway/src/main/java/org/collabmind/realtime/websocket/config/WebSocketConfig.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/services/realtime-gateway/src/main/java/org/collabmind/realtime/websocket/handler/ChatWebSocketHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/services/realtime-gateway/src/main/java/org/collabmind/realtime/websocket/handler/ChatWebSocketHandler.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/services/realtime-gateway/src/main/java/org/collabmind/realtime/websocket/protocol/ClientCommand.java" beforeDir="false" afterPath="$PROJECT_DIR$/services/realtime-gateway/src/main/java/org/collabmind/realtime/websocket/protocol/ClientCommand.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/services/realtime-gateway/src/main/java/org/collabmind/realtime/websocket/protocol/ServerEvent.java" beforeDir="false" afterPath="$PROJECT_DIR$/services/realtime-gateway/src/main/java/org/collabmind/realtime/websocket/protocol/ServerEvent.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/services/realtime-gateway/src/main/java/org/collabmind/realtime/websocket/session/ConnectedClient.java" beforeDir="false" afterPath="$PROJECT_DIR$/services/realtime-gateway/src/main/java/org/collabmind/realtime/websocket/session/ConnectedClient.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/services/realtime-gateway/src/main/java/org/collabmind/realtime/websocket/session/ConnectionRegistry.java" beforeDir="false" afterPath="$PROJECT_DIR$/services/realtime-gateway/src/main/java/org/collabmind/realtime/websocket/session/ConnectionRegistry.java" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -48,30 +57,30 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "Application.RealtimeGatewayApplication.executor": "Run",
-    "RequestMappingsPanelOrder0": "0",
-    "RequestMappingsPanelOrder1": "1",
-    "RequestMappingsPanelWidth0": "75",
-    "RequestMappingsPanelWidth1": "75",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "SHARE_PROJECT_CONFIGURATION_FILES": "true",
-    "Spring Boot.AiOrchestratorApplication.executor": "Run",
-    "Spring Boot.ChatCoreApplication.executor": "Run",
-    "Spring Boot.IdentityServiceApplication.executor": "Run",
-    "Spring Boot.RealtimeGatewayApplication.executor": "Run",
-    "git-widget-placeholder": "realtime-gateway",
-    "kotlin-language-version-configured": "true",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "run.configurations.included.in.services": "true",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;Application.RealtimeGatewayApplication.executor&quot;: &quot;Run&quot;,
+    &quot;RequestMappingsPanelOrder0&quot;: &quot;0&quot;,
+    &quot;RequestMappingsPanelOrder1&quot;: &quot;1&quot;,
+    &quot;RequestMappingsPanelWidth0&quot;: &quot;75&quot;,
+    &quot;RequestMappingsPanelWidth1&quot;: &quot;75&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
+    &quot;Spring Boot.AiOrchestratorApplication.executor&quot;: &quot;Run&quot;,
+    &quot;Spring Boot.ChatCoreApplication.executor&quot;: &quot;Run&quot;,
+    &quot;Spring Boot.IdentityServiceApplication.executor&quot;: &quot;Run&quot;,
+    &quot;Spring Boot.RealtimeGatewayApplication.executor&quot;: &quot;Run&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;realtime-gateway&quot;,
+    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;run.configurations.included.in.services&quot;: &quot;true&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
-}]]></component>
+}</component>
   <component name="RunDashboard">
     <option name="configurationTypes">
       <set>
@@ -82,7 +91,7 @@
       </set>
     </option>
   </component>
-  <component name="RunManager" selected="Spring Boot.ChatCoreApplication">
+  <component name="RunManager" selected="Spring Boot.RealtimeGatewayApplication">
     <configuration name="RealtimeGatewayApplication" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
       <option name="MAIN_CLASS_NAME" value="org.collabmind.realtime.RealtimeGatewayApplication" />
       <module name="realtime-gateway" />
