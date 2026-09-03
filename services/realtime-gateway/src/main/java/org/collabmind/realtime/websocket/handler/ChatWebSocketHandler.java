@@ -1,6 +1,7 @@
 package org.collabmind.realtime.websocket.handler;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.collabmind.realtime.websocket.application.MessageRelayService;
 import org.collabmind.realtime.websocket.application.RealtimeFanoutService;
 import org.collabmind.realtime.websocket.protocol.ClientCommand;
 import org.collabmind.realtime.websocket.protocol.ServerEvent;
@@ -22,15 +23,18 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
     private final ObjectMapper objectMapper;
     private final ConnectionRegistry connectionRegistry;
     private final RealtimeFanoutService fanoutService;
+    private final MessageRelayService messageRelayService;
 
     public ChatWebSocketHandler(
             ObjectMapper objectMapper,
             ConnectionRegistry connectionRegistry,
-            RealtimeFanoutService fanoutService
+            RealtimeFanoutService fanoutService,
+            MessageRelayService messageRelayService
     ) {
         this.objectMapper = objectMapper;
         this.connectionRegistry = connectionRegistry;
         this.fanoutService = fanoutService;
+        this.messageRelayService = messageRelayService;
     }
 
     @Override
@@ -70,6 +74,11 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
             );
 
             fanoutService.sendToClient(client, pongEvent);
+            return;
+        }
+
+        if ("SEND_MESSAGE".equalsIgnoreCase(command.commandType())) {
+            messageRelayService.relaySendMessage(client, command);
             return;
         }
 
