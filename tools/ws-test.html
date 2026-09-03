@@ -6,14 +6,33 @@
 <body>
 <h2>CollabMind WebSocket Test</h2>
 
+<p><strong>User ID:</strong> <span id="userId"></span></p>
+
+<label>
+    Conversation ID:
+    <input id="conversationId" style="width: 360px;" placeholder="Paste conversation id here">
+</label>
+
+<br><br>
+
+<label>
+    Message:
+    <input id="messageContent" style="width: 360px;" value="Hello from realtime-gateway">
+</label>
+
+<br><br>
+
 <button onclick="sendPing()">Send PING</button>
 <button onclick="sendBroadcast()">Send BROADCAST_TEST</button>
+<button onclick="sendMessage()">Send Real Message</button>
 
 <pre id="output"></pre>
 
 <script>
     const output = document.getElementById("output");
     const userId = crypto.randomUUID();
+
+    document.getElementById("userId").textContent = userId;
 
     const socket = new WebSocket(`ws://localhost:8083/ws/chat?userId=${userId}`);
 
@@ -62,6 +81,22 @@
             conversationId: "test-room",
             payload: {
                 message: "Hello from CollabMind WebSocket test"
+            }
+        }));
+    }
+
+    function sendMessage() {
+        const conversationId = document.getElementById("conversationId").value;
+        const content = document.getElementById("messageContent").value;
+
+        socket.send(JSON.stringify({
+            commandId: crypto.randomUUID(),
+            commandType: "SEND_MESSAGE",
+            conversationId: conversationId,
+            payload: {
+                conversationId: conversationId,
+                clientMessageId: crypto.randomUUID(),
+                content: content
             }
         }));
     }
