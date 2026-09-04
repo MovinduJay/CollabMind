@@ -11,6 +11,7 @@ import org.collabmind.realtime.websocket.session.ConversationSubscriptionRegistr
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.*;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
+import org.collabmind.realtime.websocket.application.ConversationSubscriptionService;
 
 import java.net.URI;
 import java.net.URLDecoder;
@@ -26,19 +27,22 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
     private final ConversationSubscriptionRegistry subscriptionRegistry;
     private final RealtimeFanoutService fanoutService;
     private final MessageRelayService messageRelayService;
+    private final ConversationSubscriptionService subscriptionService;
 
     public ChatWebSocketHandler(
             ObjectMapper objectMapper,
             ConnectionRegistry connectionRegistry,
             ConversationSubscriptionRegistry subscriptionRegistry,
             RealtimeFanoutService fanoutService,
-            MessageRelayService messageRelayService
+            MessageRelayService messageRelayService,
+            ConversationSubscriptionService subscriptionService
     ) {
         this.objectMapper = objectMapper;
         this.connectionRegistry = connectionRegistry;
         this.subscriptionRegistry = subscriptionRegistry;
         this.fanoutService = fanoutService;
         this.messageRelayService = messageRelayService;
+        this.subscriptionService= subscriptionService;
     }
 
     @Override
@@ -82,35 +86,12 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
         }
 
         if ("SUBSCRIBE_CONVERSATION".equalsIgnoreCase(command.commandType())) {
-            subscriptionRegistry.subscribe(command.conversationId(), client.sessionId());
-
-            ServerEvent subscribedEvent = ServerEvent.of(
-                    "SUBSCRIBED_CONVERSATION",
-                    command.conversationId(),
-                    Map.of(
-                            "commandId", command.commandId(),
-                            "conversationId", command.conversationId(),
-                            "subscriberCount", subscriptionRegistry.subscriberCount(command.conversationId())
-                    )
-            );
-
-            fanoutService.sendToClient(client, subscribedEvent);
+            subscriptionService.subscribe(client, command);
             return;
         }
 
         if ("UNSUBSCRIBE_CONVERSATION".equalsIgnoreCase(command.commandType())) {
-            subscriptionRegistry.unsubscribe(command.conversationId(), client.sessionId());
-
-            ServerEvent unsubscribedEvent = ServerEvent.of(
-                    "UNSUBSCRIBED_CONVERSATION",
-                    command.conversationId(),
-                    Map.of(
-                            "commandId", command.commandId(),
-                            "conversationId", command.conversationId()
-                    )
-            );
-
-            fanoutService.sendToClient(client, unsubscribedEvent);
+            subscriptionService.unsubscribe(client, command);
             return;
         }
 
