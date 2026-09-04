@@ -6,14 +6,6 @@
   <component name="ChangeListManager">
     <list default="true" id="64296f3a-d178-4690-a0c3-b0da2f7d7a57" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/services/chat-core/target/classes/org/collabmind/chatcore/conversation/application/ConversationService.class" beforeDir="false" afterPath="$PROJECT_DIR$/services/chat-core/target/classes/org/collabmind/chatcore/conversation/application/ConversationService.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/services/chat-core/target/classes/org/collabmind/chatcore/messaging/application/MessageService.class" beforeDir="false" afterPath="$PROJECT_DIR$/services/chat-core/target/classes/org/collabmind/chatcore/messaging/application/MessageService.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/services/realtime-gateway/src/main/java/org/collabmind/realtime/websocket/application/MessageRelayService.java" beforeDir="false" afterPath="$PROJECT_DIR$/services/realtime-gateway/src/main/java/org/collabmind/realtime/websocket/application/MessageRelayService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/services/realtime-gateway/src/main/java/org/collabmind/realtime/websocket/handler/ChatWebSocketHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/services/realtime-gateway/src/main/java/org/collabmind/realtime/websocket/handler/ChatWebSocketHandler.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/services/realtime-gateway/src/main/java/org/collabmind/realtime/websocket/protocol/SendMessagePayload.java" beforeDir="false" afterPath="$PROJECT_DIR$/services/realtime-gateway/src/main/java/org/collabmind/realtime/websocket/protocol/SendMessagePayload.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/services/realtime-gateway/target/classes/application.properties" beforeDir="false" afterPath="$PROJECT_DIR$/services/realtime-gateway/target/classes/application.properties" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/services/realtime-gateway/target/classes/org/collabmind/realtime/websocket/handler/ChatWebSocketHandler.class" beforeDir="false" afterPath="$PROJECT_DIR$/services/realtime-gateway/target/classes/org/collabmind/realtime/websocket/handler/ChatWebSocketHandler.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tools/ws-test.html" beforeDir="false" afterPath="$PROJECT_DIR$/tools/ws-test.html" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
