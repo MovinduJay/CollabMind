@@ -6,7 +6,14 @@
 <body>
 <h2>CollabMind WebSocket Test</h2>
 
-<p><strong>User ID:</strong> <span id="userId"></span></p>
+<label>
+    JWT Token:
+    <input id="token" style="width: 760px;" placeholder="Paste JWT from identity-service here">
+</label>
+
+<button onclick="connect()">Connect</button>
+
+<p><strong>Connected User ID:</strong> <span id="userId">Not connected</span></p>
 
 <label>
     Conversation ID:
@@ -17,7 +24,7 @@
 
 <label>
     Message:
-    <input id="messageContent" style="width: 420px;" value="Hello from subscribed conversation">
+    <input id="messageContent" style="width: 420px;" value="Hello from JWT-authenticated realtime gateway">
 </label>
 
 <br><br>
@@ -31,46 +38,65 @@
 
 <script>
     const output = document.getElementById("output");
-    const userId = crypto.randomUUID();
+    const userIdElement = document.getElementById("userId");
 
-    document.getElementById("userId").textContent = userId;
-
-    const socket = new WebSocket(`ws://localhost:8083/ws/chat?userId=${userId}`);
+    let socket = null;
 
     function log(message) {
         output.textContent += message + "\n";
         console.log(message);
     }
 
-    socket.onopen = () => {
-        log("Connected to realtime-gateway");
+    function connect() {
+        const token = document.getElementById("token").value.trim();
 
-        socket.send(JSON.stringify({
-            commandId: crypto.randomUUID(),
-            commandType: "PING",
-            conversationId: null,
-            payload: {}
-        }));
-    };
+        if (!token) {
+            log("Please paste a JWT token first.");
+            return;
+        }
 
-    socket.onmessage = (event) => {
-        log("Server event: " + event.data);
-    };
+        socket = new WebSocket(`ws://localhost:8083/ws/chat?token=${encodeURIComponent(token)}`);
 
-    socket.onerror = (error) => {
-        log("WebSocket error. Check if realtime-gateway is running on port 8083.");
-        console.error(error);
-    };
+        socket.onopen = () => {
+            log("Connected to realtime-gateway");
+        };
 
-    socket.onclose = () => {
-        log("Connection closed");
-    };
+        socket.onmessage = (event) => {
+            log("Server event: " + event.data);
+
+            const serverEvent = JSON.parse(event.data);
+
+            if (serverEvent.eventType === "CONNECTED") {
+                userIdElement.textContent = serverEvent.payload.userId;
+            }
+        };
+
+        socket.onerror = (error) => {
+            log("WebSocket error. Check token and make sure realtime-gateway is running on port 8083.");
+            console.error(error);
+        };
+
+        socket.onclose = () => {
+            log("Connection closed");
+        };
+    }
+
+    function ensureConnected() {
+        if (!socket || socket.readyState !== WebSocket.OPEN) {
+            log("WebSocket is not connected.");
+            return false;
+        }
+
+        return true;
+    }
 
     function getConversationId() {
         return document.getElementById("conversationId").value.trim();
     }
 
     function sendPing() {
+        if (!ensureConnected()) return;
+
         socket.send(JSON.stringify({
             commandId: crypto.randomUUID(),
             commandType: "PING",
@@ -80,6 +106,8 @@
     }
 
     function subscribeConversation() {
+        if (!ensureConnected()) return;
+
         const conversationId = getConversationId();
 
         socket.send(JSON.stringify({
@@ -91,6 +119,8 @@
     }
 
     function unsubscribeConversation() {
+        if (!ensureConnected()) return;
+
         const conversationId = getConversationId();
 
         socket.send(JSON.stringify({
@@ -102,6 +132,8 @@
     }
 
     function sendMessage() {
+        if (!ensureConnected()) return;
+
         const conversationId = getConversationId();
         const content = document.getElementById("messageContent").value;
 

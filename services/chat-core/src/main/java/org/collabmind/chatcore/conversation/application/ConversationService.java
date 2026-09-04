@@ -9,6 +9,7 @@ import org.collabmind.chatcore.membership.infrastructure.ConversationMemberRepos
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.collabmind.chatcore.common.exception.ConversationNotFoundException;
+import org.collabmind.chatcore.conversation.web.ConversationMembershipResponse;
 
 import java.util.UUID;
 
@@ -69,5 +70,22 @@ public class ConversationService {
         long memberCount = memberRepository.countByConversationId(conversationId);
 
         return ConversationResponse.from(conversation, memberCount);
+    }
+
+    @Transactional(readOnly = true)
+    public ConversationMembershipResponse checkMembership(UUID conversationId, UUID userId) {
+        Conversation conversation = conversationRepository.findById(conversationId)
+                .orElseThrow(() -> new ConversationNotFoundException(conversationId));
+
+        boolean member = memberRepository.existsByConversationIdAndUserId(
+                conversation.getId(),
+                userId
+        );
+
+        return new ConversationMembershipResponse(
+                conversation.getId(),
+                userId,
+                member
+        );
     }
 }

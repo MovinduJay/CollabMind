@@ -11,6 +11,9 @@ import org.collabmind.realtime.websocket.session.ConversationSubscriptionRegistr
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.*;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
+import org.collabmind.realtime.websocket.application.ConversationSubscriptionService;
+import org.collabmind.realtime.security.InvalidJwtTokenException;
+import org.collabmind.realtime.security.JwtTokenService;
 
 import java.net.URI;
 import java.net.URLDecoder;
@@ -26,24 +29,44 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
     private final ConversationSubscriptionRegistry subscriptionRegistry;
     private final RealtimeFanoutService fanoutService;
     private final MessageRelayService messageRelayService;
+    private final ConversationSubscriptionService subscriptionService;
+    private final JwtTokenService jwtTokenService;
 
     public ChatWebSocketHandler(
             ObjectMapper objectMapper,
             ConnectionRegistry connectionRegistry,
             ConversationSubscriptionRegistry subscriptionRegistry,
             RealtimeFanoutService fanoutService,
-            MessageRelayService messageRelayService
+            MessageRelayService messageRelayService,
+            ConversationSubscriptionService subscriptionService,
+            JwtTokenService jwtTokenService
     ) {
         this.objectMapper = objectMapper;
         this.connectionRegistry = connectionRegistry;
         this.subscriptionRegistry = subscriptionRegistry;
         this.fanoutService = fanoutService;
         this.messageRelayService = messageRelayService;
+        this.subscriptionService = subscriptionService;
+        this.jwtTokenService = jwtTokenService;
     }
 
     @Override
-    public void afterConnectionEstablished(WebSocketSession session) {
-        UUID userId = extractUserId(session.getUri());
+    public void afterConnectionEstablished(WebSocketSession session) throws Exception {
+        String token = extractQueryParam(session.getUri(), "token");
+
+        if (token == null || token.isBlank()) {
+            session.close(CloseStatus.POLICY_VIOLATION.withReason("Missing JWT token"));
+            return;
+        }
+
+        UUID userId;
+
+        try {
+            userId = jwtTokenService.extractUserId(token);
+        } catch (InvalidJwtTokenException exception) {
+            session.close(CloseStatus.POLICY_VIOLATION.withReason("Invalid JWT token"));
+            return;
+        }
 
         ConnectedClient client = connectionRegistry.register(session, userId);
 
@@ -82,35 +105,12 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
         }
 
         if ("SUBSCRIBE_CONVERSATION".equalsIgnoreCase(command.commandType())) {
-            subscriptionRegistry.subscribe(command.conversationId(), client.sessionId());
-
-            ServerEvent subscribedEvent = ServerEvent.of(
-                    "SUBSCRIBED_CONVERSATION",
-                    command.conversationId(),
-                    Map.of(
-                            "commandId", command.commandId(),
-                            "conversationId", command.conversationId(),
-                            "subscriberCount", subscriptionRegistry.subscriberCount(command.conversationId())
-                    )
-            );
-
-            fanoutService.sendToClient(client, subscribedEvent);
+            subscriptionService.subscribe(client, command);
             return;
         }
 
         if ("UNSUBSCRIBE_CONVERSATION".equalsIgnoreCase(command.commandType())) {
-            subscriptionRegistry.unsubscribe(command.conversationId(), client.sessionId());
-
-            ServerEvent unsubscribedEvent = ServerEvent.of(
-                    "UNSUBSCRIBED_CONVERSATION",
-                    command.conversationId(),
-                    Map.of(
-                            "commandId", command.commandId(),
-                            "conversationId", command.conversationId()
-                    )
-            );
-
-            fanoutService.sendToClient(client, unsubscribedEvent);
+            subscriptionService.unsubscribe(client, command);
             return;
         }
 
@@ -166,16 +166,6 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
         if (session.isOpen()) {
             session.close(CloseStatus.SERVER_ERROR);
         }
-    }
-
-    private UUID extractUserId(URI uri) {
-        String userId = extractQueryParam(uri, "userId");
-
-        if (userId == null || userId.isBlank()) {
-            return UUID.randomUUID();
-        }
-
-        return UUID.fromString(userId);
     }
 
     private String extractQueryParam(URI uri, String key) {

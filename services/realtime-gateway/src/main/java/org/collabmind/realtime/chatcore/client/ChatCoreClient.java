@@ -30,4 +30,13 @@ public class ChatCoreClient {
                 .retrieve()
                 .body(ChatCoreMessageResponse.class);
     }
+    public ChatCoreMembershipResponse checkMembership(
+            UUID conversationId,
+            UUID userId
+    ) {
+        return restClient.get()
+                .uri("/api/conversations/{conversationId}/members/{userId}/exists", conversationId, userId)
+                .retrieve()
+                .body(ChatCoreMembershipResponse.class);
+    }
 }

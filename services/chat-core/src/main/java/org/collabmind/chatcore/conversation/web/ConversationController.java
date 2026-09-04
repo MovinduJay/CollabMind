@@ -39,4 +39,12 @@ public class ConversationController {
             UUID userId
     ) {
     }
+
+    @GetMapping("/{conversationId}/members/{userId}/exists")
+    public ConversationMembershipResponse checkMembership(
+            @PathVariable UUID conversationId,
+            @PathVariable UUID userId
+    ) {
+        return conversationService.checkMembership(conversationId, userId);
+    }
 }
