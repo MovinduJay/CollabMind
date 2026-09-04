@@ -6,14 +6,34 @@
 <body>
 <h2>CollabMind WebSocket Test</h2>
 
+<p><strong>User ID:</strong> <span id="userId"></span></p>
+
+<label>
+    Conversation ID:
+    <input id="conversationId" style="width: 420px;" placeholder="Paste conversation id here">
+</label>
+
+<br><br>
+
+<label>
+    Message:
+    <input id="messageContent" style="width: 420px;" value="Hello from subscribed conversation">
+</label>
+
+<br><br>
+
 <button onclick="sendPing()">Send PING</button>
-<button onclick="sendBroadcast()">Send BROADCAST_TEST</button>
+<button onclick="subscribeConversation()">Subscribe Conversation</button>
+<button onclick="unsubscribeConversation()">Unsubscribe Conversation</button>
+<button onclick="sendMessage()">Send Real Message</button>
 
 <pre id="output"></pre>
 
 <script>
     const output = document.getElementById("output");
     const userId = crypto.randomUUID();
+
+    document.getElementById("userId").textContent = userId;
 
     const socket = new WebSocket(`ws://localhost:8083/ws/chat?userId=${userId}`);
 
@@ -46,6 +66,10 @@
         log("Connection closed");
     };
 
+    function getConversationId() {
+        return document.getElementById("conversationId").value.trim();
+    }
+
     function sendPing() {
         socket.send(JSON.stringify({
             commandId: crypto.randomUUID(),
@@ -55,13 +79,40 @@
         }));
     }
 
-    function sendBroadcast() {
+    function subscribeConversation() {
+        const conversationId = getConversationId();
+
         socket.send(JSON.stringify({
             commandId: crypto.randomUUID(),
-            commandType: "BROADCAST_TEST",
-            conversationId: "test-room",
+            commandType: "SUBSCRIBE_CONVERSATION",
+            conversationId: conversationId,
+            payload: {}
+        }));
+    }
+
+    function unsubscribeConversation() {
+        const conversationId = getConversationId();
+
+        socket.send(JSON.stringify({
+            commandId: crypto.randomUUID(),
+            commandType: "UNSUBSCRIBE_CONVERSATION",
+            conversationId: conversationId,
+            payload: {}
+        }));
+    }
+
+    function sendMessage() {
+        const conversationId = getConversationId();
+        const content = document.getElementById("messageContent").value;
+
+        socket.send(JSON.stringify({
+            commandId: crypto.randomUUID(),
+            commandType: "SEND_MESSAGE",
+            conversationId: conversationId,
             payload: {
-                message: "Hello from CollabMind WebSocket test"
+                conversationId: conversationId,
+                clientMessageId: crypto.randomUUID(),
+                content: content
             }
         }));
     }
