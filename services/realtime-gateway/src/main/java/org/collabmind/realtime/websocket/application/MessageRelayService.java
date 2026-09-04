@@ -58,6 +58,9 @@ public class MessageRelayService {
                 )
         );
 
-        fanoutService.broadcast(messageCreatedEvent);
+        fanoutService.sendToConversation(
+                savedMessage.conversationId().toString(),
+                messageCreatedEvent
+        );
     }
 }

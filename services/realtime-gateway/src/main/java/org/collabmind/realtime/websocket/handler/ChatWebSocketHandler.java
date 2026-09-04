@@ -7,6 +7,7 @@ import org.collabmind.realtime.websocket.protocol.ClientCommand;
 import org.collabmind.realtime.websocket.protocol.ServerEvent;
 import org.collabmind.realtime.websocket.session.ConnectedClient;
 import org.collabmind.realtime.websocket.session.ConnectionRegistry;
+import org.collabmind.realtime.websocket.session.ConversationSubscriptionRegistry;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.*;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
@@ -22,17 +23,20 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
 
     private final ObjectMapper objectMapper;
     private final ConnectionRegistry connectionRegistry;
+    private final ConversationSubscriptionRegistry subscriptionRegistry;
     private final RealtimeFanoutService fanoutService;
     private final MessageRelayService messageRelayService;
 
     public ChatWebSocketHandler(
             ObjectMapper objectMapper,
             ConnectionRegistry connectionRegistry,
+            ConversationSubscriptionRegistry subscriptionRegistry,
             RealtimeFanoutService fanoutService,
             MessageRelayService messageRelayService
     ) {
         this.objectMapper = objectMapper;
         this.connectionRegistry = connectionRegistry;
+        this.subscriptionRegistry = subscriptionRegistry;
         this.fanoutService = fanoutService;
         this.messageRelayService = messageRelayService;
     }
@@ -77,6 +81,39 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
             return;
         }
 
+        if ("SUBSCRIBE_CONVERSATION".equalsIgnoreCase(command.commandType())) {
+            subscriptionRegistry.subscribe(command.conversationId(), client.sessionId());
+
+            ServerEvent subscribedEvent = ServerEvent.of(
+                    "SUBSCRIBED_CONVERSATION",
+                    command.conversationId(),
+                    Map.of(
+                            "commandId", command.commandId(),
+                            "conversationId", command.conversationId(),
+                            "subscriberCount", subscriptionRegistry.subscriberCount(command.conversationId())
+                    )
+            );
+
+            fanoutService.sendToClient(client, subscribedEvent);
+            return;
+        }
+
+        if ("UNSUBSCRIBE_CONVERSATION".equalsIgnoreCase(command.commandType())) {
+            subscriptionRegistry.unsubscribe(command.conversationId(), client.sessionId());
+
+            ServerEvent unsubscribedEvent = ServerEvent.of(
+                    "UNSUBSCRIBED_CONVERSATION",
+                    command.conversationId(),
+                    Map.of(
+                            "commandId", command.commandId(),
+                            "conversationId", command.conversationId()
+                    )
+            );
+
+            fanoutService.sendToClient(client, unsubscribedEvent);
+            return;
+        }
+
         if ("SEND_MESSAGE".equalsIgnoreCase(command.commandType())) {
             messageRelayService.relaySendMessage(client, command);
             return;
@@ -115,6 +152,7 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
             CloseStatus status
     ) {
         connectionRegistry.unregister(session.getId());
+        subscriptionRegistry.removeSessionFromAllConversations(session.getId());
     }
 
     @Override
@@ -123,6 +161,7 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
             Throwable exception
     ) throws Exception {
         connectionRegistry.unregister(session.getId());
+        subscriptionRegistry.removeSessionFromAllConversations(session.getId());
 
         if (session.isOpen()) {
             session.close(CloseStatus.SERVER_ERROR);
