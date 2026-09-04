@@ -10,20 +10,21 @@
 
 <label>
     Conversation ID:
-    <input id="conversationId" style="width: 360px;" placeholder="Paste conversation id here">
+    <input id="conversationId" style="width: 420px;" placeholder="Paste conversation id here">
 </label>
 
 <br><br>
 
 <label>
     Message:
-    <input id="messageContent" style="width: 360px;" value="Hello from realtime-gateway">
+    <input id="messageContent" style="width: 420px;" value="Hello from subscribed conversation">
 </label>
 
 <br><br>
 
 <button onclick="sendPing()">Send PING</button>
-<button onclick="sendBroadcast()">Send BROADCAST_TEST</button>
+<button onclick="subscribeConversation()">Subscribe Conversation</button>
+<button onclick="unsubscribeConversation()">Unsubscribe Conversation</button>
 <button onclick="sendMessage()">Send Real Message</button>
 
 <pre id="output"></pre>
@@ -65,6 +66,10 @@
         log("Connection closed");
     };
 
+    function getConversationId() {
+        return document.getElementById("conversationId").value.trim();
+    }
+
     function sendPing() {
         socket.send(JSON.stringify({
             commandId: crypto.randomUUID(),
@@ -74,19 +79,30 @@
         }));
     }
 
-    function sendBroadcast() {
+    function subscribeConversation() {
+        const conversationId = getConversationId();
+
         socket.send(JSON.stringify({
             commandId: crypto.randomUUID(),
-            commandType: "BROADCAST_TEST",
-            conversationId: "test-room",
-            payload: {
-                message: "Hello from CollabMind WebSocket test"
-            }
+            commandType: "SUBSCRIBE_CONVERSATION",
+            conversationId: conversationId,
+            payload: {}
+        }));
+    }
+
+    function unsubscribeConversation() {
+        const conversationId = getConversationId();
+
+        socket.send(JSON.stringify({
+            commandId: crypto.randomUUID(),
+            commandType: "UNSUBSCRIBE_CONVERSATION",
+            conversationId: conversationId,
+            payload: {}
         }));
     }
 
     function sendMessage() {
-        const conversationId = document.getElementById("conversationId").value;
+        const conversationId = getConversationId();
         const content = document.getElementById("messageContent").value;
 
         socket.send(JSON.stringify({
