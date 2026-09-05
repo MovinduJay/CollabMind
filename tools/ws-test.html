@@ -76,8 +76,10 @@
             console.error(error);
         };
 
-        socket.onclose = () => {
+        socket.onclose = (event) => {
             log("Connection closed");
+            log("Close code: " + event.code);
+            log("Close reason: " + event.reason);
         };
     }
 
