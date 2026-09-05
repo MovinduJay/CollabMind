@@ -7,6 +7,7 @@ import org.collabmind.realtime.websocket.application.ConversationSubscriptionSer
 import org.collabmind.realtime.websocket.application.MessageHistoryService;
 import org.collabmind.realtime.websocket.application.MessageRelayService;
 import org.collabmind.realtime.websocket.application.RealtimeFanoutService;
+import org.collabmind.realtime.websocket.application.TypingIndicatorService;
 import org.collabmind.realtime.websocket.protocol.ClientCommand;
 import org.collabmind.realtime.websocket.protocol.ServerEvent;
 import org.collabmind.realtime.websocket.session.ConnectedClient;
@@ -20,6 +21,7 @@ import java.net.URI;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 @Component
@@ -32,6 +34,7 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
     private final MessageRelayService messageRelayService;
     private final ConversationSubscriptionService subscriptionService;
     private final MessageHistoryService messageHistoryService;
+    private final TypingIndicatorService typingIndicatorService;
     private final JwtTokenService jwtTokenService;
 
     public ChatWebSocketHandler(
@@ -42,6 +45,7 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
             MessageRelayService messageRelayService,
             ConversationSubscriptionService subscriptionService,
             MessageHistoryService messageHistoryService,
+            TypingIndicatorService typingIndicatorService,
             JwtTokenService jwtTokenService
     ) {
         this.objectMapper = objectMapper;
@@ -51,6 +55,7 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
         this.messageRelayService = messageRelayService;
         this.subscriptionService = subscriptionService;
         this.messageHistoryService = messageHistoryService;
+        this.typingIndicatorService = typingIndicatorService;
         this.jwtTokenService = jwtTokenService;
     }
 
@@ -118,6 +123,16 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
             return;
         }
 
+        if ("START_TYPING".equalsIgnoreCase(command.commandType())) {
+            typingIndicatorService.startTyping(client, command);
+            return;
+        }
+
+        if ("STOP_TYPING".equalsIgnoreCase(command.commandType())) {
+            typingIndicatorService.stopTyping(client, command);
+            return;
+        }
+
         if ("FETCH_MESSAGES_AFTER".equalsIgnoreCase(command.commandType())) {
             messageHistoryService.fetchMessagesAfter(client, command);
             return;
@@ -160,8 +175,7 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
             WebSocketSession session,
             CloseStatus status
     ) {
-        connectionRegistry.unregister(session.getId());
-        subscriptionRegistry.removeSessionFromAllConversations(session.getId());
+        cleanupConnection(session, "connection closed");
     }
 
     @Override
@@ -169,12 +183,42 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
             WebSocketSession session,
             Throwable exception
     ) throws Exception {
-        connectionRegistry.unregister(session.getId());
-        subscriptionRegistry.removeSessionFromAllConversations(session.getId());
+        cleanupConnection(session, "transport error");
 
         if (session.isOpen()) {
             session.close(CloseStatus.SERVER_ERROR);
         }
+    }
+
+    private void cleanupConnection(
+            WebSocketSession session,
+            String reason
+    ) {
+        connectionRegistry.findBySessionId(session.getId()).ifPresentOrElse(
+                client -> {
+                    Set<String> conversations = subscriptionRegistry.removeSessionFromAllConversations(session.getId());
+                    connectionRegistry.unregister(session.getId());
+
+                    for (String conversationId : conversations) {
+                        ServerEvent leftEvent = ServerEvent.of(
+                                "USER_LEFT_CONVERSATION",
+                                conversationId,
+                                Map.of(
+                                        "conversationId", conversationId,
+                                        "userId", client.userId().toString(),
+                                        "sessionId", client.sessionId(),
+                                        "reason", reason
+                                )
+                        );
+
+                        fanoutService.sendToConversation(conversationId, leftEvent);
+                    }
+                },
+                () -> {
+                    subscriptionRegistry.removeSessionFromAllConversations(session.getId());
+                    connectionRegistry.unregister(session.getId());
+                }
+        );
     }
 
     private String extractQueryParam(URI uri, String key) {

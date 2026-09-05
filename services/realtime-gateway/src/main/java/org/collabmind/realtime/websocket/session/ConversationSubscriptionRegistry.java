@@ -44,14 +44,16 @@ public class ConversationSubscriptionRegistry {
         }
     }
 
-    public void removeSessionFromAllConversations(String sessionId) {
+    public Set<String> removeSessionFromAllConversations(String sessionId) {
         Set<String> conversations = conversationsBySessionId.remove(sessionId);
 
         if (conversations == null) {
-            return;
+            return Set.of();
         }
 
-        for (String conversationId : conversations) {
+        Set<String> removedConversations = Set.copyOf(conversations);
+
+        for (String conversationId : removedConversations) {
             Set<String> sessions = sessionsByConversationId.get(conversationId);
 
             if (sessions != null) {
@@ -62,10 +64,16 @@ public class ConversationSubscriptionRegistry {
                 }
             }
         }
+
+        return removedConversations;
     }
 
     public Set<String> getSubscribedSessions(String conversationId) {
         return sessionsByConversationId.getOrDefault(conversationId, Set.of());
+    }
+
+    public boolean isSubscribed(String conversationId, String sessionId) {
+        return getSubscribedSessions(conversationId).contains(sessionId);
     }
 
     public int subscriberCount(String conversationId) {

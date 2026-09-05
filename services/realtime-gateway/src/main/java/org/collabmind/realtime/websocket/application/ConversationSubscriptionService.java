@@ -72,6 +72,23 @@ public class ConversationSubscriptionService {
 
             fanoutService.sendToClient(client, subscribedEvent);
 
+            ServerEvent joinedEvent = ServerEvent.of(
+                    "USER_JOINED_CONVERSATION",
+                    conversationId.toString(),
+                    Map.of(
+                            "conversationId", conversationId.toString(),
+                            "userId", client.userId().toString(),
+                            "sessionId", client.sessionId(),
+                            "subscriberCount", subscriptionRegistry.subscriberCount(conversationId.toString())
+                    )
+            );
+
+            fanoutService.sendToConversationExcept(
+                    conversationId.toString(),
+                    client.sessionId(),
+                    joinedEvent
+            );
+
         } catch (IllegalArgumentException exception) {
             sendSubscriptionRejected(client, command, "Invalid conversationId");
         } catch (RestClientResponseException exception) {
@@ -106,6 +123,19 @@ public class ConversationSubscriptionService {
         );
 
         fanoutService.sendToClient(client, unsubscribedEvent);
+
+        ServerEvent leftEvent = ServerEvent.of(
+                "USER_LEFT_CONVERSATION",
+                conversationIdValue,
+                Map.of(
+                        "conversationId", conversationIdValue,
+                        "userId", client.userId().toString(),
+                        "sessionId", client.sessionId(),
+                        "reason", "unsubscribed"
+                )
+        );
+
+        fanoutService.sendToConversation(conversationIdValue, leftEvent);
     }
 
     private void sendSubscriptionRejected(

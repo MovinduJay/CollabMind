@@ -40,6 +40,8 @@
 <button onclick="sendPing()">Send PING</button>
 <button onclick="subscribeConversation()">Subscribe Conversation</button>
 <button onclick="unsubscribeConversation()">Unsubscribe Conversation</button>
+<button onclick="startTyping()">Start Typing</button>
+<button onclick="stopTyping()">Stop Typing</button>
 <button onclick="sendMessage()">Send Real Message</button>
 <button onclick="fetchMessagesAfter()">Fetch Messages After</button>
 
@@ -161,6 +163,32 @@
         socket.send(JSON.stringify({
             commandId: crypto.randomUUID(),
             commandType: "UNSUBSCRIBE_CONVERSATION",
+            conversationId: conversationId,
+            payload: {}
+        }));
+    }
+
+    function startTyping() {
+        if (!ensureConnected()) return;
+
+        const conversationId = getConversationId();
+
+        socket.send(JSON.stringify({
+            commandId: crypto.randomUUID(),
+            commandType: "START_TYPING",
+            conversationId: conversationId,
+            payload: {}
+        }));
+    }
+
+    function stopTyping() {
+        if (!ensureConnected()) return;
+
+        const conversationId = getConversationId();
+
+        socket.send(JSON.stringify({
+            commandId: crypto.randomUUID(),
+            commandType: "STOP_TYPING",
             conversationId: conversationId,
             payload: {}
         }));
