@@ -6,6 +6,7 @@ import org.collabmind.realtime.ai.client.AiPromptRequest;
 import org.collabmind.realtime.ai.client.AiPromptResponse;
 import org.collabmind.realtime.chatcore.client.ChatCoreClient;
 import org.collabmind.realtime.chatcore.client.ChatCoreMessageResponse;
+import org.collabmind.realtime.chatcore.client.ChatCoreSaveAiMessageRequest;
 import org.collabmind.realtime.chatcore.client.ChatCoreSendMessageRequest;
 import org.collabmind.realtime.websocket.protocol.ClientCommand;
 import org.collabmind.realtime.websocket.protocol.SendMessagePayload;
@@ -14,9 +15,11 @@ import org.collabmind.realtime.websocket.session.ConnectedClient;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClientResponseException;
 
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 public class MessageRelayService {
@@ -72,26 +75,26 @@ public class MessageRelayService {
                     payload.content()
             );
 
-            ChatCoreMessageResponse savedMessage = chatCoreClient.sendMessage(
+            ChatCoreMessageResponse savedUserMessage = chatCoreClient.sendMessage(
                     payload.conversationId(),
                     chatCoreRequest
             );
 
-            ServerEvent messageCreatedEvent = ServerEvent.of(
+            ServerEvent userMessageCreatedEvent = ServerEvent.of(
                     "MESSAGE_CREATED",
-                    savedMessage.conversationId().toString(),
+                    savedUserMessage.conversationId().toString(),
                     Map.of(
                             "commandId", command.commandId(),
-                            "message", savedMessage
+                            "message", savedUserMessage
                     )
             );
 
             fanoutService.sendToConversation(
-                    savedMessage.conversationId().toString(),
-                    messageCreatedEvent
+                    savedUserMessage.conversationId().toString(),
+                    userMessageCreatedEvent
             );
 
-            triggerAiIfMentioned(client, command, savedMessage);
+            triggerAiIfMentioned(client, command, savedUserMessage);
 
         } catch (IllegalArgumentException exception) {
             sendMessageFailed(client, command, "Invalid message payload");
@@ -113,9 +116,9 @@ public class MessageRelayService {
     private void triggerAiIfMentioned(
             ConnectedClient client,
             ClientCommand command,
-            ChatCoreMessageResponse savedMessage
+            ChatCoreMessageResponse savedUserMessage
     ) {
-        Optional<String> agentType = aiMentionService.detectAgentType(savedMessage.content());
+        Optional<String> agentType = aiMentionService.detectAgentType(savedUserMessage.content());
 
         if (agentType.isEmpty()) {
             return;
@@ -123,44 +126,71 @@ public class MessageRelayService {
 
         try {
             AiPromptRequest aiRequest = new AiPromptRequest(
-                    savedMessage.conversationId(),
+                    savedUserMessage.conversationId(),
                     client.userId(),
                     agentType.get(),
-                    savedMessage.content()
+                    savedUserMessage.content()
             );
 
             AiPromptResponse aiResponse = aiOrchestratorClient.generateResponse(aiRequest);
 
-            ServerEvent aiResponseEvent = ServerEvent.of(
-                    "AI_RESPONSE_CREATED",
-                    savedMessage.conversationId().toString(),
+            UUID aiClientMessageId = createDeterministicAiClientMessageId(
+                    savedUserMessage.id(),
+                    agentType.get()
+            );
+
+            ChatCoreSaveAiMessageRequest saveAiRequest = new ChatCoreSaveAiMessageRequest(
+                    client.userId(),
+                    aiClientMessageId,
+                    savedUserMessage.id(),
+                    aiResponse.agentType(),
+                    aiResponse.response()
+            );
+
+            ChatCoreMessageResponse savedAiMessage = chatCoreClient.saveAiMessage(
+                    savedUserMessage.conversationId(),
+                    saveAiRequest
+            );
+
+            ServerEvent aiMessageCreatedEvent = ServerEvent.of(
+                    "AI_MESSAGE_CREATED",
+                    savedAiMessage.conversationId().toString(),
                     Map.of(
                             "commandId", command.commandId(),
-                            "sourceMessageId", savedMessage.id().toString(),
-                            "agentType", aiResponse.agentType(),
-                            "response", aiResponse.response(),
-                            "createdAt", aiResponse.createdAt().toString()
+                            "sourceMessageId", savedUserMessage.id().toString(),
+                            "message", savedAiMessage
                     )
             );
 
             fanoutService.sendToConversation(
-                    savedMessage.conversationId().toString(),
-                    aiResponseEvent
+                    savedAiMessage.conversationId().toString(),
+                    aiMessageCreatedEvent
             );
 
         } catch (RestClientResponseException exception) {
             sendAiFailed(
                     client,
                     command,
-                    "ai-orchestrator rejected request with status " + exception.getStatusCode().value()
+                    "AI flow failed with downstream status " + exception.getStatusCode().value()
             );
         } catch (Exception exception) {
             sendAiFailed(
                     client,
                     command,
-                    "Unexpected error while generating AI response"
+                    "Unexpected error while generating or saving AI response"
             );
         }
+    }
+
+    private UUID createDeterministicAiClientMessageId(
+            UUID sourceMessageId,
+            String agentType
+    ) {
+        String idempotencyKey = "AI_RESPONSE:" + sourceMessageId + ":" + agentType;
+
+        return UUID.nameUUIDFromBytes(
+                idempotencyKey.getBytes(StandardCharsets.UTF_8)
+        );
     }
 
     private void sendMessageFailed(

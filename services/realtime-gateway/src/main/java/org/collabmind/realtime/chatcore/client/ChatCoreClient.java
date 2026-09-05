@@ -39,4 +39,15 @@ public class ChatCoreClient {
                 .retrieve()
                 .body(ChatCoreMembershipResponse.class);
     }
+
+    public ChatCoreMessageResponse saveAiMessage(
+            UUID conversationId,
+            ChatCoreSaveAiMessageRequest request
+    ) {
+        return restClient.post()
+                .uri("/api/conversations/{conversationId}/messages/ai", conversationId)
+                .body(request)
+                .retrieve()
+                .body(ChatCoreMessageResponse.class);
+    }
 }
