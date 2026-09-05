@@ -14,6 +14,7 @@
 <button onclick="connect()">Connect</button>
 
 <p><strong>Connected User ID:</strong> <span id="userId">Not connected</span></p>
+<p><strong>Last Seen Sequence:</strong> <span id="lastSeenSequence">0</span></p>
 
 <label>
     Conversation ID:
@@ -24,7 +25,14 @@
 
 <label>
     Message:
-    <input id="messageContent" style="width: 420px;" value="Hello from JWT-authenticated realtime gateway">
+    <input id="messageContent" style="width: 420px;" value="@planner help us break CollabMind into next tasks">
+</label>
+
+<br><br>
+
+<label>
+    Fetch after sequence:
+    <input id="afterSequence" type="number" value="0" style="width: 80px;">
 </label>
 
 <br><br>
@@ -33,14 +41,17 @@
 <button onclick="subscribeConversation()">Subscribe Conversation</button>
 <button onclick="unsubscribeConversation()">Unsubscribe Conversation</button>
 <button onclick="sendMessage()">Send Real Message</button>
+<button onclick="fetchMessagesAfter()">Fetch Messages After</button>
 
 <pre id="output"></pre>
 
 <script>
     const output = document.getElementById("output");
     const userIdElement = document.getElementById("userId");
+    const lastSeenSequenceElement = document.getElementById("lastSeenSequence");
 
     let socket = null;
+    let lastSeenSequence = 0;
 
     function log(message) {
         output.textContent += message + "\n";
@@ -69,6 +80,21 @@
             if (serverEvent.eventType === "CONNECTED") {
                 userIdElement.textContent = serverEvent.payload.userId;
             }
+
+            if (
+                serverEvent.eventType === "MESSAGE_CREATED" ||
+                serverEvent.eventType === "AI_MESSAGE_CREATED"
+            ) {
+                updateLastSeenSequence(serverEvent.payload.message.sequenceNumber);
+            }
+
+            if (serverEvent.eventType === "MESSAGE_HISTORY") {
+                const messages = serverEvent.payload.messages || [];
+
+                for (const message of messages) {
+                    updateLastSeenSequence(message.sequenceNumber);
+                }
+            }
         };
 
         socket.onerror = (error) => {
@@ -81,6 +107,13 @@
             log("Close code: " + event.code);
             log("Close reason: " + event.reason);
         };
+    }
+
+    function updateLastSeenSequence(sequenceNumber) {
+        if (sequenceNumber > lastSeenSequence) {
+            lastSeenSequence = sequenceNumber;
+            lastSeenSequenceElement.textContent = lastSeenSequence;
+        }
     }
 
     function ensureConnected() {
@@ -147,6 +180,23 @@
                 conversationId: conversationId,
                 clientMessageId: crypto.randomUUID(),
                 content: content
+            }
+        }));
+    }
+
+    function fetchMessagesAfter() {
+        if (!ensureConnected()) return;
+
+        const conversationId = getConversationId();
+        const afterSequence = Number(document.getElementById("afterSequence").value);
+
+        socket.send(JSON.stringify({
+            commandId: crypto.randomUUID(),
+            commandType: "FETCH_MESSAGES_AFTER",
+            conversationId: conversationId,
+            payload: {
+                afterSequence: afterSequence,
+                limit: 50
             }
         }));
     }
