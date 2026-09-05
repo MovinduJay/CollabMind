@@ -1,6 +1,10 @@
 package org.collabmind.realtime.websocket.handler;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.collabmind.realtime.security.InvalidJwtTokenException;
+import org.collabmind.realtime.security.JwtTokenService;
+import org.collabmind.realtime.websocket.application.ConversationSubscriptionService;
+import org.collabmind.realtime.websocket.application.MessageHistoryService;
 import org.collabmind.realtime.websocket.application.MessageRelayService;
 import org.collabmind.realtime.websocket.application.RealtimeFanoutService;
 import org.collabmind.realtime.websocket.protocol.ClientCommand;
@@ -11,9 +15,6 @@ import org.collabmind.realtime.websocket.session.ConversationSubscriptionRegistr
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.*;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
-import org.collabmind.realtime.websocket.application.ConversationSubscriptionService;
-import org.collabmind.realtime.security.InvalidJwtTokenException;
-import org.collabmind.realtime.security.JwtTokenService;
 
 import java.net.URI;
 import java.net.URLDecoder;
@@ -30,6 +31,7 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
     private final RealtimeFanoutService fanoutService;
     private final MessageRelayService messageRelayService;
     private final ConversationSubscriptionService subscriptionService;
+    private final MessageHistoryService messageHistoryService;
     private final JwtTokenService jwtTokenService;
 
     public ChatWebSocketHandler(
@@ -39,6 +41,7 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
             RealtimeFanoutService fanoutService,
             MessageRelayService messageRelayService,
             ConversationSubscriptionService subscriptionService,
+            MessageHistoryService messageHistoryService,
             JwtTokenService jwtTokenService
     ) {
         this.objectMapper = objectMapper;
@@ -47,6 +50,7 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
         this.fanoutService = fanoutService;
         this.messageRelayService = messageRelayService;
         this.subscriptionService = subscriptionService;
+        this.messageHistoryService = messageHistoryService;
         this.jwtTokenService = jwtTokenService;
     }
 
@@ -111,6 +115,11 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
 
         if ("UNSUBSCRIBE_CONVERSATION".equalsIgnoreCase(command.commandType())) {
             subscriptionService.unsubscribe(client, command);
+            return;
+        }
+
+        if ("FETCH_MESSAGES_AFTER".equalsIgnoreCase(command.commandType())) {
+            messageHistoryService.fetchMessagesAfter(client, command);
             return;
         }
 
