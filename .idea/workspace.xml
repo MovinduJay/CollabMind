@@ -6,6 +6,8 @@
   <component name="ChangeListManager">
     <list default="true" id="64296f3a-d178-4690-a0c3-b0da2f7d7a57" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/services/ai-orchestrator/src/main/java/org/collabmind/ai/agent/domain/AgentType.java" beforeDir="false" afterPath="$PROJECT_DIR$/services/ai-orchestrator/src/main/java/org/collabmind/ai/agent/domain/AgentType.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/services/ai-orchestrator/src/main/java/org/collabmind/ai/agent/web/AiPromptRequest.java" beforeDir="false" afterPath="$PROJECT_DIR$/services/ai-orchestrator/src/main/java/org/collabmind/ai/agent/web/AiPromptRequest.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -84,7 +86,7 @@
       </set>
     </option>
   </component>
-  <component name="RunManager" selected="Spring Boot.ChatCoreApplication">
+  <component name="RunManager" selected="Spring Boot.AiOrchestratorApplication">
     <configuration name="RealtimeGatewayApplication" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
       <option name="MAIN_CLASS_NAME" value="org.collabmind.realtime.RealtimeGatewayApplication" />
       <module name="realtime-gateway" />
@@ -153,7 +155,7 @@
       <workItem from="1788170025510" duration="1049000" />
       <workItem from="1788187154292" duration="1985000" />
       <workItem from="1788189221045" duration="7866000" />
-      <workItem from="1788582139109" duration="2061000" />
+      <workItem from="1788582139109" duration="3159000" />
     </task>
     <servers />
   </component>
