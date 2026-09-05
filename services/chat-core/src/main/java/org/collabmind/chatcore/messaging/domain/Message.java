@@ -26,8 +26,11 @@ public class Message {
         AI
     }
 
+    public static final UUID AI_SYSTEM_SENDER_ID =
+            UUID.fromString("00000000-0000-0000-0000-000000000001");
+
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
+    @GeneratedValue
     private UUID id;
 
     @Column(name = "conversation_id", nullable = false)
@@ -43,13 +46,19 @@ public class Message {
     private long sequenceNumber;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 30)
+    @Column(name = "message_type", nullable = false)
     private MessageType messageType;
 
-    @Column(nullable = false, length = 4000)
+    @Column(name = "content", nullable = false, length = 4000)
     private String content;
 
-    @Column(nullable = false)
+    @Column(name = "agent_type", length = 40)
+    private String agentType;
+
+    @Column(name = "source_message_id")
+    private UUID sourceMessageId;
+
+    @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 
     protected Message() {
@@ -61,7 +70,9 @@ public class Message {
             UUID clientMessageId,
             long sequenceNumber,
             MessageType messageType,
-            String content
+            String content,
+            String agentType,
+            UUID sourceMessageId
     ) {
         this.conversationId = conversationId;
         this.senderId = senderId;
@@ -69,6 +80,8 @@ public class Message {
         this.sequenceNumber = sequenceNumber;
         this.messageType = messageType;
         this.content = content;
+        this.agentType = agentType;
+        this.sourceMessageId = sourceMessageId;
         this.createdAt = Instant.now();
     }
 
@@ -85,7 +98,29 @@ public class Message {
                 clientMessageId,
                 sequenceNumber,
                 MessageType.USER,
-                content
+                content,
+                null,
+                null
+        );
+    }
+
+    public static Message aiMessage(
+            UUID conversationId,
+            UUID clientMessageId,
+            long sequenceNumber,
+            String agentType,
+            UUID sourceMessageId,
+            String content
+    ) {
+        return new Message(
+                conversationId,
+                AI_SYSTEM_SENDER_ID,
+                clientMessageId,
+                sequenceNumber,
+                MessageType.AI,
+                content,
+                agentType,
+                sourceMessageId
         );
     }
 
@@ -115,6 +150,14 @@ public class Message {
 
     public String getContent() {
         return content;
+    }
+
+    public String getAgentType() {
+        return agentType;
+    }
+
+    public UUID getSourceMessageId() {
+        return sourceMessageId;
     }
 
     public Instant getCreatedAt() {

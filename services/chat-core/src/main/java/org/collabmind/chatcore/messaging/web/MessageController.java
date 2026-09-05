@@ -4,6 +4,7 @@ import jakarta.validation.Valid;
 import org.collabmind.chatcore.messaging.application.MessageService;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import org.collabmind.chatcore.messaging.web.SaveAiMessageRequest;
 
 import java.util.List;
 import java.util.UUID;
@@ -34,5 +35,13 @@ public class MessageController {
             @RequestParam(defaultValue = "50") int limit
     ) {
         return messageService.getMessagesAfter(conversationId, afterSequence, limit);
+    }
+
+    @PostMapping("/ai")
+    public MessageResponse saveAiMessage(
+            @PathVariable UUID conversationId,
+            @Valid @RequestBody SaveAiMessageRequest request
+    ) {
+        return messageService.saveAiMessage(conversationId, request);
     }
 }

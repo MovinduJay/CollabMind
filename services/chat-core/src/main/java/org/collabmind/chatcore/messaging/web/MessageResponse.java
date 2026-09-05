@@ -13,6 +13,8 @@ public record MessageResponse(
         long sequenceNumber,
         String messageType,
         String content,
+        String agentType,
+        UUID sourceMessageId,
         Instant createdAt
 ) {
 
@@ -25,6 +27,8 @@ public record MessageResponse(
                 message.getSequenceNumber(),
                 message.getMessageType().name(),
                 message.getContent(),
+                message.getAgentType(),
+                message.getSourceMessageId(),
                 message.getCreatedAt()
         );
     }

@@ -4,20 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="64296f3a-d178-4690-a0c3-b0da2f7d7a57" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/services/realtime-gateway/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/services/realtime-gateway/pom.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/services/realtime-gateway/src/main/java/org/collabmind/realtime/ai/client/AiOrchestratorClient.java" beforeDir="false" afterPath="$PROJECT_DIR$/services/realtime-gateway/src/main/java/org/collabmind/realtime/ai/client/AiOrchestratorClient.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/services/realtime-gateway/src/main/java/org/collabmind/realtime/ai/client/AiPromptRequest.java" beforeDir="false" afterPath="$PROJECT_DIR$/services/realtime-gateway/src/main/java/org/collabmind/realtime/ai/client/AiPromptRequest.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/services/realtime-gateway/src/main/java/org/collabmind/realtime/ai/client/AiPromptResponse.java" beforeDir="false" afterPath="$PROJECT_DIR$/services/realtime-gateway/src/main/java/org/collabmind/realtime/ai/client/AiPromptResponse.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/services/realtime-gateway/src/main/java/org/collabmind/realtime/websocket/application/AiMentionService.java" beforeDir="false" afterPath="$PROJECT_DIR$/services/realtime-gateway/src/main/java/org/collabmind/realtime/websocket/application/AiMentionService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/services/realtime-gateway/src/main/java/org/collabmind/realtime/websocket/application/MessageRelayService.java" beforeDir="false" afterPath="$PROJECT_DIR$/services/realtime-gateway/src/main/java/org/collabmind/realtime/websocket/application/MessageRelayService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/services/realtime-gateway/src/main/resources/application.properties" beforeDir="false" afterPath="$PROJECT_DIR$/services/realtime-gateway/src/main/resources/application.properties" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/services/realtime-gateway/target/classes/application.properties" beforeDir="false" afterPath="$PROJECT_DIR$/services/realtime-gateway/target/classes/application.properties" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/services/realtime-gateway/target/classes/org/collabmind/realtime/websocket/application/MessageRelayService.class" beforeDir="false" afterPath="$PROJECT_DIR$/services/realtime-gateway/target/classes/org/collabmind/realtime/websocket/application/MessageRelayService.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/services/realtime-gateway/target/classes/org/collabmind/realtime/websocket/handler/ChatWebSocketHandler.class" beforeDir="false" afterPath="$PROJECT_DIR$/services/realtime-gateway/target/classes/org/collabmind/realtime/websocket/handler/ChatWebSocketHandler.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tools/ws-test.html" beforeDir="false" afterPath="$PROJECT_DIR$/tools/ws-test.html" afterDir="false" />
-    </list>
+    <list default="true" id="64296f3a-d178-4690-a0c3-b0da2f7d7a57" name="Changes" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -74,7 +61,7 @@
     "Spring Boot.ChatCoreApplication.executor": "Run",
     "Spring Boot.IdentityServiceApplication.executor": "Run",
     "Spring Boot.RealtimeGatewayApplication.executor": "Run",
-    "git-widget-placeholder": "realtime-gateway",
+    "git-widget-placeholder": "feature/chat-core-bootstrap",
     "kotlin-language-version-configured": "true",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
@@ -95,7 +82,7 @@
       </set>
     </option>
   </component>
-  <component name="RunManager" selected="Spring Boot.AiOrchestratorApplication">
+  <component name="RunManager" selected="Spring Boot.ChatCoreApplication">
     <configuration name="RealtimeGatewayApplication" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
       <option name="MAIN_CLASS_NAME" value="org.collabmind.realtime.RealtimeGatewayApplication" />
       <module name="realtime-gateway" />
