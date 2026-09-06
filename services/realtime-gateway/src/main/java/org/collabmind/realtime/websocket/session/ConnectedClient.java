@@ -8,6 +8,7 @@ import java.util.UUID;
 public record ConnectedClient(
         String sessionId,
         UUID userId,
+        String jwtToken,
         WebSocketSession session,
         Instant connectedAt
 ) {
