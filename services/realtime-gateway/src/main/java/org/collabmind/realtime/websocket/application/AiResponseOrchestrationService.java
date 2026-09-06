@@ -85,6 +85,8 @@ public class AiResponseOrchestrationService {
                             "sourceMessageId", savedUserMessage.id().toString(),
                             "contextMessageCount", contextMessages.size(),
                             "providerName", aiResponse.providerName(),
+                            "primaryProviderName", aiResponse.primaryProviderName(),
+                            "fallbackUsed", aiResponse.fallbackUsed(),
                             "latencyMs", aiResponse.latencyMs(),
                             "message", savedAiMessage
                     )

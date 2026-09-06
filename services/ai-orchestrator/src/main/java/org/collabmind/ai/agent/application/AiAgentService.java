@@ -15,21 +15,21 @@ import java.util.List;
 @Service
 public class AiAgentService {
 
-    private final AiProvider aiProvider;
+    private final AiProvider primaryProvider;
+    private final AiProvider fallbackProvider;
+    private final boolean fallbackEnabled;
     private final AiRequestLogRepository auditLogRepository;
 
     public AiAgentService(
             List<AiProvider> aiProviders,
             AiRequestLogRepository auditLogRepository,
-            @Value("${collabmind.ai.provider:mock}") String selectedProviderName
+            @Value("${collabmind.ai.provider:mock}") String selectedProviderName,
+            @Value("${collabmind.ai.fallback-provider:mock}") String fallbackProviderName,
+            @Value("${collabmind.ai.fallback-enabled:true}") boolean fallbackEnabled
     ) {
-        this.aiProvider = aiProviders.stream()
-                .filter(provider -> provider.providerName().equalsIgnoreCase(selectedProviderName))
-                .findFirst()
-                .orElseThrow(() -> new IllegalStateException(
-                        "No AI provider configured with name: " + selectedProviderName
-                ));
-
+        this.primaryProvider = resolveProvider(aiProviders, selectedProviderName);
+        this.fallbackProvider = resolveProvider(aiProviders, fallbackProviderName);
+        this.fallbackEnabled = fallbackEnabled;
         this.auditLogRepository = auditLogRepository;
     }
 
@@ -39,49 +39,131 @@ public class AiAgentService {
                 : request.contextMessages();
 
         String contextSummary = buildContextSummary(contextMessages);
-
-        long startedAtNanos = System.nanoTime();
+        long overallStartedAtNanos = System.nanoTime();
 
         try {
-            String response = aiProvider.generateResponse(
+            ProviderCallResult primaryResult = callProvider(
+                    primaryProvider,
                     request,
                     contextSummary
             );
-
-            long latencyMs = calculateLatencyMs(startedAtNanos);
 
             auditLogRepository.save(AiRequestLog.success(
                     request.conversationId(),
                     request.userId(),
                     request.agentType(),
-                    aiProvider.providerName(),
-                    latencyMs
+                    primaryProvider.providerName(),
+                    primaryResult.latencyMs()
             ));
 
             return new AiPromptResponse(
                     request.conversationId(),
                     request.userId(),
                     request.agentType(),
-                    aiProvider.providerName(),
-                    latencyMs,
-                    response,
+                    primaryProvider.providerName(),
+                    primaryProvider.providerName(),
+                    false,
+                    calculateLatencyMs(overallStartedAtNanos),
+                    primaryResult.response(),
                     Instant.now()
             );
 
-        } catch (RuntimeException exception) {
-            long latencyMs = calculateLatencyMs(startedAtNanos);
+        } catch (RuntimeException primaryException) {
+            long primaryLatencyMs = calculateLatencyMs(overallStartedAtNanos);
 
             auditLogRepository.save(AiRequestLog.failure(
                     request.conversationId(),
                     request.userId(),
                     request.agentType(),
-                    aiProvider.providerName(),
-                    latencyMs,
-                    safeErrorMessage(exception)
+                    primaryProvider.providerName(),
+                    primaryLatencyMs,
+                    safeErrorMessage(primaryException)
             ));
 
-            throw exception;
+            if (!shouldUseFallback()) {
+                throw primaryException;
+            }
+
+            long fallbackStartedAtNanos = System.nanoTime();
+
+            try {
+                ProviderCallResult fallbackResult = callProvider(
+                        fallbackProvider,
+                        request,
+                        contextSummary
+                );
+
+                auditLogRepository.save(AiRequestLog.success(
+                        request.conversationId(),
+                        request.userId(),
+                        request.agentType(),
+                        fallbackProvider.providerName(),
+                        fallbackResult.latencyMs()
+                ));
+
+                return new AiPromptResponse(
+                        request.conversationId(),
+                        request.userId(),
+                        request.agentType(),
+                        fallbackProvider.providerName(),
+                        primaryProvider.providerName(),
+                        true,
+                        calculateLatencyMs(overallStartedAtNanos),
+                        fallbackResult.response(),
+                        Instant.now()
+                );
+
+            } catch (RuntimeException fallbackException) {
+                long fallbackLatencyMs = calculateLatencyMs(fallbackStartedAtNanos);
+
+                auditLogRepository.save(AiRequestLog.failure(
+                        request.conversationId(),
+                        request.userId(),
+                        request.agentType(),
+                        fallbackProvider.providerName(),
+                        fallbackLatencyMs,
+                        safeErrorMessage(fallbackException)
+                ));
+
+                fallbackException.addSuppressed(primaryException);
+                throw fallbackException;
+            }
         }
+    }
+
+    private AiProvider resolveProvider(
+            List<AiProvider> aiProviders,
+            String providerName
+    ) {
+        return aiProviders.stream()
+                .filter(provider -> provider.providerName().equalsIgnoreCase(providerName))
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException(
+                        "No AI provider configured with name: " + providerName
+                ));
+    }
+
+    private boolean shouldUseFallback() {
+        return fallbackEnabled &&
+                !primaryProvider.providerName().equalsIgnoreCase(fallbackProvider.providerName());
+    }
+
+    private ProviderCallResult callProvider(
+            AiProvider provider,
+            AiPromptRequest request,
+            String contextSummary
+    ) {
+        long startedAtNanos = System.nanoTime();
+
+        String response = provider.generateResponse(
+                request,
+                contextSummary
+        );
+
+        return new ProviderCallResult(
+                response,
+                calculateLatencyMs(startedAtNanos)
+        );
     }
 
     private long calculateLatencyMs(long startedAtNanos) {
@@ -120,5 +202,11 @@ public class AiAgentService {
         }
 
         return builder.toString();
+    }
+
+    private record ProviderCallResult(
+            String response,
+            long latencyMs
+    ) {
     }
 }
