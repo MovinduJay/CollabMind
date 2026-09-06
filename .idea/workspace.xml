@@ -4,13 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="64296f3a-d178-4690-a0c3-b0da2f7d7a57" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/services/ai-orchestrator/src/main/java/org/collabmind/ai/agent/application/AiAgentService.java" beforeDir="false" afterPath="$PROJECT_DIR$/services/ai-orchestrator/src/main/java/org/collabmind/ai/agent/application/AiAgentService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/services/ai-orchestrator/src/main/java/org/collabmind/ai/audit/domain/AiRequestLog.java" beforeDir="false" afterPath="$PROJECT_DIR$/services/ai-orchestrator/src/main/java/org/collabmind/ai/audit/domain/AiRequestLog.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/services/ai-orchestrator/src/main/java/org/collabmind/ai/audit/infrastructure/AiRequestLogRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/services/ai-orchestrator/src/main/java/org/collabmind/ai/audit/infrastructure/AiRequestLogRepository.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/services/ai-orchestrator/src/main/java/org/collabmind/ai/audit/web/AiRequestLogController.java" beforeDir="false" afterPath="$PROJECT_DIR$/services/ai-orchestrator/src/main/java/org/collabmind/ai/audit/web/AiRequestLogController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/services/ai-orchestrator/src/main/java/org/collabmind/ai/audit/web/AiRequestLogResponse.java" beforeDir="false" afterPath="$PROJECT_DIR$/services/ai-orchestrator/src/main/java/org/collabmind/ai/audit/web/AiRequestLogResponse.java" afterDir="false" />
-    </list>
+    <list default="true" id="64296f3a-d178-4690-a0c3-b0da2f7d7a57" name="Changes" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
