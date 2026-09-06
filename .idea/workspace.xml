@@ -7,8 +7,9 @@
     <list default="true" id="64296f3a-d178-4690-a0c3-b0da2f7d7a57" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/docker-compose.yml" beforeDir="false" afterPath="$PROJECT_DIR$/docker-compose.yml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/services/identity-service/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/services/identity-service/pom.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/services/identity-service/src/main/resources/application.properties" beforeDir="false" afterPath="$PROJECT_DIR$/services/identity-service/src/main/resources/application.properties" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/services/ai-orchestrator/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/services/ai-orchestrator/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/services/ai-orchestrator/src/main/resources/application.properties" beforeDir="false" afterPath="$PROJECT_DIR$/services/ai-orchestrator/src/main/resources/application.properties" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/services/ai-orchestrator/target/classes/application.properties" beforeDir="false" afterPath="$PROJECT_DIR$/services/ai-orchestrator/target/classes/application.properties" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -66,7 +67,7 @@
     "Spring Boot.ChatCoreApplication.executor": "Run",
     "Spring Boot.IdentityServiceApplication.executor": "Run",
     "Spring Boot.RealtimeGatewayApplication.executor": "Run",
-    "git-widget-placeholder": "feature/identity-auth",
+    "git-widget-placeholder": "ai-orchestrator",
     "kotlin-language-version-configured": "true",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
@@ -87,7 +88,7 @@
       </set>
     </option>
   </component>
-  <component name="RunManager" selected="Spring Boot.IdentityServiceApplication">
+  <component name="RunManager" selected="Spring Boot.AiOrchestratorApplication">
     <configuration name="RealtimeGatewayApplication" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
       <option name="MAIN_CLASS_NAME" value="org.collabmind.realtime.RealtimeGatewayApplication" />
       <module name="realtime-gateway" />
