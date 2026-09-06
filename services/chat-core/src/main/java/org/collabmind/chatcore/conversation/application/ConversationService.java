@@ -1,15 +1,14 @@
 package org.collabmind.chatcore.conversation.application;
 
+import org.collabmind.chatcore.common.exception.ConversationNotFoundException;
 import org.collabmind.chatcore.conversation.domain.Conversation;
 import org.collabmind.chatcore.conversation.infrastructure.ConversationRepository;
+import org.collabmind.chatcore.conversation.web.ConversationMembershipResponse;
 import org.collabmind.chatcore.conversation.web.ConversationResponse;
-import org.collabmind.chatcore.conversation.web.CreateConversationRequest;
 import org.collabmind.chatcore.membership.domain.ConversationMember;
 import org.collabmind.chatcore.membership.infrastructure.ConversationMemberRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.collabmind.chatcore.common.exception.ConversationNotFoundException;
-import org.collabmind.chatcore.conversation.web.ConversationMembershipResponse;
 
 import java.util.UUID;
 
@@ -28,39 +27,45 @@ public class ConversationService {
     }
 
     @Transactional
-    public ConversationResponse createConversation(CreateConversationRequest request) {
+    public ConversationResponse createConversation(
+            String name,
+            UUID authenticatedUserId
+    ) {
         Conversation conversation = new Conversation(
-                request.name(),
-                request.creatorUserId()
+                name,
+                authenticatedUserId
         );
 
         Conversation savedConversation = conversationRepository.save(conversation);
 
-        ConversationMember ownerMembership = new ConversationMember(
+        ConversationMember owner = new ConversationMember(
                 savedConversation.getId(),
-                request.creatorUserId(),
+                authenticatedUserId,
                 ConversationMember.Role.OWNER
         );
 
-        memberRepository.save(ownerMembership);
+        memberRepository.save(owner);
 
         return ConversationResponse.from(savedConversation, 1);
     }
 
     @Transactional
-    public ConversationResponse joinConversation(UUID conversationId, UUID userId) {
+    public ConversationResponse joinConversation(
+            UUID conversationId,
+            UUID authenticatedUserId
+    ) {
         Conversation conversation = conversationRepository.findById(conversationId)
                 .orElseThrow(() -> new ConversationNotFoundException(conversationId));
 
         boolean alreadyMember = memberRepository.existsByConversationIdAndUserId(
                 conversationId,
-                userId
+                authenticatedUserId
         );
 
         if (!alreadyMember) {
             ConversationMember member = new ConversationMember(
                     conversationId,
-                    userId,
+                    authenticatedUserId,
                     ConversationMember.Role.MEMBER
             );
 
@@ -73,7 +78,10 @@ public class ConversationService {
     }
 
     @Transactional(readOnly = true)
-    public ConversationMembershipResponse checkMembership(UUID conversationId, UUID userId) {
+    public ConversationMembershipResponse checkMembership(
+            UUID conversationId,
+            UUID userId
+    ) {
         Conversation conversation = conversationRepository.findById(conversationId)
                 .orElseThrow(() -> new ConversationNotFoundException(conversationId));
 

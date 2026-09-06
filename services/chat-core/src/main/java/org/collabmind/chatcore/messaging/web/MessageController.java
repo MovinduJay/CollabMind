@@ -2,9 +2,8 @@ package org.collabmind.chatcore.messaging.web;
 
 import jakarta.validation.Valid;
 import org.collabmind.chatcore.messaging.application.MessageService;
-import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
-import org.collabmind.chatcore.messaging.web.SaveAiMessageRequest;
 
 import java.util.List;
 import java.util.UUID;
@@ -20,28 +19,47 @@ public class MessageController {
     }
 
     @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
     public MessageResponse sendMessage(
             @PathVariable UUID conversationId,
-            @Valid @RequestBody SendMessageRequest request
+            @Valid @RequestBody SendMessageRequest request,
+            Authentication authentication
     ) {
-        return messageService.sendMessage(conversationId, request);
+        return messageService.sendMessage(
+                conversationId,
+                authenticatedUserId(authentication),
+                request
+        );
+    }
+
+    @PostMapping("/ai")
+    public MessageResponse saveAiMessage(
+            @PathVariable UUID conversationId,
+            @Valid @RequestBody SaveAiMessageRequest request,
+            Authentication authentication
+    ) {
+        return messageService.saveAiMessage(
+                conversationId,
+                authenticatedUserId(authentication),
+                request
+        );
     }
 
     @GetMapping
     public List<MessageResponse> getMessagesAfter(
             @PathVariable UUID conversationId,
             @RequestParam(defaultValue = "0") long afterSequence,
-            @RequestParam(defaultValue = "50") int limit
+            @RequestParam(defaultValue = "50") int limit,
+            Authentication authentication
     ) {
-        return messageService.getMessagesAfter(conversationId, afterSequence, limit);
+        return messageService.getMessagesAfter(
+                conversationId,
+                authenticatedUserId(authentication),
+                afterSequence,
+                limit
+        );
     }
 
-    @PostMapping("/ai")
-    public MessageResponse saveAiMessage(
-            @PathVariable UUID conversationId,
-            @Valid @RequestBody SaveAiMessageRequest request
-    ) {
-        return messageService.saveAiMessage(conversationId, request);
+    private UUID authenticatedUserId(Authentication authentication) {
+        return UUID.fromString(authentication.getName());
     }
 }

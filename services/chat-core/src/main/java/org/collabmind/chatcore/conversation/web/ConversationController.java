@@ -1,9 +1,8 @@
 package org.collabmind.chatcore.conversation.web;
 
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotNull;
 import org.collabmind.chatcore.conversation.application.ConversationService;
-import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
@@ -19,32 +18,43 @@ public class ConversationController {
     }
 
     @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
     public ConversationResponse createConversation(
-            @Valid @RequestBody CreateConversationRequest request
+            @Valid @RequestBody CreateConversationRequest request,
+            Authentication authentication
     ) {
-        return conversationService.createConversation(request);
+        return conversationService.createConversation(
+                request.name(),
+                authenticatedUserId(authentication)
+        );
     }
 
     @PostMapping("/{conversationId}/members")
     public ConversationResponse joinConversation(
             @PathVariable UUID conversationId,
-            @Valid @RequestBody JoinConversationRequest request
+            Authentication authentication
     ) {
-        return conversationService.joinConversation(conversationId, request.userId());
-    }
-
-    public record JoinConversationRequest(
-            @NotNull(message = "User ID is required")
-            UUID userId
-    ) {
+        return conversationService.joinConversation(
+                conversationId,
+                authenticatedUserId(authentication)
+        );
     }
 
     @GetMapping("/{conversationId}/members/{userId}/exists")
     public ConversationMembershipResponse checkMembership(
             @PathVariable UUID conversationId,
-            @PathVariable UUID userId
+            @PathVariable UUID userId,
+            Authentication authentication
     ) {
+        UUID authenticatedUserId = authenticatedUserId(authentication);
+
+        if (!authenticatedUserId.equals(userId)) {
+            throw new IllegalArgumentException("Cannot check membership for another user");
+        }
+
         return conversationService.checkMembership(conversationId, userId);
+    }
+
+    private UUID authenticatedUserId(Authentication authentication) {
+        return UUID.fromString(authentication.getName());
     }
 }
