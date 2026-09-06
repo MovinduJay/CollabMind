@@ -1,5 +1,6 @@
 package org.collabmind.realtime.websocket.application;
 
+import org.collabmind.realtime.ai.client.AiContextMessage;
 import org.collabmind.realtime.ai.client.AiOrchestratorClient;
 import org.collabmind.realtime.ai.client.AiPromptRequest;
 import org.collabmind.realtime.ai.client.AiPromptResponse;
@@ -14,12 +15,15 @@ import org.springframework.web.client.RestClientResponseException;
 
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 @Service
 public class AiResponseOrchestrationService {
+
+    private static final int CONTEXT_MESSAGE_LIMIT = 10;
 
     private final AiOrchestratorClient aiOrchestratorClient;
     private final ChatCoreClient chatCoreClient;
@@ -43,11 +47,14 @@ public class AiResponseOrchestrationService {
             String agentType
     ) {
         try {
+            List<AiContextMessage> contextMessages = fetchRecentContext(savedUserMessage);
+
             AiPromptRequest aiRequest = new AiPromptRequest(
                     savedUserMessage.conversationId(),
                     client.userId(),
                     agentType,
-                    savedUserMessage.content()
+                    savedUserMessage.content(),
+                    contextMessages
             );
 
             AiPromptResponse aiResponse = aiOrchestratorClient.generateResponse(aiRequest);
@@ -76,6 +83,7 @@ public class AiResponseOrchestrationService {
                     Map.of(
                             "commandId", commandId,
                             "sourceMessageId", savedUserMessage.id().toString(),
+                            "contextMessageCount", contextMessages.size(),
                             "message", savedAiMessage
                     )
             );
@@ -102,6 +110,27 @@ public class AiResponseOrchestrationService {
         }
 
         return CompletableFuture.completedFuture(null);
+    }
+
+    private List<AiContextMessage> fetchRecentContext(ChatCoreMessageResponse savedUserMessage) {
+        long afterSequence = Math.max(
+                0,
+                savedUserMessage.sequenceNumber() - CONTEXT_MESSAGE_LIMIT
+        );
+
+        return chatCoreClient.findMessagesAfter(
+                        savedUserMessage.conversationId(),
+                        afterSequence,
+                        CONTEXT_MESSAGE_LIMIT
+                )
+                .stream()
+                .map(message -> new AiContextMessage(
+                        message.sequenceNumber(),
+                        message.messageType(),
+                        message.content(),
+                        message.agentType()
+                ))
+                .toList();
     }
 
     private UUID createDeterministicAiClientMessageId(
