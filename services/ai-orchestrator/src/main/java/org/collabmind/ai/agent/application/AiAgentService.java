@@ -34,15 +34,21 @@ public class AiAgentService {
 
         String contextSummary = buildContextSummary(contextMessages);
 
+        long startedAtNanos = System.nanoTime();
+
         String response = aiProvider.generateResponse(
                 request,
                 contextSummary
         );
 
+        long latencyMs = (System.nanoTime() - startedAtNanos) / 1_000_000;
+
         return new AiPromptResponse(
                 request.conversationId(),
                 request.userId(),
                 request.agentType(),
+                aiProvider.providerName(),
+                latencyMs,
                 response,
                 Instant.now()
         );
