@@ -11,6 +11,8 @@ public record ChatCoreMessageResponse(
         long sequenceNumber,
         String messageType,
         String content,
+        String agentType,
+        UUID sourceMessageId,
         Instant createdAt
 ) {
 }

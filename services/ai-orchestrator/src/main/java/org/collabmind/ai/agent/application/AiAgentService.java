@@ -1,74 +1,212 @@
 package org.collabmind.ai.agent.application;
 
-import org.collabmind.ai.agent.domain.AgentType;
+import org.collabmind.ai.agent.web.AiContextMessage;
 import org.collabmind.ai.agent.web.AiPromptRequest;
 import org.collabmind.ai.agent.web.AiPromptResponse;
+import org.collabmind.ai.audit.domain.AiRequestLog;
+import org.collabmind.ai.audit.infrastructure.AiRequestLogRepository;
+import org.collabmind.ai.provider.application.AiProvider;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
+import java.util.List;
 
 @Service
 public class AiAgentService {
 
-    public AiPromptResponse generateResponse(AiPromptRequest request) {
-        String response = switch (request.agentType()) {
-            case PLANNER -> generatePlannerResponse(request.message());
-            case CRITIC -> generateCriticResponse(request.message());
-            case SUMMARIZER -> generateSummarizerResponse(request.message());
-            case RESEARCHER -> generateResearcherResponse(request.message());
-        };
+    private final AiProvider primaryProvider;
+    private final AiProvider fallbackProvider;
+    private final boolean fallbackEnabled;
+    private final AiRequestLogRepository auditLogRepository;
 
-        return new AiPromptResponse(
-                request.conversationId(),
-                request.userId(),
-                request.agentType(),
+    public AiAgentService(
+            List<AiProvider> aiProviders,
+            AiRequestLogRepository auditLogRepository,
+            @Value("${collabmind.ai.provider:mock}") String selectedProviderName,
+            @Value("${collabmind.ai.fallback-provider:mock}") String fallbackProviderName,
+            @Value("${collabmind.ai.fallback-enabled:true}") boolean fallbackEnabled
+    ) {
+        this.primaryProvider = resolveProvider(aiProviders, selectedProviderName);
+        this.fallbackProvider = resolveProvider(aiProviders, fallbackProviderName);
+        this.fallbackEnabled = fallbackEnabled;
+        this.auditLogRepository = auditLogRepository;
+    }
+
+    public AiPromptResponse generateResponse(AiPromptRequest request) {
+        List<AiContextMessage> contextMessages = request.contextMessages() == null
+                ? List.of()
+                : request.contextMessages();
+
+        String contextSummary = buildContextSummary(contextMessages);
+        long overallStartedAtNanos = System.nanoTime();
+
+        try {
+            ProviderCallResult primaryResult = callProvider(
+                    primaryProvider,
+                    request,
+                    contextSummary
+            );
+
+            auditLogRepository.save(AiRequestLog.success(
+                    request.conversationId(),
+                    request.userId(),
+                    request.agentType(),
+                    primaryProvider.providerName(),
+                    primaryResult.latencyMs()
+            ));
+
+            return new AiPromptResponse(
+                    request.conversationId(),
+                    request.userId(),
+                    request.agentType(),
+                    primaryProvider.providerName(),
+                    primaryProvider.providerName(),
+                    false,
+                    calculateLatencyMs(overallStartedAtNanos),
+                    primaryResult.response(),
+                    Instant.now()
+            );
+
+        } catch (RuntimeException primaryException) {
+            long primaryLatencyMs = calculateLatencyMs(overallStartedAtNanos);
+
+            auditLogRepository.save(AiRequestLog.failure(
+                    request.conversationId(),
+                    request.userId(),
+                    request.agentType(),
+                    primaryProvider.providerName(),
+                    primaryLatencyMs,
+                    safeErrorMessage(primaryException)
+            ));
+
+            if (!shouldUseFallback()) {
+                throw primaryException;
+            }
+
+            long fallbackStartedAtNanos = System.nanoTime();
+
+            try {
+                ProviderCallResult fallbackResult = callProvider(
+                        fallbackProvider,
+                        request,
+                        contextSummary
+                );
+
+                auditLogRepository.save(AiRequestLog.success(
+                        request.conversationId(),
+                        request.userId(),
+                        request.agentType(),
+                        fallbackProvider.providerName(),
+                        fallbackResult.latencyMs()
+                ));
+
+                return new AiPromptResponse(
+                        request.conversationId(),
+                        request.userId(),
+                        request.agentType(),
+                        fallbackProvider.providerName(),
+                        primaryProvider.providerName(),
+                        true,
+                        calculateLatencyMs(overallStartedAtNanos),
+                        fallbackResult.response(),
+                        Instant.now()
+                );
+
+            } catch (RuntimeException fallbackException) {
+                long fallbackLatencyMs = calculateLatencyMs(fallbackStartedAtNanos);
+
+                auditLogRepository.save(AiRequestLog.failure(
+                        request.conversationId(),
+                        request.userId(),
+                        request.agentType(),
+                        fallbackProvider.providerName(),
+                        fallbackLatencyMs,
+                        safeErrorMessage(fallbackException)
+                ));
+
+                fallbackException.addSuppressed(primaryException);
+                throw fallbackException;
+            }
+        }
+    }
+
+    private AiProvider resolveProvider(
+            List<AiProvider> aiProviders,
+            String providerName
+    ) {
+        return aiProviders.stream()
+                .filter(provider -> provider.providerName().equalsIgnoreCase(providerName))
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException(
+                        "No AI provider configured with name: " + providerName
+                ));
+    }
+
+    private boolean shouldUseFallback() {
+        return fallbackEnabled &&
+                !primaryProvider.providerName().equalsIgnoreCase(fallbackProvider.providerName());
+    }
+
+    private ProviderCallResult callProvider(
+            AiProvider provider,
+            AiPromptRequest request,
+            String contextSummary
+    ) {
+        long startedAtNanos = System.nanoTime();
+
+        String response = provider.generateResponse(
+                request,
+                contextSummary
+        );
+
+        return new ProviderCallResult(
                 response,
-                Instant.now()
+                calculateLatencyMs(startedAtNanos)
         );
     }
 
-    private String generatePlannerResponse(String message) {
-        return """
-                Here is a simple plan:
-                1. Clarify the main goal.
-                2. Break the idea into small tasks.
-                3. Assign priorities.
-                4. Decide the next action.
-                
-                Based on your message: "%s"
-                """.formatted(message);
+    private long calculateLatencyMs(long startedAtNanos) {
+        return (System.nanoTime() - startedAtNanos) / 1_000_000;
     }
 
-    private String generateCriticResponse(String message) {
-        return """
-                Here is a critical review:
-                1. Check whether the idea solves a real problem.
-                2. Identify the riskiest assumption.
-                3. Look for missing constraints.
-                4. Validate before building too much.
-                
-                Based on your message: "%s"
-                """.formatted(message);
+    private String safeErrorMessage(RuntimeException exception) {
+        if (exception.getMessage() == null || exception.getMessage().isBlank()) {
+            return exception.getClass().getSimpleName();
+        }
+
+        return exception.getMessage();
     }
 
-    private String generateSummarizerResponse(String message) {
-        return """
-                Summary:
-                The discussion needs to be converted into a clear decision, key points, and next steps.
-                
-                Source message: "%s"
-                """.formatted(message);
+    private String buildContextSummary(List<AiContextMessage> contextMessages) {
+        if (contextMessages.isEmpty()) {
+            return "No previous context was provided.";
+        }
+
+        StringBuilder builder = new StringBuilder();
+        builder.append("Recent conversation context:\n");
+
+        for (AiContextMessage message : contextMessages) {
+            builder.append("- #")
+                    .append(message.sequenceNumber())
+                    .append(" [")
+                    .append(message.messageType())
+                    .append("] ");
+
+            if (message.agentType() != null && !message.agentType().isBlank()) {
+                builder.append("(").append(message.agentType()).append(") ");
+            }
+
+            builder.append(message.content())
+                    .append("\n");
+        }
+
+        return builder.toString();
     }
 
-    private String generateResearcherResponse(String message) {
-        return """
-                Research direction:
-                1. Find similar existing solutions.
-                2. Compare target users.
-                3. Check market demand.
-                4. Collect evidence before implementation.
-                
-                Based on your message: "%s"
-                """.formatted(message);
+    private record ProviderCallResult(
+            String response,
+            long latencyMs
+    ) {
     }
 }

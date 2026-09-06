@@ -1,9 +1,6 @@
 package org.collabmind.realtime.websocket.application;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.collabmind.realtime.ai.client.AiOrchestratorClient;
-import org.collabmind.realtime.ai.client.AiPromptRequest;
-import org.collabmind.realtime.ai.client.AiPromptResponse;
 import org.collabmind.realtime.chatcore.client.ChatCoreClient;
 import org.collabmind.realtime.chatcore.client.ChatCoreMessageResponse;
 import org.collabmind.realtime.chatcore.client.ChatCoreSendMessageRequest;
@@ -23,21 +20,21 @@ public class MessageRelayService {
 
     private final ObjectMapper objectMapper;
     private final ChatCoreClient chatCoreClient;
-    private final AiOrchestratorClient aiOrchestratorClient;
     private final AiMentionService aiMentionService;
+    private final AiResponseOrchestrationService aiResponseOrchestrationService;
     private final RealtimeFanoutService fanoutService;
 
     public MessageRelayService(
             ObjectMapper objectMapper,
             ChatCoreClient chatCoreClient,
-            AiOrchestratorClient aiOrchestratorClient,
             AiMentionService aiMentionService,
+            AiResponseOrchestrationService aiResponseOrchestrationService,
             RealtimeFanoutService fanoutService
     ) {
         this.objectMapper = objectMapper;
         this.chatCoreClient = chatCoreClient;
-        this.aiOrchestratorClient = aiOrchestratorClient;
         this.aiMentionService = aiMentionService;
+        this.aiResponseOrchestrationService = aiResponseOrchestrationService;
         this.fanoutService = fanoutService;
     }
 
@@ -72,26 +69,26 @@ public class MessageRelayService {
                     payload.content()
             );
 
-            ChatCoreMessageResponse savedMessage = chatCoreClient.sendMessage(
+            ChatCoreMessageResponse savedUserMessage = chatCoreClient.sendMessage(
                     payload.conversationId(),
                     chatCoreRequest
             );
 
-            ServerEvent messageCreatedEvent = ServerEvent.of(
+            ServerEvent userMessageCreatedEvent = ServerEvent.of(
                     "MESSAGE_CREATED",
-                    savedMessage.conversationId().toString(),
+                    savedUserMessage.conversationId().toString(),
                     Map.of(
                             "commandId", command.commandId(),
-                            "message", savedMessage
+                            "message", savedUserMessage
                     )
             );
 
             fanoutService.sendToConversation(
-                    savedMessage.conversationId().toString(),
-                    messageCreatedEvent
+                    savedUserMessage.conversationId().toString(),
+                    userMessageCreatedEvent
             );
 
-            triggerAiIfMentioned(client, command, savedMessage);
+            triggerAiInBackgroundIfMentioned(client, command, savedUserMessage);
 
         } catch (IllegalArgumentException exception) {
             sendMessageFailed(client, command, "Invalid message payload");
@@ -110,57 +107,38 @@ public class MessageRelayService {
         }
     }
 
-    private void triggerAiIfMentioned(
+    private void triggerAiInBackgroundIfMentioned(
             ConnectedClient client,
             ClientCommand command,
-            ChatCoreMessageResponse savedMessage
+            ChatCoreMessageResponse savedUserMessage
     ) {
-        Optional<String> agentType = aiMentionService.detectAgentType(savedMessage.content());
+        Optional<String> agentType = aiMentionService.detectAgentType(savedUserMessage.content());
 
         if (agentType.isEmpty()) {
             return;
         }
 
-        try {
-            AiPromptRequest aiRequest = new AiPromptRequest(
-                    savedMessage.conversationId(),
-                    client.userId(),
-                    agentType.get(),
-                    savedMessage.content()
-            );
+        ServerEvent thinkingStartedEvent = ServerEvent.of(
+                "AI_THINKING_STARTED",
+                savedUserMessage.conversationId().toString(),
+                Map.of(
+                        "commandId", command.commandId(),
+                        "sourceMessageId", savedUserMessage.id().toString(),
+                        "agentType", agentType.get()
+                )
+        );
 
-            AiPromptResponse aiResponse = aiOrchestratorClient.generateResponse(aiRequest);
+        fanoutService.sendToConversation(
+                savedUserMessage.conversationId().toString(),
+                thinkingStartedEvent
+        );
 
-            ServerEvent aiResponseEvent = ServerEvent.of(
-                    "AI_RESPONSE_CREATED",
-                    savedMessage.conversationId().toString(),
-                    Map.of(
-                            "commandId", command.commandId(),
-                            "sourceMessageId", savedMessage.id().toString(),
-                            "agentType", aiResponse.agentType(),
-                            "response", aiResponse.response(),
-                            "createdAt", aiResponse.createdAt().toString()
-                    )
-            );
-
-            fanoutService.sendToConversation(
-                    savedMessage.conversationId().toString(),
-                    aiResponseEvent
-            );
-
-        } catch (RestClientResponseException exception) {
-            sendAiFailed(
-                    client,
-                    command,
-                    "ai-orchestrator rejected request with status " + exception.getStatusCode().value()
-            );
-        } catch (Exception exception) {
-            sendAiFailed(
-                    client,
-                    command,
-                    "Unexpected error while generating AI response"
-            );
-        }
+        aiResponseOrchestrationService.generateAndPersistAiResponse(
+                client,
+                command.commandId(),
+                savedUserMessage,
+                agentType.get()
+        );
     }
 
     private void sendMessageFailed(
@@ -174,24 +152,6 @@ public class MessageRelayService {
 
         ServerEvent failedEvent = ServerEvent.of(
                 "MESSAGE_SEND_FAILED",
-                command.conversationId(),
-                payload
-        );
-
-        fanoutService.sendToClient(client, failedEvent);
-    }
-
-    private void sendAiFailed(
-            ConnectedClient client,
-            ClientCommand command,
-            String reason
-    ) {
-        Map<String, Object> payload = new HashMap<>();
-        payload.put("commandId", command.commandId());
-        payload.put("reason", reason);
-
-        ServerEvent failedEvent = ServerEvent.of(
-                "AI_RESPONSE_FAILED",
                 command.conversationId(),
                 payload
         );

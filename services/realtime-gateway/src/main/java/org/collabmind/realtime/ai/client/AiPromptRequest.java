@@ -1,11 +1,13 @@
 package org.collabmind.realtime.ai.client;
 
+import java.util.List;
 import java.util.UUID;
 
 public record AiPromptRequest(
         UUID conversationId,
         UUID userId,
         String agentType,
-        String message
+        String message,
+        List<AiContextMessage> contextMessages
 ) {
 }

@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.collabmind.chatcore.common.exception.ConversationNotFoundException;
 import org.collabmind.chatcore.common.exception.UserNotConversationMemberException;
+import org.collabmind.chatcore.messaging.web.SaveAiMessageRequest;
 
 import java.util.List;
 import java.util.UUID;
@@ -24,6 +25,7 @@ public class MessageService {
     private final MessageRepository messageRepository;
     private final ConversationRepository conversationRepository;
     private final ConversationMemberRepository memberRepository;
+
 
     public MessageService(
             MessageRepository messageRepository,
@@ -87,5 +89,54 @@ public class MessageService {
                 .stream()
                 .map(MessageResponse::from)
                 .toList();
+    }
+
+    @Transactional
+    public MessageResponse saveAiMessage(
+            UUID conversationId,
+            SaveAiMessageRequest request
+    ) {
+        return messageRepository
+                .findBySenderIdAndClientMessageId(
+                        Message.AI_SYSTEM_SENDER_ID,
+                        request.clientMessageId()
+                )
+                .map(MessageResponse::from)
+                .orElseGet(() -> createNewAiMessage(conversationId, request));
+    }
+
+    private MessageResponse createNewAiMessage(
+            UUID conversationId,
+            SaveAiMessageRequest request
+    ) {
+        boolean requesterIsMember = memberRepository.existsByConversationIdAndUserId(
+                conversationId,
+                request.requesterUserId()
+        );
+
+        if (!requesterIsMember) {
+            throw new UserNotConversationMemberException(
+                    request.requesterUserId(),
+                    conversationId
+            );
+        }
+
+        Conversation conversation = conversationRepository.findByIdForUpdate(conversationId)
+                .orElseThrow(() -> new ConversationNotFoundException(conversationId));
+
+        long sequenceNumber = conversation.allocateNextSequence();
+
+        Message message = Message.aiMessage(
+                conversationId,
+                request.clientMessageId(),
+                sequenceNumber,
+                request.agentType(),
+                request.sourceMessageId(),
+                request.content()
+        );
+
+        Message savedMessage = messageRepository.save(message);
+
+        return MessageResponse.from(savedMessage);
     }
 }

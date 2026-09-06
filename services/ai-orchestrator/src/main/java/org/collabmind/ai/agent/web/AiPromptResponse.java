@@ -9,6 +9,10 @@ public record AiPromptResponse(
         UUID conversationId,
         UUID userId,
         AgentType agentType,
+        String providerName,
+        String primaryProviderName,
+        boolean fallbackUsed,
+        long latencyMs,
         String response,
         Instant createdAt
 ) {

@@ -62,6 +62,19 @@ public class RealtimeFanoutService {
                 .forEach(client -> sendToClient(client, event));
     }
 
+    public void sendToConversationExcept(
+            String conversationId,
+            String excludedSessionId,
+            ServerEvent event
+    ) {
+        subscriptionRegistry.getSubscribedSessions(conversationId)
+                .stream()
+                .filter(sessionId -> !sessionId.equals(excludedSessionId))
+                .map(connectionRegistry::findBySessionId)
+                .flatMap(java.util.Optional::stream)
+                .forEach(client -> sendToClient(client, event));
+    }
+
     public void broadcast(ServerEvent event) {
         connectionRegistry.getAllClients()
                 .forEach(client -> sendToClient(client, event));
