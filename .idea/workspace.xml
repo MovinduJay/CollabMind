@@ -86,7 +86,7 @@
       </set>
     </option>
   </component>
-  <component name="RunManager" selected="Spring Boot.ChatCoreApplication">
+  <component name="RunManager" selected="Spring Boot.AiOrchestratorApplication">
     <configuration name="RealtimeGatewayApplication" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
       <option name="MAIN_CLASS_NAME" value="org.collabmind.realtime.RealtimeGatewayApplication" />
       <module name="realtime-gateway" />
@@ -156,6 +156,7 @@
       <workItem from="1788187154292" duration="1985000" />
       <workItem from="1788189221045" duration="7866000" />
       <workItem from="1788582139109" duration="5126000" />
+      <workItem from="1788671168255" duration="1327000" />
     </task>
     <servers />
   </component>
