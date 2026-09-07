@@ -2,10 +2,8 @@ package org.collabmind.realtime.websocket.application;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.collabmind.realtime.chatcore.client.ChatCoreClient;
-import org.collabmind.realtime.chatcore.client.ChatCoreMembershipResponse;
 import org.collabmind.realtime.chatcore.client.ChatCoreMessageResponse;
 import org.collabmind.realtime.websocket.protocol.ClientCommand;
-import org.collabmind.realtime.websocket.protocol.FetchMessagesPayload;
 import org.collabmind.realtime.websocket.protocol.ServerEvent;
 import org.collabmind.realtime.websocket.session.ConnectedClient;
 import org.springframework.stereotype.Service;
@@ -36,81 +34,58 @@ public class MessageHistoryService {
         this.fanoutService = fanoutService;
     }
 
-    public void fetchMessagesAfter(
-            ConnectedClient client,
-            ClientCommand command
-    ) {
-        String conversationIdValue = command.conversationId();
-
-        if (conversationIdValue == null || conversationIdValue.isBlank()) {
-            sendHistoryFailed(client, command, "Missing conversationId");
-            return;
-        }
-
+    public void fetchMessagesAfter(ConnectedClient client, ClientCommand command) {
         try {
-            UUID conversationId = UUID.fromString(conversationIdValue);
-
-            ChatCoreMembershipResponse membership = chatCoreClient.checkMembership(
-                    conversationId,
-                    client.userId()
-            );
-
-            if (!membership.member()) {
-                sendHistoryFailed(
-                        client,
-                        command,
-                        "User is not a member of this conversation"
-                );
+            if (command.conversationId() == null || command.conversationId().isBlank()) {
+                sendHistoryFailed(client, command, null, "conversationId is required");
                 return;
             }
 
-            FetchMessagesPayload payload = objectMapper.convertValue(
-                    command.payload(),
-                    FetchMessagesPayload.class
-            );
+            FetchMessagesPayload payload = command.payload() == null
+                    ? new FetchMessagesPayload(0, DEFAULT_LIMIT)
+                    : objectMapper.treeToValue(command.payload(), FetchMessagesPayload.class);
 
-            long afterSequence = payload.afterSequence() == null
-                    ? 0L
-                    : Math.max(0L, payload.afterSequence());
+            long afterSequence = payload == null ? 0 : payload.afterSequence();
+            int requestedLimit = payload == null ? DEFAULT_LIMIT : payload.limit();
+            int safeLimit = Math.max(1, Math.min(requestedLimit, MAX_LIMIT));
 
-            int limit = payload.limit() == null
-                    ? DEFAULT_LIMIT
-                    : Math.max(1, Math.min(payload.limit(), MAX_LIMIT));
+            UUID conversationId = UUID.fromString(command.conversationId());
 
             List<ChatCoreMessageResponse> messages = chatCoreClient.findMessagesAfter(
                     conversationId,
                     afterSequence,
-                    limit
+                    safeLimit,
+                    client.jwtToken()
             );
 
-            ServerEvent historyEvent = ServerEvent.of(
-                    "MESSAGE_HISTORY",
-                    conversationId.toString(),
-                    Map.of(
-                            "commandId", command.commandId(),
-                            "conversationId", conversationId.toString(),
-                            "afterSequence", afterSequence,
-                            "limit", limit,
-                            "count", messages.size(),
-                            "messages", messages
+            Map<String, Object> responsePayload = new HashMap<>();
+            responsePayload.put("commandId", command.commandId());
+            responsePayload.put("afterSequence", afterSequence);
+            responsePayload.put("limit", safeLimit);
+            responsePayload.put("messages", messages);
+
+            fanoutService.sendToClient(
+                    client,
+                    ServerEvent.of(
+                            "MESSAGE_HISTORY",
+                            command.conversationId(),
+                            responsePayload
                     )
             );
 
-            fanoutService.sendToClient(client, historyEvent);
-
-        } catch (IllegalArgumentException exception) {
-            sendHistoryFailed(client, command, "Invalid conversationId or payload");
         } catch (RestClientResponseException exception) {
             sendHistoryFailed(
                     client,
                     command,
+                    command.conversationId(),
                     "chat-core rejected history request with status " + exception.getStatusCode().value()
             );
         } catch (Exception exception) {
             sendHistoryFailed(
                     client,
                     command,
-                    "Unexpected error while fetching message history"
+                    command.conversationId(),
+                    "Unable to fetch message history"
             );
         }
     }
@@ -118,18 +93,26 @@ public class MessageHistoryService {
     private void sendHistoryFailed(
             ConnectedClient client,
             ClientCommand command,
+            String conversationId,
             String reason
     ) {
         Map<String, Object> payload = new HashMap<>();
         payload.put("commandId", command.commandId());
         payload.put("reason", reason);
 
-        ServerEvent failedEvent = ServerEvent.of(
-                "MESSAGE_HISTORY_FAILED",
-                command.conversationId(),
-                payload
+        fanoutService.sendToClient(
+                client,
+                ServerEvent.of(
+                        "MESSAGE_HISTORY_FAILED",
+                        conversationId,
+                        payload
+                )
         );
+    }
 
-        fanoutService.sendToClient(client, failedEvent);
+    private record FetchMessagesPayload(
+            long afterSequence,
+            int limit
+    ) {
     }
 }

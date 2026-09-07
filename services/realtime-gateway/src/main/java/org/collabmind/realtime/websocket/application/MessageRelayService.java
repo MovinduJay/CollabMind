@@ -5,7 +5,6 @@ import org.collabmind.realtime.chatcore.client.ChatCoreClient;
 import org.collabmind.realtime.chatcore.client.ChatCoreMessageResponse;
 import org.collabmind.realtime.chatcore.client.ChatCoreSendMessageRequest;
 import org.collabmind.realtime.websocket.protocol.ClientCommand;
-import org.collabmind.realtime.websocket.protocol.SendMessagePayload;
 import org.collabmind.realtime.websocket.protocol.ServerEvent;
 import org.collabmind.realtime.websocket.session.ConnectedClient;
 import org.springframework.stereotype.Service;
@@ -14,148 +13,156 @@ import org.springframework.web.client.RestClientResponseException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 public class MessageRelayService {
 
     private final ObjectMapper objectMapper;
     private final ChatCoreClient chatCoreClient;
+    private final RealtimeFanoutService fanoutService;
     private final AiMentionService aiMentionService;
     private final AiResponseOrchestrationService aiResponseOrchestrationService;
-    private final RealtimeFanoutService fanoutService;
 
     public MessageRelayService(
             ObjectMapper objectMapper,
             ChatCoreClient chatCoreClient,
+            RealtimeFanoutService fanoutService,
             AiMentionService aiMentionService,
-            AiResponseOrchestrationService aiResponseOrchestrationService,
-            RealtimeFanoutService fanoutService
+            AiResponseOrchestrationService aiResponseOrchestrationService
     ) {
         this.objectMapper = objectMapper;
         this.chatCoreClient = chatCoreClient;
+        this.fanoutService = fanoutService;
         this.aiMentionService = aiMentionService;
         this.aiResponseOrchestrationService = aiResponseOrchestrationService;
-        this.fanoutService = fanoutService;
     }
 
-    public void relaySendMessage(
-            ConnectedClient client,
-            ClientCommand command
-    ) {
+    public void relaySendMessage(ConnectedClient client, ClientCommand command) {
+        handleSendMessage(client, command);
+    }
+
+    public void relayMessage(ConnectedClient client, ClientCommand command) {
+        handleSendMessage(client, command);
+    }
+
+    public void sendMessage(ConnectedClient client, ClientCommand command) {
+        handleSendMessage(client, command);
+    }
+
+    public void handleSendMessage(ConnectedClient client, ClientCommand command) {
         try {
-            SendMessagePayload payload = objectMapper.convertValue(
+            if (command.conversationId() == null || command.conversationId().isBlank()) {
+                sendMessageFailed(client, command, null, "conversationId is required");
+                return;
+            }
+
+            SendMessagePayload payload = objectMapper.treeToValue(
                     command.payload(),
                     SendMessagePayload.class
             );
 
-            if (payload.conversationId() == null) {
-                sendMessageFailed(client, command, "Missing conversationId");
-                return;
-            }
-
-            if (payload.clientMessageId() == null) {
-                sendMessageFailed(client, command, "Missing clientMessageId");
+            if (payload == null || payload.clientMessageId() == null) {
+                sendMessageFailed(client, command, command.conversationId(), "clientMessageId is required");
                 return;
             }
 
             if (payload.content() == null || payload.content().isBlank()) {
-                sendMessageFailed(client, command, "Message content cannot be blank");
+                sendMessageFailed(client, command, command.conversationId(), "content is required");
                 return;
             }
 
+            UUID conversationId = UUID.fromString(command.conversationId());
+
             ChatCoreSendMessageRequest chatCoreRequest = new ChatCoreSendMessageRequest(
-                    client.userId(),
                     payload.clientMessageId(),
                     payload.content()
             );
 
-            ChatCoreMessageResponse savedUserMessage = chatCoreClient.sendMessage(
-                    payload.conversationId(),
+            ChatCoreMessageResponse savedMessage = chatCoreClient.sendMessage(
+                    conversationId,
+                    client.jwtToken(),
                     chatCoreRequest
             );
 
-            ServerEvent userMessageCreatedEvent = ServerEvent.of(
-                    "MESSAGE_CREATED",
-                    savedUserMessage.conversationId().toString(),
-                    Map.of(
-                            "commandId", command.commandId(),
-                            "message", savedUserMessage
+            Map<String, Object> messagePayload = new HashMap<>();
+            messagePayload.put("commandId", command.commandId());
+            messagePayload.put("message", savedMessage);
+
+            fanoutService.sendToConversation(
+                    savedMessage.conversationId().toString(),
+                    ServerEvent.of(
+                            "MESSAGE_CREATED",
+                            savedMessage.conversationId().toString(),
+                            messagePayload
                     )
             );
 
-            fanoutService.sendToConversation(
-                    savedUserMessage.conversationId().toString(),
-                    userMessageCreatedEvent
-            );
+            Optional<String> agentType = aiMentionService.detectAgentType(savedMessage.content());
 
-            triggerAiInBackgroundIfMentioned(client, command, savedUserMessage);
+            agentType.ifPresent(detectedAgentType -> {
+                Map<String, Object> thinkingPayload = new HashMap<>();
+                thinkingPayload.put("commandId", command.commandId());
+                thinkingPayload.put("sourceMessageId", savedMessage.id().toString());
+                thinkingPayload.put("agentType", detectedAgentType);
 
-        } catch (IllegalArgumentException exception) {
-            sendMessageFailed(client, command, "Invalid message payload");
+                fanoutService.sendToConversation(
+                        savedMessage.conversationId().toString(),
+                        ServerEvent.of(
+                                "AI_THINKING_STARTED",
+                                savedMessage.conversationId().toString(),
+                                thinkingPayload
+                        )
+                );
+
+                aiResponseOrchestrationService.generateAndPersistAiResponse(
+                        client,
+                        command.commandId(),
+                        savedMessage,
+                        detectedAgentType
+                );
+            });
+
         } catch (RestClientResponseException exception) {
             sendMessageFailed(
                     client,
                     command,
+                    command.conversationId(),
                     "chat-core rejected message with status " + exception.getStatusCode().value()
             );
         } catch (Exception exception) {
             sendMessageFailed(
                     client,
                     command,
-                    "Unexpected error while sending message"
+                    command.conversationId(),
+                    "Unable to send message"
             );
         }
-    }
-
-    private void triggerAiInBackgroundIfMentioned(
-            ConnectedClient client,
-            ClientCommand command,
-            ChatCoreMessageResponse savedUserMessage
-    ) {
-        Optional<String> agentType = aiMentionService.detectAgentType(savedUserMessage.content());
-
-        if (agentType.isEmpty()) {
-            return;
-        }
-
-        ServerEvent thinkingStartedEvent = ServerEvent.of(
-                "AI_THINKING_STARTED",
-                savedUserMessage.conversationId().toString(),
-                Map.of(
-                        "commandId", command.commandId(),
-                        "sourceMessageId", savedUserMessage.id().toString(),
-                        "agentType", agentType.get()
-                )
-        );
-
-        fanoutService.sendToConversation(
-                savedUserMessage.conversationId().toString(),
-                thinkingStartedEvent
-        );
-
-        aiResponseOrchestrationService.generateAndPersistAiResponse(
-                client,
-                command.commandId(),
-                savedUserMessage,
-                agentType.get()
-        );
     }
 
     private void sendMessageFailed(
             ConnectedClient client,
             ClientCommand command,
+            String conversationId,
             String reason
     ) {
         Map<String, Object> payload = new HashMap<>();
         payload.put("commandId", command.commandId());
         payload.put("reason", reason);
 
-        ServerEvent failedEvent = ServerEvent.of(
-                "MESSAGE_SEND_FAILED",
-                command.conversationId(),
-                payload
+        fanoutService.sendToClient(
+                client,
+                ServerEvent.of(
+                        "MESSAGE_SEND_FAILED",
+                        conversationId,
+                        payload
+                )
         );
+    }
 
-        fanoutService.sendToClient(client, failedEvent);
+    private record SendMessagePayload(
+            UUID clientMessageId,
+            String content
+    ) {
     }
 }

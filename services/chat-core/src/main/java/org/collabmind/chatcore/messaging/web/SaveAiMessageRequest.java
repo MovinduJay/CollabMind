@@ -16,7 +16,7 @@ public record SaveAiMessageRequest(
         String agentType,
 
         @NotBlank
-        @Size(max = 4000)
+        @Size(max = 12000)
         String content
 ) {
 }

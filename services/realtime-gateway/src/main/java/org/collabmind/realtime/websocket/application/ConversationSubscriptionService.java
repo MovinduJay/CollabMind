@@ -30,129 +30,109 @@ public class ConversationSubscriptionService {
         this.fanoutService = fanoutService;
     }
 
-    public void subscribe(
-            ConnectedClient client,
-            ClientCommand command
-    ) {
-        String conversationIdValue = command.conversationId();
-
-        if (conversationIdValue == null || conversationIdValue.isBlank()) {
-            sendSubscriptionRejected(client, command, "Missing conversationId");
-            return;
-        }
-
+    public void subscribe(ConnectedClient client, ClientCommand command) {
         try {
-            UUID conversationId = UUID.fromString(conversationIdValue);
+            String conversationId = command.conversationId();
 
-            ChatCoreMembershipResponse membership = chatCoreClient.checkMembership(
-                    conversationId,
-                    client.userId()
-            );
-
-            if (!membership.member()) {
-                sendSubscriptionRejected(
-                        client,
-                        command,
-                        "User is not a member of this conversation"
-                );
+            if (conversationId == null || conversationId.isBlank()) {
+                sendRejected(client, command, null, "conversationId is required");
                 return;
             }
 
-            subscriptionRegistry.subscribe(conversationId.toString(), client.sessionId());
+            UUID parsedConversationId = UUID.fromString(conversationId);
 
-            ServerEvent subscribedEvent = ServerEvent.of(
-                    "SUBSCRIBED_CONVERSATION",
-                    conversationId.toString(),
-                    Map.of(
-                            "commandId", command.commandId(),
-                            "conversationId", conversationId.toString(),
-                            "subscriberCount", subscriptionRegistry.subscriberCount(conversationId.toString())
-                    )
+            ChatCoreMembershipResponse membership = chatCoreClient.checkMembership(
+                    parsedConversationId,
+                    client.userId(),
+                    client.jwtToken()
             );
 
-            fanoutService.sendToClient(client, subscribedEvent);
+            if (membership == null || !membership.member()) {
+                sendRejected(client, command, conversationId, "User is not a member of this conversation");
+                return;
+            }
 
-            ServerEvent joinedEvent = ServerEvent.of(
-                    "USER_JOINED_CONVERSATION",
-                    conversationId.toString(),
-                    Map.of(
-                            "conversationId", conversationId.toString(),
-                            "userId", client.userId().toString(),
-                            "sessionId", client.sessionId(),
-                            "subscriberCount", subscriptionRegistry.subscriberCount(conversationId.toString())
-                    )
+            subscriptionRegistry.subscribe(client.sessionId(), conversationId);
+
+            Map<String, Object> payload = new HashMap<>();
+            payload.put("commandId", command.commandId());
+            payload.put("conversationId", conversationId);
+            payload.put("subscriberCount", subscriptionRegistry.subscriberCount(conversationId));
+
+            fanoutService.sendToClient(
+                    client,
+                    ServerEvent.of("SUBSCRIBED_CONVERSATION", conversationId, payload)
             );
+
+            Map<String, Object> joinedPayload = new HashMap<>();
+            joinedPayload.put("userId", client.userId().toString());
+            joinedPayload.put("subscriberCount", subscriptionRegistry.subscriberCount(conversationId));
 
             fanoutService.sendToConversationExcept(
-                    conversationId.toString(),
+                    conversationId,
                     client.sessionId(),
-                    joinedEvent
+                    ServerEvent.of("USER_JOINED_CONVERSATION", conversationId, joinedPayload)
             );
 
-        } catch (IllegalArgumentException exception) {
-            sendSubscriptionRejected(client, command, "Invalid conversationId");
         } catch (RestClientResponseException exception) {
-            sendSubscriptionRejected(
+            sendRejected(
                     client,
                     command,
+                    command.conversationId(),
                     "chat-core rejected membership check with status " + exception.getStatusCode().value()
+            );
+        } catch (Exception exception) {
+            sendRejected(
+                    client,
+                    command,
+                    command.conversationId(),
+                    "Unable to subscribe to conversation"
             );
         }
     }
 
-    public void unsubscribe(
-            ConnectedClient client,
-            ClientCommand command
-    ) {
-        String conversationIdValue = command.conversationId();
+    public void unsubscribe(ConnectedClient client, ClientCommand command) {
+        String conversationId = command.conversationId();
 
-        if (conversationIdValue == null || conversationIdValue.isBlank()) {
-            sendSubscriptionRejected(client, command, "Missing conversationId");
+        if (conversationId == null || conversationId.isBlank()) {
             return;
         }
 
-        subscriptionRegistry.unsubscribe(conversationIdValue, client.sessionId());
+        subscriptionRegistry.unsubscribe(client.sessionId(), conversationId);
 
-        ServerEvent unsubscribedEvent = ServerEvent.of(
-                "UNSUBSCRIBED_CONVERSATION",
-                conversationIdValue,
-                Map.of(
-                        "commandId", command.commandId(),
-                        "conversationId", conversationIdValue
-                )
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("commandId", command.commandId());
+        payload.put("conversationId", conversationId);
+
+        fanoutService.sendToClient(
+                client,
+                ServerEvent.of("UNSUBSCRIBED_CONVERSATION", conversationId, payload)
         );
 
-        fanoutService.sendToClient(client, unsubscribedEvent);
+        Map<String, Object> leftPayload = new HashMap<>();
+        leftPayload.put("userId", client.userId().toString());
+        leftPayload.put("subscriberCount", subscriptionRegistry.subscriberCount(conversationId));
 
-        ServerEvent leftEvent = ServerEvent.of(
-                "USER_LEFT_CONVERSATION",
-                conversationIdValue,
-                Map.of(
-                        "conversationId", conversationIdValue,
-                        "userId", client.userId().toString(),
-                        "sessionId", client.sessionId(),
-                        "reason", "unsubscribed"
-                )
+        fanoutService.sendToConversationExcept(
+                conversationId,
+                client.sessionId(),
+                ServerEvent.of("USER_LEFT_CONVERSATION", conversationId, leftPayload)
         );
-
-        fanoutService.sendToConversation(conversationIdValue, leftEvent);
     }
 
-    private void sendSubscriptionRejected(
+    private void sendRejected(
             ConnectedClient client,
             ClientCommand command,
+            String conversationId,
             String reason
     ) {
         Map<String, Object> payload = new HashMap<>();
         payload.put("commandId", command.commandId());
         payload.put("reason", reason);
 
-        ServerEvent rejectedEvent = ServerEvent.of(
-                "SUBSCRIPTION_REJECTED",
-                command.conversationId(),
-                payload
+        fanoutService.sendToClient(
+                client,
+                ServerEvent.of("SUBSCRIPTION_REJECTED", conversationId, payload)
         );
-
-        fanoutService.sendToClient(client, rejectedEvent);
     }
 }

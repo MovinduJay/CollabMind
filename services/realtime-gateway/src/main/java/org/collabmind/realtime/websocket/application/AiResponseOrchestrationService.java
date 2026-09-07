@@ -46,8 +46,17 @@ public class AiResponseOrchestrationService {
             ChatCoreMessageResponse savedUserMessage,
             String agentType
     ) {
+        String stage = "starting_ai_flow";
+
         try {
-            List<AiContextMessage> contextMessages = fetchRecentContext(savedUserMessage);
+            stage = "fetching_recent_context_from_chat_core";
+
+            List<AiContextMessage> contextMessages = fetchRecentContext(
+                    client,
+                    savedUserMessage
+            );
+
+            stage = "calling_ai_orchestrator";
 
             AiPromptRequest aiRequest = new AiPromptRequest(
                     savedUserMessage.conversationId(),
@@ -59,13 +68,14 @@ public class AiResponseOrchestrationService {
 
             AiPromptResponse aiResponse = aiOrchestratorClient.generateResponse(aiRequest);
 
+            stage = "saving_ai_message_to_chat_core";
+
             UUID aiClientMessageId = createDeterministicAiClientMessageId(
                     savedUserMessage.id(),
                     agentType
             );
 
             ChatCoreSaveAiMessageRequest saveAiRequest = new ChatCoreSaveAiMessageRequest(
-                    client.userId(),
                     aiClientMessageId,
                     savedUserMessage.id(),
                     aiResponse.agentType(),
@@ -74,27 +84,27 @@ public class AiResponseOrchestrationService {
 
             ChatCoreMessageResponse savedAiMessage = chatCoreClient.saveAiMessage(
                     savedUserMessage.conversationId(),
+                    client.jwtToken(),
                     saveAiRequest
             );
 
-            ServerEvent aiMessageCreatedEvent = ServerEvent.of(
-                    "AI_MESSAGE_CREATED",
-                    savedAiMessage.conversationId().toString(),
-                    Map.of(
-                            "commandId", commandId,
-                            "sourceMessageId", savedUserMessage.id().toString(),
-                            "contextMessageCount", contextMessages.size(),
-                            "providerName", aiResponse.providerName(),
-                            "primaryProviderName", aiResponse.primaryProviderName(),
-                            "fallbackUsed", aiResponse.fallbackUsed(),
-                            "latencyMs", aiResponse.latencyMs(),
-                            "message", savedAiMessage
-                    )
-            );
+            Map<String, Object> payload = new HashMap<>();
+            payload.put("commandId", commandId);
+            payload.put("sourceMessageId", savedUserMessage.id().toString());
+            payload.put("contextMessageCount", contextMessages.size());
+            payload.put("providerName", aiResponse.providerName());
+            payload.put("primaryProviderName", aiResponse.primaryProviderName());
+            payload.put("fallbackUsed", aiResponse.fallbackUsed());
+            payload.put("latencyMs", aiResponse.latencyMs());
+            payload.put("message", savedAiMessage);
 
             fanoutService.sendToConversation(
                     savedAiMessage.conversationId().toString(),
-                    aiMessageCreatedEvent
+                    ServerEvent.of(
+                            "AI_MESSAGE_CREATED",
+                            savedAiMessage.conversationId().toString(),
+                            payload
+                    )
             );
 
         } catch (RestClientResponseException exception) {
@@ -102,21 +112,27 @@ public class AiResponseOrchestrationService {
                     client,
                     commandId,
                     savedUserMessage.conversationId().toString(),
-                    "AI flow failed with downstream status " + exception.getStatusCode().value()
+                    "AI flow failed at stage [" + stage + "] with downstream status "
+                            + exception.getStatusCode().value()
+                            + ". Body: "
+                            + exception.getResponseBodyAsString()
             );
         } catch (Exception exception) {
             sendAiFailed(
                     client,
                     commandId,
                     savedUserMessage.conversationId().toString(),
-                    "Unexpected error while generating or saving AI response"
+                    "Unexpected error at stage [" + stage + "]: " + exception.getMessage()
             );
         }
 
         return CompletableFuture.completedFuture(null);
     }
 
-    private List<AiContextMessage> fetchRecentContext(ChatCoreMessageResponse savedUserMessage) {
+    private List<AiContextMessage> fetchRecentContext(
+            ConnectedClient client,
+            ChatCoreMessageResponse savedUserMessage
+    ) {
         long afterSequence = Math.max(
                 0,
                 savedUserMessage.sequenceNumber() - CONTEXT_MESSAGE_LIMIT
@@ -125,7 +141,8 @@ public class AiResponseOrchestrationService {
         return chatCoreClient.findMessagesAfter(
                         savedUserMessage.conversationId(),
                         afterSequence,
-                        CONTEXT_MESSAGE_LIMIT
+                        CONTEXT_MESSAGE_LIMIT,
+                        client.jwtToken()
                 )
                 .stream()
                 .map(message -> new AiContextMessage(
@@ -158,12 +175,13 @@ public class AiResponseOrchestrationService {
         payload.put("commandId", commandId);
         payload.put("reason", reason);
 
-        ServerEvent failedEvent = ServerEvent.of(
-                "AI_RESPONSE_FAILED",
-                conversationId,
-                payload
+        fanoutService.sendToClient(
+                client,
+                ServerEvent.of(
+                        "AI_RESPONSE_FAILED",
+                        conversationId,
+                        payload
+                )
         );
-
-        fanoutService.sendToClient(client, failedEvent);
     }
 }

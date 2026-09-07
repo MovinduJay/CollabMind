@@ -49,7 +49,7 @@ public class Message {
     @Column(name = "message_type", nullable = false)
     private MessageType messageType;
 
-    @Column(name = "content", nullable = false, length = 4000)
+    @Column(name = "content", nullable = false, length = 12000)
     private String content;
 
     @Column(name = "agent_type", length = 40)
@@ -164,3 +164,5 @@ public class Message {
         return createdAt;
     }
 }
+
+
