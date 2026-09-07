@@ -1,6 +1,7 @@
 package org.collabmind.chatcore.membership.domain;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -13,14 +14,13 @@ import java.util.UUID;
                         name = "uk_conversation_member",
                         columnNames = {"conversation_id", "user_id"}
                 )
+        },
+        indexes = {
+                @Index(name = "idx_conversation_members_conversation_id", columnList = "conversation_id"),
+                @Index(name = "idx_conversation_members_user_id", columnList = "user_id")
         }
 )
 public class ConversationMember {
-
-    public enum Role {
-        OWNER,
-        MEMBER
-    }
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -33,20 +33,24 @@ public class ConversationMember {
     private UUID userId;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 30)
+    @Column(nullable = false, length = 20)
     private Role role;
 
-    @Column(nullable = false)
+    @CreationTimestamp
+    @Column(name = "joined_at", nullable = false, updatable = false)
     private Instant joinedAt;
 
     protected ConversationMember() {
     }
 
-    public ConversationMember(UUID conversationId, UUID userId, Role role) {
+    public ConversationMember(
+            UUID conversationId,
+            UUID userId,
+            Role role
+    ) {
         this.conversationId = conversationId;
         this.userId = userId;
         this.role = role;
-        this.joinedAt = Instant.now();
     }
 
     public UUID getId() {
@@ -67,5 +71,10 @@ public class ConversationMember {
 
     public Instant getJoinedAt() {
         return joinedAt;
+    }
+
+    public enum Role {
+        OWNER,
+        MEMBER
     }
 }

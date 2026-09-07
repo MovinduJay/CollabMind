@@ -5,11 +5,13 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="64296f3a-d178-4690-a0c3-b0da2f7d7a57" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/services/realtime-gateway/src/main/java/org/collabmind/realtime/websocket/application/ConversationSubscriptionService.java" beforeDir="false" afterPath="$PROJECT_DIR$/services/realtime-gateway/src/main/java/org/collabmind/realtime/websocket/application/ConversationSubscriptionService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/services/realtime-gateway/src/main/java/org/collabmind/realtime/websocket/application/RealtimeFanoutService.java" beforeDir="false" afterPath="$PROJECT_DIR$/services/realtime-gateway/src/main/java/org/collabmind/realtime/websocket/application/RealtimeFanoutService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/services/realtime-gateway/src/main/java/org/collabmind/realtime/websocket/session/ConversationSubscriptionRegistry.java" beforeDir="false" afterPath="$PROJECT_DIR$/services/realtime-gateway/src/main/java/org/collabmind/realtime/websocket/session/ConversationSubscriptionRegistry.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/services/realtime-gateway/target/classes/org/collabmind/realtime/websocket/application/ConversationSubscriptionService.class" beforeDir="false" afterPath="$PROJECT_DIR$/services/realtime-gateway/target/classes/org/collabmind/realtime/websocket/application/ConversationSubscriptionService.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/services/realtime-gateway/target/classes/org/collabmind/realtime/websocket/session/ConversationSubscriptionRegistry.class" beforeDir="false" afterPath="$PROJECT_DIR$/services/realtime-gateway/target/classes/org/collabmind/realtime/websocket/session/ConversationSubscriptionRegistry.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/services/chat-core/src/main/java/org/collabmind/chatcore/conversation/application/ConversationService.java" beforeDir="false" afterPath="$PROJECT_DIR$/services/chat-core/src/main/java/org/collabmind/chatcore/conversation/application/ConversationService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/services/chat-core/src/main/java/org/collabmind/chatcore/conversation/web/ConversationController.java" beforeDir="false" afterPath="$PROJECT_DIR$/services/chat-core/src/main/java/org/collabmind/chatcore/conversation/web/ConversationController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/services/chat-core/src/main/java/org/collabmind/chatcore/membership/domain/ConversationMember.java" beforeDir="false" afterPath="$PROJECT_DIR$/services/chat-core/src/main/java/org/collabmind/chatcore/membership/domain/ConversationMember.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/services/chat-core/src/main/java/org/collabmind/chatcore/membership/infrastructure/ConversationMemberRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/services/chat-core/src/main/java/org/collabmind/chatcore/membership/infrastructure/ConversationMemberRepository.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/services/chat-core/target/classes/org/collabmind/chatcore/conversation/application/ConversationService.class" beforeDir="false" afterPath="$PROJECT_DIR$/services/chat-core/target/classes/org/collabmind/chatcore/conversation/application/ConversationService.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/services/chat-core/target/classes/org/collabmind/chatcore/conversation/web/ConversationController.class" beforeDir="false" afterPath="$PROJECT_DIR$/services/chat-core/target/classes/org/collabmind/chatcore/conversation/web/ConversationController.class" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -88,7 +90,7 @@
       </set>
     </option>
   </component>
-  <component name="RunManager" selected="Spring Boot.RealtimeGatewayApplication">
+  <component name="RunManager" selected="Spring Boot.ChatCoreApplication">
     <configuration name="RealtimeGatewayApplication" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
       <option name="MAIN_CLASS_NAME" value="org.collabmind.realtime.RealtimeGatewayApplication" />
       <module name="realtime-gateway" />
@@ -179,7 +181,7 @@
       <workItem from="1788582139109" duration="5126000" />
       <workItem from="1788671168255" duration="1635000" />
       <workItem from="1788722954521" duration="3450000" />
-      <workItem from="1788726620887" duration="8437000" />
+      <workItem from="1788726620887" duration="9936000" />
     </task>
     <servers />
   </component>

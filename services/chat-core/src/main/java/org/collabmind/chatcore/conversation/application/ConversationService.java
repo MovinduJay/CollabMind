@@ -3,6 +3,7 @@ package org.collabmind.chatcore.conversation.application;
 import org.collabmind.chatcore.common.exception.ConversationNotFoundException;
 import org.collabmind.chatcore.conversation.domain.Conversation;
 import org.collabmind.chatcore.conversation.infrastructure.ConversationRepository;
+import org.collabmind.chatcore.conversation.web.ConversationMemberResponse;
 import org.collabmind.chatcore.conversation.web.ConversationMembershipResponse;
 import org.collabmind.chatcore.conversation.web.ConversationResponse;
 import org.collabmind.chatcore.membership.domain.ConversationMember;
@@ -10,6 +11,8 @@ import org.collabmind.chatcore.membership.infrastructure.ConversationMemberRepos
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 @Service
@@ -49,6 +52,21 @@ public class ConversationService {
         return ConversationResponse.from(savedConversation, 1);
     }
 
+    @Transactional(readOnly = true)
+    public List<ConversationResponse> listMyConversations(UUID authenticatedUserId) {
+        return memberRepository.findByUserId(authenticatedUserId)
+                .stream()
+                .map(ConversationMember::getConversationId)
+                .distinct()
+                .map(conversationId -> conversationRepository.findById(conversationId).orElse(null))
+                .filter(Objects::nonNull)
+                .map(conversation -> ConversationResponse.from(
+                        conversation,
+                        memberRepository.countByConversationId(conversation.getId())
+                ))
+                .toList();
+    }
+
     @Transactional
     public ConversationResponse joinConversation(
             UUID conversationId,
@@ -78,6 +96,25 @@ public class ConversationService {
     }
 
     @Transactional(readOnly = true)
+    public List<ConversationMemberResponse> listMembers(
+            UUID conversationId,
+            UUID authenticatedUserId
+    ) {
+        Conversation conversation = conversationRepository.findById(conversationId)
+                .orElseThrow(() -> new ConversationNotFoundException(conversationId));
+
+        requireConversationMember(
+                conversation.getId(),
+                authenticatedUserId
+        );
+
+        return memberRepository.findByConversationId(conversation.getId())
+                .stream()
+                .map(ConversationMemberResponse::from)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
     public ConversationMembershipResponse checkMembership(
             UUID conversationId,
             UUID userId
@@ -95,5 +132,19 @@ public class ConversationService {
                 userId,
                 member
         );
+    }
+
+    private void requireConversationMember(
+            UUID conversationId,
+            UUID authenticatedUserId
+    ) {
+        boolean member = memberRepository.existsByConversationIdAndUserId(
+                conversationId,
+                authenticatedUserId
+        );
+
+        if (!member) {
+            throw new IllegalArgumentException("User is not a member of this conversation");
+        }
     }
 }

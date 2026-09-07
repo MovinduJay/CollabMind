@@ -5,6 +5,7 @@ import org.collabmind.chatcore.conversation.application.ConversationService;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -28,12 +29,30 @@ public class ConversationController {
         );
     }
 
+    @GetMapping
+    public List<ConversationResponse> listMyConversations(Authentication authentication) {
+        return conversationService.listMyConversations(
+                authenticatedUserId(authentication)
+        );
+    }
+
     @PostMapping("/{conversationId}/members")
     public ConversationResponse joinConversation(
             @PathVariable UUID conversationId,
             Authentication authentication
     ) {
         return conversationService.joinConversation(
+                conversationId,
+                authenticatedUserId(authentication)
+        );
+    }
+
+    @GetMapping("/{conversationId}/members")
+    public List<ConversationMemberResponse> listMembers(
+            @PathVariable UUID conversationId,
+            Authentication authentication
+    ) {
+        return conversationService.listMembers(
                 conversationId,
                 authenticatedUserId(authentication)
         );
