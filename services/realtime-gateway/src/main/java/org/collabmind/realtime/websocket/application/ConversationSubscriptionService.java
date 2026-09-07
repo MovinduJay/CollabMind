@@ -52,7 +52,7 @@ public class ConversationSubscriptionService {
                 return;
             }
 
-            subscriptionRegistry.subscribe(client.sessionId(), conversationId);
+            subscriptionRegistry.subscribe(conversationId, client.sessionId());
 
             Map<String, Object> payload = new HashMap<>();
             payload.put("commandId", command.commandId());
@@ -98,7 +98,7 @@ public class ConversationSubscriptionService {
             return;
         }
 
-        subscriptionRegistry.unsubscribe(client.sessionId(), conversationId);
+        subscriptionRegistry.unsubscribe(conversationId, client.sessionId());
 
         Map<String, Object> payload = new HashMap<>();
         payload.put("commandId", command.commandId());
@@ -136,3 +136,4 @@ public class ConversationSubscriptionService {
         );
     }
 }
+

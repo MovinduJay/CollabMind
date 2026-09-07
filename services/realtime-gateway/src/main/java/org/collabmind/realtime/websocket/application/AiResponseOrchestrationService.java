@@ -106,18 +106,14 @@ public class AiResponseOrchestrationService {
                     savedAiMessage.conversationId().toString(),
                     payload
             );
-
-// Send directly to the user who triggered the AI.
-// This confirms the AI flow works even if room subscription fan-out has a bug.
             fanoutService.sendToClient(
                     client,
                     aiMessageCreatedEvent
             );
 
-// Also try room fan-out for other subscribed users.
-// If subscription registry is fixed later, other users will receive it too.
-            fanoutService.sendToConversation(
+            fanoutService.sendToConversationExcept(
                     savedAiMessage.conversationId().toString(),
+                    client.sessionId(),
                     aiMessageCreatedEvent
             );
 

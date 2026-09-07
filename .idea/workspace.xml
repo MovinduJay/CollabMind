@@ -6,12 +6,10 @@
   <component name="ChangeListManager">
     <list default="true" id="64296f3a-d178-4690-a0c3-b0da2f7d7a57" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/services/ai-orchestrator/src/main/resources/application.properties" beforeDir="false" afterPath="$PROJECT_DIR$/services/ai-orchestrator/src/main/resources/application.properties" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/services/chat-core/src/main/resources/application.properties" beforeDir="false" afterPath="$PROJECT_DIR$/services/chat-core/src/main/resources/application.properties" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/services/chat-core/target/classes/application.properties" beforeDir="false" afterPath="$PROJECT_DIR$/services/chat-core/target/classes/application.properties" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/services/identity-service/src/main/resources/application.properties" beforeDir="false" afterPath="$PROJECT_DIR$/services/identity-service/src/main/resources/application.properties" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/services/realtime-gateway/src/main/java/org/collabmind/realtime/websocket/application/AiResponseOrchestrationService.java" beforeDir="false" afterPath="$PROJECT_DIR$/services/realtime-gateway/src/main/java/org/collabmind/realtime/websocket/application/AiResponseOrchestrationService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/services/realtime-gateway/src/main/java/org/collabmind/realtime/websocket/application/ConversationSubscriptionService.java" beforeDir="false" afterPath="$PROJECT_DIR$/services/realtime-gateway/src/main/java/org/collabmind/realtime/websocket/application/ConversationSubscriptionService.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/services/realtime-gateway/target/classes/org/collabmind/realtime/websocket/application/AiResponseOrchestrationService.class" beforeDir="false" afterPath="$PROJECT_DIR$/services/realtime-gateway/target/classes/org/collabmind/realtime/websocket/application/AiResponseOrchestrationService.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/services/realtime-gateway/target/classes/org/collabmind/realtime/websocket/application/ConversationSubscriptionService.class" beforeDir="false" afterPath="$PROJECT_DIR$/services/realtime-gateway/target/classes/org/collabmind/realtime/websocket/application/ConversationSubscriptionService.class" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -90,7 +88,7 @@
       </set>
     </option>
   </component>
-  <component name="RunManager" selected="Spring Boot.AiOrchestratorApplication">
+  <component name="RunManager" selected="Spring Boot.RealtimeGatewayApplication">
     <configuration name="RealtimeGatewayApplication" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
       <option name="MAIN_CLASS_NAME" value="org.collabmind.realtime.RealtimeGatewayApplication" />
       <module name="realtime-gateway" />
@@ -181,7 +179,7 @@
       <workItem from="1788582139109" duration="5126000" />
       <workItem from="1788671168255" duration="1635000" />
       <workItem from="1788722954521" duration="3450000" />
-      <workItem from="1788726620887" duration="4807000" />
+      <workItem from="1788726620887" duration="6666000" />
     </task>
     <servers />
   </component>
