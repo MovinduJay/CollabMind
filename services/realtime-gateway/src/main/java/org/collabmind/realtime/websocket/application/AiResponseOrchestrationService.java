@@ -34,15 +34,18 @@ public class AiResponseOrchestrationService {
     private final AiOrchestratorClient aiOrchestratorClient;
     private final ChatCoreClient chatCoreClient;
     private final RealtimeFanoutService fanoutService;
+    private final AiRequestGuard aiRequestGuard;
 
     public AiResponseOrchestrationService(
             AiOrchestratorClient aiOrchestratorClient,
             ChatCoreClient chatCoreClient,
-            RealtimeFanoutService fanoutService
+            RealtimeFanoutService fanoutService,
+            AiRequestGuard aiRequestGuard
     ) {
         this.aiOrchestratorClient = aiOrchestratorClient;
         this.chatCoreClient = chatCoreClient;
         this.fanoutService = fanoutService;
+        this.aiRequestGuard = aiRequestGuard;
     }
 
     @Async("aiTaskExecutor")
@@ -54,8 +57,29 @@ public class AiResponseOrchestrationService {
     ) {
         Instant startedAt = Instant.now();
         String stage = "STARTING_AI_FLOW";
+        AiRequestGuard.Decision guardDecision = null;
 
         try {
+            guardDecision = aiRequestGuard.tryBegin(
+                    client.userId(),
+                    savedUserMessage.conversationId(),
+                    savedUserMessage.id(),
+                    agentType
+            );
+
+            if (!guardDecision.accepted()) {
+                sendAiGuardRejected(
+                        client,
+                        commandId,
+                        savedUserMessage.conversationId().toString(),
+                        savedUserMessage.id().toString(),
+                        agentType,
+                        guardDecision
+                );
+
+                return CompletableFuture.completedFuture(null);
+            }
+
             publishStageUpdate(
                     client,
                     commandId,
@@ -63,7 +87,7 @@ public class AiResponseOrchestrationService {
                     agentType,
                     stage,
                     startedAt,
-                    "AI response flow started"
+                    "AI response flow accepted and started"
             );
 
             stage = "FETCHING_CONTEXT";
@@ -75,7 +99,7 @@ public class AiResponseOrchestrationService {
                     agentType,
                     stage,
                     startedAt,
-                    "Fetching recent conversation context from chat-core"
+                    "Fetching recent user-only context from chat-core"
             );
 
             List<AiContextMessage> contextMessages = fetchRecentUserContext(
@@ -191,6 +215,10 @@ public class AiResponseOrchestrationService {
                     startedAt,
                     "Unexpected error at stage [" + stage + "]: " + exception.getMessage()
             );
+        } finally {
+            if (guardDecision != null && guardDecision.accepted()) {
+                aiRequestGuard.complete(guardDecision.requestKey());
+            }
         }
 
         return CompletableFuture.completedFuture(null);
@@ -290,6 +318,32 @@ public class AiResponseOrchestrationService {
 
         return content.substring(0, MAX_AI_MESSAGE_CONTENT_LENGTH)
                 + "\n\n[AI response was truncated because it exceeded the chat message limit.]";
+    }
+
+    private void sendAiGuardRejected(
+            ConnectedClient client,
+            String commandId,
+            String conversationId,
+            String sourceMessageId,
+            String agentType,
+            AiRequestGuard.Decision decision
+    ) {
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("commandId", commandId);
+        payload.put("sourceMessageId", sourceMessageId);
+        payload.put("agentType", agentType);
+        payload.put("reason", decision.reason());
+        payload.put("requestKey", decision.requestKey());
+        payload.put("retryAfterMs", decision.retryAfterMs());
+
+        fanoutService.sendToClient(
+                client,
+                ServerEvent.of(
+                        decision.eventType(),
+                        conversationId,
+                        payload
+                )
+        );
     }
 
     private void sendAiFailed(
