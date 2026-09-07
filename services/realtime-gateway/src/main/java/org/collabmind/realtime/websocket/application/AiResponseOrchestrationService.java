@@ -24,6 +24,7 @@ import java.util.concurrent.CompletableFuture;
 public class AiResponseOrchestrationService {
 
     private static final int CONTEXT_MESSAGE_LIMIT = 10;
+    private static final int MAX_AI_MESSAGE_CONTENT_LENGTH = 11_800;
 
     private final AiOrchestratorClient aiOrchestratorClient;
     private final ChatCoreClient chatCoreClient;
@@ -75,11 +76,13 @@ public class AiResponseOrchestrationService {
                     agentType
             );
 
+            String safeAiContent = truncateForChatCore(aiResponse.response());
+
             ChatCoreSaveAiMessageRequest saveAiRequest = new ChatCoreSaveAiMessageRequest(
                     aiClientMessageId,
                     savedUserMessage.id(),
                     aiResponse.agentType(),
-                    aiResponse.response()
+                    safeAiContent
             );
 
             ChatCoreMessageResponse savedAiMessage = chatCoreClient.saveAiMessage(
@@ -98,13 +101,24 @@ public class AiResponseOrchestrationService {
             payload.put("latencyMs", aiResponse.latencyMs());
             payload.put("message", savedAiMessage);
 
+            ServerEvent aiMessageCreatedEvent = ServerEvent.of(
+                    "AI_MESSAGE_CREATED",
+                    savedAiMessage.conversationId().toString(),
+                    payload
+            );
+
+// Send directly to the user who triggered the AI.
+// This confirms the AI flow works even if room subscription fan-out has a bug.
+            fanoutService.sendToClient(
+                    client,
+                    aiMessageCreatedEvent
+            );
+
+// Also try room fan-out for other subscribed users.
+// If subscription registry is fixed later, other users will receive it too.
             fanoutService.sendToConversation(
                     savedAiMessage.conversationId().toString(),
-                    ServerEvent.of(
-                            "AI_MESSAGE_CREATED",
-                            savedAiMessage.conversationId().toString(),
-                            payload
-                    )
+                    aiMessageCreatedEvent
             );
 
         } catch (RestClientResponseException exception) {
@@ -145,13 +159,29 @@ public class AiResponseOrchestrationService {
                         client.jwtToken()
                 )
                 .stream()
+                .filter(message -> "USER".equalsIgnoreCase(message.messageType()))
                 .map(message -> new AiContextMessage(
                         message.sequenceNumber(),
                         message.messageType(),
-                        message.content(),
+                        truncateContextContent(message.content()),
                         message.agentType()
                 ))
                 .toList();
+    }
+
+    private String truncateContextContent(String content) {
+        int maxContextMessageLength = 500;
+
+        if (content == null || content.isBlank()) {
+            return "";
+        }
+
+        if (content.length() <= maxContextMessageLength) {
+            return content;
+        }
+
+        return content.substring(0, maxContextMessageLength)
+                + "... [context truncated]";
     }
 
     private UUID createDeterministicAiClientMessageId(
@@ -163,6 +193,21 @@ public class AiResponseOrchestrationService {
         return UUID.nameUUIDFromBytes(
                 idempotencyKey.getBytes(StandardCharsets.UTF_8)
         );
+    }
+
+    private String truncateForChatCore(String content) {
+        String fallbackMessage = "AI response was empty.";
+
+        if (content == null || content.isBlank()) {
+            return fallbackMessage;
+        }
+
+        if (content.length() <= MAX_AI_MESSAGE_CONTENT_LENGTH) {
+            return content;
+        }
+
+        return content.substring(0, MAX_AI_MESSAGE_CONTENT_LENGTH)
+                + "\n\n[AI response was truncated because it exceeded the chat message limit.]";
     }
 
     private void sendAiFailed(
