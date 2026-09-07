@@ -52,28 +52,38 @@ public class ConversationSubscriptionService {
                 return;
             }
 
-            subscriptionRegistry.subscribe(conversationId, client.sessionId());
+            int subscriberCount = subscriptionRegistry.subscribe(conversationId, client.sessionId());
 
             Map<String, Object> payload = new HashMap<>();
             payload.put("commandId", command.commandId());
             payload.put("conversationId", conversationId);
-            payload.put("subscriberCount", subscriptionRegistry.subscriberCount(conversationId));
+            payload.put("subscriberCount", subscriberCount);
+            payload.put("userId", client.userId().toString());
+            payload.put("sessionId", client.sessionId());
 
             fanoutService.sendToClient(
                     client,
                     ServerEvent.of("SUBSCRIBED_CONVERSATION", conversationId, payload)
             );
 
-            Map<String, Object> joinedPayload = new HashMap<>();
-            joinedPayload.put("userId", client.userId().toString());
-            joinedPayload.put("subscriberCount", subscriptionRegistry.subscriberCount(conversationId));
-
             fanoutService.sendToConversationExcept(
                     conversationId,
                     client.sessionId(),
-                    ServerEvent.of("USER_JOINED_CONVERSATION", conversationId, joinedPayload)
+                    ServerEvent.of("USER_JOINED_CONVERSATION", conversationId, payload)
             );
 
+            fanoutService.sendToConversation(
+                    conversationId,
+                    ServerEvent.of("PRESENCE_UPDATED", conversationId, presencePayload(conversationId))
+            );
+
+        } catch (IllegalArgumentException exception) {
+            sendRejected(
+                    client,
+                    command,
+                    command.conversationId(),
+                    "conversationId must be a valid UUID"
+            );
         } catch (RestClientResponseException exception) {
             sendRejected(
                     client,
@@ -98,26 +108,37 @@ public class ConversationSubscriptionService {
             return;
         }
 
-        subscriptionRegistry.unsubscribe(conversationId, client.sessionId());
+        int subscriberCount = subscriptionRegistry.unsubscribe(conversationId, client.sessionId());
 
         Map<String, Object> payload = new HashMap<>();
         payload.put("commandId", command.commandId());
         payload.put("conversationId", conversationId);
+        payload.put("subscriberCount", subscriberCount);
+        payload.put("userId", client.userId().toString());
+        payload.put("sessionId", client.sessionId());
 
         fanoutService.sendToClient(
                 client,
                 ServerEvent.of("UNSUBSCRIBED_CONVERSATION", conversationId, payload)
         );
 
-        Map<String, Object> leftPayload = new HashMap<>();
-        leftPayload.put("userId", client.userId().toString());
-        leftPayload.put("subscriberCount", subscriptionRegistry.subscriberCount(conversationId));
-
-        fanoutService.sendToConversationExcept(
+        fanoutService.sendToConversation(
                 conversationId,
-                client.sessionId(),
-                ServerEvent.of("USER_LEFT_CONVERSATION", conversationId, leftPayload)
+                ServerEvent.of("USER_LEFT_CONVERSATION", conversationId, payload)
         );
+
+        fanoutService.sendToConversation(
+                conversationId,
+                ServerEvent.of("PRESENCE_UPDATED", conversationId, presencePayload(conversationId))
+        );
+    }
+
+    private Map<String, Object> presencePayload(String conversationId) {
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("conversationId", conversationId);
+        payload.put("subscriberCount", subscriptionRegistry.subscriberCount(conversationId));
+        payload.put("subscribedSessions", subscriptionRegistry.getSubscribedSessions(conversationId).size());
+        return payload;
     }
 
     private void sendRejected(
@@ -136,4 +157,3 @@ public class ConversationSubscriptionService {
         );
     }
 }
-
