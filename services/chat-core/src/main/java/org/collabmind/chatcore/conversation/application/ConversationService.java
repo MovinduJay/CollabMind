@@ -11,8 +11,8 @@ import org.collabmind.chatcore.membership.infrastructure.ConversationMemberRepos
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Comparator;
 import java.util.List;
-import java.util.Objects;
 import java.util.UUID;
 
 @Service
@@ -54,12 +54,22 @@ public class ConversationService {
 
     @Transactional(readOnly = true)
     public List<ConversationResponse> listMyConversations(UUID authenticatedUserId) {
-        return memberRepository.findByUserId(authenticatedUserId)
+        List<UUID> conversationIds = memberRepository.findByUserId(authenticatedUserId)
                 .stream()
                 .map(ConversationMember::getConversationId)
                 .distinct()
-                .map(conversationId -> conversationRepository.findById(conversationId).orElse(null))
-                .filter(Objects::nonNull)
+                .toList();
+
+        if (conversationIds.isEmpty()) {
+            return List.of();
+        }
+
+        return conversationRepository.findByIdIn(conversationIds)
+                .stream()
+                .sorted(Comparator.comparing(
+                        Conversation::getCreatedAt,
+                        Comparator.nullsLast(Comparator.naturalOrder())
+                ).reversed())
                 .map(conversation -> ConversationResponse.from(
                         conversation,
                         memberRepository.countByConversationId(conversation.getId())

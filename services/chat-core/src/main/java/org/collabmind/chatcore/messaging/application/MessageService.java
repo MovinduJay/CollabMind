@@ -1,144 +1,99 @@
 package org.collabmind.chatcore.messaging.application;
 
 import org.collabmind.chatcore.common.exception.ConversationNotFoundException;
-import org.collabmind.chatcore.common.exception.UserNotConversationMemberException;
 import org.collabmind.chatcore.conversation.domain.Conversation;
 import org.collabmind.chatcore.conversation.infrastructure.ConversationRepository;
 import org.collabmind.chatcore.membership.infrastructure.ConversationMemberRepository;
 import org.collabmind.chatcore.messaging.domain.Message;
 import org.collabmind.chatcore.messaging.infrastructure.MessageRepository;
 import org.collabmind.chatcore.messaging.web.MessageResponse;
-import org.collabmind.chatcore.messaging.web.SaveAiMessageRequest;
-import org.collabmind.chatcore.messaging.web.SendMessageRequest;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 
 @Service
 public class MessageService {
 
-    private static final int MAX_PAGE_SIZE = 100;
+    private static final UUID AI_SENDER_ID = UUID.fromString("00000000-0000-0000-0000-000000000001");
+    private static final int DEFAULT_LIMIT = 50;
+    private static final int MAX_LIMIT = 100;
 
-    private final MessageRepository messageRepository;
     private final ConversationRepository conversationRepository;
     private final ConversationMemberRepository memberRepository;
+    private final MessageRepository messageRepository;
 
     public MessageService(
-            MessageRepository messageRepository,
             ConversationRepository conversationRepository,
-            ConversationMemberRepository memberRepository
+            ConversationMemberRepository memberRepository,
+            MessageRepository messageRepository
     ) {
-        this.messageRepository = messageRepository;
         this.conversationRepository = conversationRepository;
         this.memberRepository = memberRepository;
+        this.messageRepository = messageRepository;
     }
 
     @Transactional
-    public MessageResponse sendMessage(
+    public MessageResponse sendUserMessage(
             UUID conversationId,
-            UUID authenticatedUserId,
-            SendMessageRequest request
+            UUID senderUserId,
+            UUID clientMessageId,
+            String content
     ) {
+        requireConversationMember(conversationId, senderUserId);
+
         return messageRepository
-                .findBySenderIdAndClientMessageId(
-                        authenticatedUserId,
-                        request.clientMessageId()
-                )
+                .findBySenderIdAndClientMessageId(senderUserId, clientMessageId)
                 .map(MessageResponse::from)
-                .orElseGet(() -> createNewUserMessage(
+                .orElseGet(() -> createUserMessage(
                         conversationId,
-                        authenticatedUserId,
-                        request
+                        senderUserId,
+                        clientMessageId,
+                        content
                 ));
-    }
-
-    private MessageResponse createNewUserMessage(
-            UUID conversationId,
-            UUID authenticatedUserId,
-            SendMessageRequest request
-    ) {
-        validateMembership(conversationId, authenticatedUserId);
-
-        Conversation conversation = conversationRepository.findByIdForUpdate(conversationId)
-                .orElseThrow(() -> new ConversationNotFoundException(conversationId));
-
-        long sequenceNumber = conversation.allocateNextSequence();
-
-        Message message = Message.userMessage(
-                conversationId,
-                authenticatedUserId,
-                request.clientMessageId(),
-                sequenceNumber,
-                request.content()
-        );
-
-        Message savedMessage = messageRepository.save(message);
-
-        return MessageResponse.from(savedMessage);
     }
 
     @Transactional
     public MessageResponse saveAiMessage(
             UUID conversationId,
             UUID authenticatedUserId,
-            SaveAiMessageRequest request
+            UUID clientMessageId,
+            UUID sourceMessageId,
+            String agentType,
+            String content
     ) {
+        requireConversationMember(conversationId, authenticatedUserId);
+
         return messageRepository
-                .findBySenderIdAndClientMessageId(
-                        Message.AI_SYSTEM_SENDER_ID,
-                        request.clientMessageId()
-                )
+                .findBySenderIdAndClientMessageId(AI_SENDER_ID, clientMessageId)
                 .map(MessageResponse::from)
-                .orElseGet(() -> createNewAiMessage(
+                .orElseGet(() -> createAiMessage(
                         conversationId,
-                        authenticatedUserId,
-                        request
+                        clientMessageId,
+                        sourceMessageId,
+                        agentType,
+                        content
                 ));
     }
 
-    private MessageResponse createNewAiMessage(
-            UUID conversationId,
-            UUID authenticatedUserId,
-            SaveAiMessageRequest request
-    ) {
-        validateMembership(conversationId, authenticatedUserId);
-
-        Conversation conversation = conversationRepository.findByIdForUpdate(conversationId)
-                .orElseThrow(() -> new ConversationNotFoundException(conversationId));
-
-        long sequenceNumber = conversation.allocateNextSequence();
-
-        Message message = Message.aiMessage(
-                conversationId,
-                request.clientMessageId(),
-                sequenceNumber,
-                request.agentType(),
-                request.sourceMessageId(),
-                request.content()
-        );
-
-        Message savedMessage = messageRepository.save(message);
-
-        return MessageResponse.from(savedMessage);
-    }
-
     @Transactional(readOnly = true)
-    public List<MessageResponse> getMessagesAfter(
+    public List<MessageResponse> findMessagesAfter(
             UUID conversationId,
             UUID authenticatedUserId,
             long afterSequence,
             int limit
     ) {
-        validateMembership(conversationId, authenticatedUserId);
+        requireConversationMember(conversationId, authenticatedUserId);
 
-        int safeLimit = Math.max(1, Math.min(limit, MAX_PAGE_SIZE));
+        int safeLimit = safeLimit(limit);
 
-        return messageRepository.findMessagesAfter(
+        return messageRepository
+                .findMessagesAfter(
                         conversationId,
-                        afterSequence,
+                        Math.max(0, afterSequence),
                         PageRequest.of(0, safeLimit)
                 )
                 .stream()
@@ -146,17 +101,101 @@ public class MessageService {
                 .toList();
     }
 
-    private void validateMembership(
+    @Transactional(readOnly = true)
+    public List<MessageResponse> findLatestMessages(
             UUID conversationId,
-            UUID userId
+            UUID authenticatedUserId,
+            int limit
     ) {
+        requireConversationMember(conversationId, authenticatedUserId);
+
+        int safeLimit = safeLimit(limit);
+
+        return messageRepository
+                .findLatestMessages(
+                        conversationId,
+                        PageRequest.of(0, safeLimit)
+                )
+                .stream()
+                .sorted(Comparator.comparingLong(Message::getSequenceNumber))
+                .map(MessageResponse::from)
+                .toList();
+    }
+
+    private MessageResponse createUserMessage(
+            UUID conversationId,
+            UUID senderUserId,
+            UUID clientMessageId,
+            String content
+    ) {
+        Conversation conversation = conversationRepository
+                .findByIdForUpdate(conversationId)
+                .orElseThrow(() -> new ConversationNotFoundException(conversationId));
+
+        long sequenceNumber = conversation.allocateNextSequence();
+
+        Message message = Message.userMessage(
+                conversation.getId(),
+                senderUserId,
+                clientMessageId,
+                sequenceNumber,
+                content
+        );
+
+        return MessageResponse.from(messageRepository.save(message));
+    }
+
+    private MessageResponse createAiMessage(
+            UUID conversationId,
+            UUID clientMessageId,
+            UUID sourceMessageId,
+            String agentType,
+            String content
+    ) {
+        Conversation conversation = conversationRepository
+                .findByIdForUpdate(conversationId)
+                .orElseThrow(() -> new ConversationNotFoundException(conversationId));
+
+        long sequenceNumber = conversation.allocateNextSequence();
+
+        Message message = Message.aiMessage(
+                conversation.getId(),
+                AI_SENDER_ID,
+                clientMessageId,
+                sourceMessageId,
+                agentType,
+                sequenceNumber,
+                content
+        );
+
+        return MessageResponse.from(messageRepository.save(message));
+    }
+
+    private void requireConversationMember(
+            UUID conversationId,
+            UUID authenticatedUserId
+    ) {
+        boolean conversationExists = conversationRepository.existsById(conversationId);
+
+        if (!conversationExists) {
+            throw new ConversationNotFoundException(conversationId);
+        }
+
         boolean member = memberRepository.existsByConversationIdAndUserId(
                 conversationId,
-                userId
+                authenticatedUserId
         );
 
         if (!member) {
-            throw new UserNotConversationMemberException(userId, conversationId);
+            throw new IllegalArgumentException("User is not a member of this conversation");
         }
+    }
+
+    private int safeLimit(int requestedLimit) {
+        if (requestedLimit <= 0) {
+            return DEFAULT_LIMIT;
+        }
+
+        return Math.min(requestedLimit, MAX_LIMIT);
     }
 }

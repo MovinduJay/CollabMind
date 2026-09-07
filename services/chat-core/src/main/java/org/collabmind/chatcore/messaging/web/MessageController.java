@@ -19,15 +19,16 @@ public class MessageController {
     }
 
     @PostMapping
-    public MessageResponse sendMessage(
+    public MessageResponse sendUserMessage(
             @PathVariable UUID conversationId,
             @Valid @RequestBody SendMessageRequest request,
             Authentication authentication
     ) {
-        return messageService.sendMessage(
+        return messageService.sendUserMessage(
                 conversationId,
                 authenticatedUserId(authentication),
-                request
+                request.clientMessageId(),
+                request.content()
         );
     }
 
@@ -40,21 +41,37 @@ public class MessageController {
         return messageService.saveAiMessage(
                 conversationId,
                 authenticatedUserId(authentication),
-                request
+                request.clientMessageId(),
+                request.sourceMessageId(),
+                request.agentType(),
+                request.content()
         );
     }
 
     @GetMapping
-    public List<MessageResponse> getMessagesAfter(
+    public List<MessageResponse> findMessagesAfter(
             @PathVariable UUID conversationId,
             @RequestParam(defaultValue = "0") long afterSequence,
             @RequestParam(defaultValue = "50") int limit,
             Authentication authentication
     ) {
-        return messageService.getMessagesAfter(
+        return messageService.findMessagesAfter(
                 conversationId,
                 authenticatedUserId(authentication),
                 afterSequence,
+                limit
+        );
+    }
+
+    @GetMapping("/latest")
+    public List<MessageResponse> findLatestMessages(
+            @PathVariable UUID conversationId,
+            @RequestParam(defaultValue = "50") int limit,
+            Authentication authentication
+    ) {
+        return messageService.findLatestMessages(
+                conversationId,
+                authenticatedUserId(authentication),
                 limit
         );
     }

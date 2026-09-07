@@ -1,6 +1,7 @@
 package org.collabmind.chatcore.messaging.domain;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -10,27 +11,25 @@ import java.util.UUID;
         name = "messages",
         uniqueConstraints = {
                 @UniqueConstraint(
-                        name = "uk_message_conversation_sequence",
+                        name = "uk_message_sequence_per_conversation",
                         columnNames = {"conversation_id", "sequence_number"}
                 ),
                 @UniqueConstraint(
                         name = "uk_message_sender_client_message",
                         columnNames = {"sender_id", "client_message_id"}
                 )
+        },
+        indexes = {
+                @Index(name = "idx_messages_conversation_sequence", columnList = "conversation_id, sequence_number"),
+                @Index(name = "idx_messages_sender_client_message", columnList = "sender_id, client_message_id"),
+                @Index(name = "idx_messages_created_at", columnList = "created_at"),
+                @Index(name = "idx_messages_source_message_id", columnList = "source_message_id")
         }
 )
 public class Message {
 
-    public enum MessageType {
-        USER,
-        AI
-    }
-
-    public static final UUID AI_SYSTEM_SENDER_ID =
-            UUID.fromString("00000000-0000-0000-0000-000000000001");
-
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
     @Column(name = "conversation_id", nullable = false)
@@ -46,10 +45,10 @@ public class Message {
     private long sequenceNumber;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "message_type", nullable = false)
+    @Column(name = "message_type", nullable = false, length = 20)
     private MessageType messageType;
 
-    @Column(name = "content", nullable = false, length = 12000)
+    @Column(nullable = false, columnDefinition = "TEXT")
     private String content;
 
     @Column(name = "agent_type", length = 40)
@@ -58,7 +57,8 @@ public class Message {
     @Column(name = "source_message_id")
     private UUID sourceMessageId;
 
-    @Column(name = "created_at", nullable = false)
+    @CreationTimestamp
+    @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
     protected Message() {
@@ -82,7 +82,6 @@ public class Message {
         this.content = content;
         this.agentType = agentType;
         this.sourceMessageId = sourceMessageId;
-        this.createdAt = Instant.now();
     }
 
     public static Message userMessage(
@@ -106,15 +105,16 @@ public class Message {
 
     public static Message aiMessage(
             UUID conversationId,
+            UUID aiSenderId,
             UUID clientMessageId,
-            long sequenceNumber,
-            String agentType,
             UUID sourceMessageId,
+            String agentType,
+            long sequenceNumber,
             String content
     ) {
         return new Message(
                 conversationId,
-                AI_SYSTEM_SENDER_ID,
+                aiSenderId,
                 clientMessageId,
                 sequenceNumber,
                 MessageType.AI,
@@ -163,6 +163,9 @@ public class Message {
     public Instant getCreatedAt() {
         return createdAt;
     }
+
+    public enum MessageType {
+        USER,
+        AI
+    }
 }
-
-
