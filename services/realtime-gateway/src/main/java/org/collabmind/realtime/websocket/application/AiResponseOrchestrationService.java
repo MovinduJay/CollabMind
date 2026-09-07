@@ -24,7 +24,10 @@ import java.util.concurrent.CompletableFuture;
 public class AiResponseOrchestrationService {
 
     private static final int CONTEXT_MESSAGE_LIMIT = 10;
+    private static final int MAX_CONTEXT_MESSAGE_CONTENT_LENGTH = 500;
     private static final int MAX_AI_MESSAGE_CONTENT_LENGTH = 11_800;
+
+    private static final String USER_MESSAGE_TYPE = "USER";
 
     private final AiOrchestratorClient aiOrchestratorClient;
     private final ChatCoreClient chatCoreClient;
@@ -52,7 +55,7 @@ public class AiResponseOrchestrationService {
         try {
             stage = "fetching_recent_context_from_chat_core";
 
-            List<AiContextMessage> contextMessages = fetchRecentContext(
+            List<AiContextMessage> contextMessages = fetchRecentUserContext(
                     client,
                     savedUserMessage
             );
@@ -106,6 +109,7 @@ public class AiResponseOrchestrationService {
                     savedAiMessage.conversationId().toString(),
                     payload
             );
+
             fanoutService.sendToClient(
                     client,
                     aiMessageCreatedEvent
@@ -139,7 +143,7 @@ public class AiResponseOrchestrationService {
         return CompletableFuture.completedFuture(null);
     }
 
-    private List<AiContextMessage> fetchRecentContext(
+    private List<AiContextMessage> fetchRecentUserContext(
             ConnectedClient client,
             ChatCoreMessageResponse savedUserMessage
     ) {
@@ -155,7 +159,7 @@ public class AiResponseOrchestrationService {
                         client.jwtToken()
                 )
                 .stream()
-                .filter(message -> "USER".equalsIgnoreCase(message.messageType()))
+                .filter(message -> USER_MESSAGE_TYPE.equalsIgnoreCase(message.messageType()))
                 .map(message -> new AiContextMessage(
                         message.sequenceNumber(),
                         message.messageType(),
@@ -166,17 +170,15 @@ public class AiResponseOrchestrationService {
     }
 
     private String truncateContextContent(String content) {
-        int maxContextMessageLength = 500;
-
         if (content == null || content.isBlank()) {
             return "";
         }
 
-        if (content.length() <= maxContextMessageLength) {
+        if (content.length() <= MAX_CONTEXT_MESSAGE_CONTENT_LENGTH) {
             return content;
         }
 
-        return content.substring(0, maxContextMessageLength)
+        return content.substring(0, MAX_CONTEXT_MESSAGE_CONTENT_LENGTH)
                 + "... [context truncated]";
     }
 
