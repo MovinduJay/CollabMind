@@ -5,8 +5,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="64296f3a-d178-4690-a0c3-b0da2f7d7a57" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/services/chat-core/src/main/java/org/collabmind/chatcore/conversation/domain/Conversation.java" beforeDir="false" afterPath="$PROJECT_DIR$/services/chat-core/src/main/java/org/collabmind/chatcore/conversation/domain/Conversation.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/services/chat-core/src/main/java/org/collabmind/chatcore/conversation/infrastructure/ConversationRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/services/chat-core/src/main/java/org/collabmind/chatcore/conversation/infrastructure/ConversationRepository.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -176,7 +175,7 @@
       <workItem from="1788582139109" duration="5126000" />
       <workItem from="1788671168255" duration="1635000" />
       <workItem from="1788722954521" duration="3450000" />
-      <workItem from="1788726620887" duration="10226000" />
+      <workItem from="1788726620887" duration="10960000" />
     </task>
     <servers />
   </component>
