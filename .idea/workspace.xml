@@ -6,29 +6,12 @@
   <component name="ChangeListManager">
     <list default="true" id="64296f3a-d178-4690-a0c3-b0da2f7d7a57" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/services/chat-core/src/main/java/org/collabmind/chatcore/messaging/domain/Message.java" beforeDir="false" afterPath="$PROJECT_DIR$/services/chat-core/src/main/java/org/collabmind/chatcore/messaging/domain/Message.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/services/chat-core/src/main/java/org/collabmind/chatcore/messaging/web/SaveAiMessageRequest.java" beforeDir="false" afterPath="$PROJECT_DIR$/services/chat-core/src/main/java/org/collabmind/chatcore/messaging/web/SaveAiMessageRequest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/services/ai-orchestrator/src/main/resources/application.properties" beforeDir="false" afterPath="$PROJECT_DIR$/services/ai-orchestrator/src/main/resources/application.properties" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/services/chat-core/src/main/resources/application.properties" beforeDir="false" afterPath="$PROJECT_DIR$/services/chat-core/src/main/resources/application.properties" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/services/chat-core/target/classes/application.properties" beforeDir="false" afterPath="$PROJECT_DIR$/services/chat-core/target/classes/application.properties" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/services/chat-core/target/classes/org/collabmind/chatcore/messaging/domain/Message.class" beforeDir="false" afterPath="$PROJECT_DIR$/services/chat-core/target/classes/org/collabmind/chatcore/messaging/domain/Message.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/services/chat-core/target/classes/org/collabmind/chatcore/messaging/web/SaveAiMessageRequest.class" beforeDir="false" afterPath="$PROJECT_DIR$/services/chat-core/target/classes/org/collabmind/chatcore/messaging/web/SaveAiMessageRequest.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/services/realtime-gateway/src/main/java/org/collabmind/realtime/ai/client/AiPromptRequest.java" beforeDir="false" afterPath="$PROJECT_DIR$/services/realtime-gateway/src/main/java/org/collabmind/realtime/ai/client/AiPromptRequest.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/services/realtime-gateway/src/main/java/org/collabmind/realtime/ai/client/AiPromptResponse.java" beforeDir="false" afterPath="$PROJECT_DIR$/services/realtime-gateway/src/main/java/org/collabmind/realtime/ai/client/AiPromptResponse.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/services/realtime-gateway/src/main/java/org/collabmind/realtime/chatcore/client/ChatCoreClient.java" beforeDir="false" afterPath="$PROJECT_DIR$/services/realtime-gateway/src/main/java/org/collabmind/realtime/chatcore/client/ChatCoreClient.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/services/realtime-gateway/src/main/java/org/collabmind/realtime/chatcore/client/ChatCoreSaveAiMessageRequest.java" beforeDir="false" afterPath="$PROJECT_DIR$/services/realtime-gateway/src/main/java/org/collabmind/realtime/chatcore/client/ChatCoreSaveAiMessageRequest.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/services/realtime-gateway/src/main/java/org/collabmind/realtime/chatcore/client/ChatCoreSendMessageRequest.java" beforeDir="false" afterPath="$PROJECT_DIR$/services/realtime-gateway/src/main/java/org/collabmind/realtime/chatcore/client/ChatCoreSendMessageRequest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/services/identity-service/src/main/resources/application.properties" beforeDir="false" afterPath="$PROJECT_DIR$/services/identity-service/src/main/resources/application.properties" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/services/realtime-gateway/src/main/java/org/collabmind/realtime/websocket/application/AiResponseOrchestrationService.java" beforeDir="false" afterPath="$PROJECT_DIR$/services/realtime-gateway/src/main/java/org/collabmind/realtime/websocket/application/AiResponseOrchestrationService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/services/realtime-gateway/src/main/java/org/collabmind/realtime/websocket/application/ConversationSubscriptionService.java" beforeDir="false" afterPath="$PROJECT_DIR$/services/realtime-gateway/src/main/java/org/collabmind/realtime/websocket/application/ConversationSubscriptionService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/services/realtime-gateway/src/main/java/org/collabmind/realtime/websocket/application/MessageHistoryService.java" beforeDir="false" afterPath="$PROJECT_DIR$/services/realtime-gateway/src/main/java/org/collabmind/realtime/websocket/application/MessageHistoryService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/services/realtime-gateway/src/main/java/org/collabmind/realtime/websocket/application/MessageRelayService.java" beforeDir="false" afterPath="$PROJECT_DIR$/services/realtime-gateway/src/main/java/org/collabmind/realtime/websocket/application/MessageRelayService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/services/realtime-gateway/target/classes/org/collabmind/realtime/chatcore/client/ChatCoreClient$1.class" beforeDir="false" afterPath="$PROJECT_DIR$/services/realtime-gateway/target/classes/org/collabmind/realtime/chatcore/client/ChatCoreClient$1.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/services/realtime-gateway/target/classes/org/collabmind/realtime/chatcore/client/ChatCoreClient.class" beforeDir="false" afterPath="$PROJECT_DIR$/services/realtime-gateway/target/classes/org/collabmind/realtime/chatcore/client/ChatCoreClient.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/services/realtime-gateway/target/classes/org/collabmind/realtime/chatcore/client/ChatCoreSaveAiMessageRequest.class" beforeDir="false" afterPath="$PROJECT_DIR$/services/realtime-gateway/target/classes/org/collabmind/realtime/chatcore/client/ChatCoreSaveAiMessageRequest.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/services/realtime-gateway/target/classes/org/collabmind/realtime/chatcore/client/ChatCoreSendMessageRequest.class" beforeDir="false" afterPath="$PROJECT_DIR$/services/realtime-gateway/target/classes/org/collabmind/realtime/chatcore/client/ChatCoreSendMessageRequest.class" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/services/realtime-gateway/target/classes/org/collabmind/realtime/websocket/application/AiResponseOrchestrationService.class" beforeDir="false" afterPath="$PROJECT_DIR$/services/realtime-gateway/target/classes/org/collabmind/realtime/websocket/application/AiResponseOrchestrationService.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/services/realtime-gateway/target/classes/org/collabmind/realtime/websocket/application/ConversationSubscriptionService.class" beforeDir="false" afterPath="$PROJECT_DIR$/services/realtime-gateway/target/classes/org/collabmind/realtime/websocket/application/ConversationSubscriptionService.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/services/realtime-gateway/target/classes/org/collabmind/realtime/websocket/application/MessageHistoryService.class" beforeDir="false" afterPath="$PROJECT_DIR$/services/realtime-gateway/target/classes/org/collabmind/realtime/websocket/application/MessageHistoryService.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/services/realtime-gateway/target/classes/org/collabmind/realtime/websocket/application/MessageRelayService.class" beforeDir="false" afterPath="$PROJECT_DIR$/services/realtime-gateway/target/classes/org/collabmind/realtime/websocket/application/MessageRelayService.class" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -107,7 +90,7 @@
       </set>
     </option>
   </component>
-  <component name="RunManager" selected="Spring Boot.ChatCoreApplication">
+  <component name="RunManager" selected="Spring Boot.AiOrchestratorApplication">
     <configuration name="RealtimeGatewayApplication" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
       <option name="MAIN_CLASS_NAME" value="org.collabmind.realtime.RealtimeGatewayApplication" />
       <module name="realtime-gateway" />
@@ -122,6 +105,10 @@
       </method>
     </configuration>
     <configuration name="AiOrchestratorApplication" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" nameIsGenerated="true">
+      <envs>
+        <env name="AI_DB_USERNAME" value="postgres" />
+        <env name="AI_DB_PASSWORD" value="123456" />
+      </envs>
       <module name="ai-orchestrator" />
       <option name="SPRING_BOOT_MAIN_CLASS" value="org.collabmind.ai.AiOrchestratorApplication" />
       <method v="2">
@@ -129,6 +116,10 @@
       </method>
     </configuration>
     <configuration name="ChatCoreApplication" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" nameIsGenerated="true">
+      <envs>
+        <env name="CHAT_DB_USERNAME" value="postgres" />
+        <env name="CHAT_DB_PASSWORD" value="123456" />
+      </envs>
       <module name="chat-core" />
       <option name="SPRING_BOOT_MAIN_CLASS" value="org.collabmind.chatcore.ChatCoreApplication" />
       <method v="2">
@@ -136,6 +127,10 @@
       </method>
     </configuration>
     <configuration name="IdentityServiceApplication" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" nameIsGenerated="true">
+      <envs>
+        <env name="IDENTITY_DB_USERNAME" value="postgres" />
+        <env name="IDENTITY_DB_PASSWORD" value="123456" />
+      </envs>
       <module name="identity-service" />
       <option name="SPRING_BOOT_MAIN_CLASS" value="org.collabmind.identity.IdentityServiceApplication" />
       <method v="2">
@@ -149,6 +144,13 @@
         <option name="Make" enabled="true" />
       </method>
     </configuration>
+    <list>
+      <item itemvalue="Application.RealtimeGatewayApplication" />
+      <item itemvalue="Spring Boot.AiOrchestratorApplication" />
+      <item itemvalue="Spring Boot.ChatCoreApplication" />
+      <item itemvalue="Spring Boot.IdentityServiceApplication" />
+      <item itemvalue="Spring Boot.RealtimeGatewayApplication" />
+    </list>
     <recent_temporary>
       <list>
         <item itemvalue="Application.RealtimeGatewayApplication" />
@@ -179,7 +181,7 @@
       <workItem from="1788582139109" duration="5126000" />
       <workItem from="1788671168255" duration="1635000" />
       <workItem from="1788722954521" duration="3450000" />
-      <workItem from="1788726620887" duration="1874000" />
+      <workItem from="1788726620887" duration="4807000" />
     </task>
     <servers />
   </component>
