@@ -14,6 +14,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClientResponseException;
 
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -50,17 +52,48 @@ public class AiResponseOrchestrationService {
             ChatCoreMessageResponse savedUserMessage,
             String agentType
     ) {
-        String stage = "starting_ai_flow";
+        Instant startedAt = Instant.now();
+        String stage = "STARTING_AI_FLOW";
 
         try {
-            stage = "fetching_recent_context_from_chat_core";
+            publishStageUpdate(
+                    client,
+                    commandId,
+                    savedUserMessage.conversationId().toString(),
+                    agentType,
+                    stage,
+                    startedAt,
+                    "AI response flow started"
+            );
+
+            stage = "FETCHING_CONTEXT";
+
+            publishStageUpdate(
+                    client,
+                    commandId,
+                    savedUserMessage.conversationId().toString(),
+                    agentType,
+                    stage,
+                    startedAt,
+                    "Fetching recent conversation context from chat-core"
+            );
 
             List<AiContextMessage> contextMessages = fetchRecentUserContext(
                     client,
                     savedUserMessage
             );
 
-            stage = "calling_ai_orchestrator";
+            stage = "CALLING_AI_ORCHESTRATOR";
+
+            publishStageUpdate(
+                    client,
+                    commandId,
+                    savedUserMessage.conversationId().toString(),
+                    agentType,
+                    stage,
+                    startedAt,
+                    "Calling ai-orchestrator provider strategy"
+            );
 
             AiPromptRequest aiRequest = new AiPromptRequest(
                     savedUserMessage.conversationId(),
@@ -72,7 +105,17 @@ public class AiResponseOrchestrationService {
 
             AiPromptResponse aiResponse = aiOrchestratorClient.generateResponse(aiRequest);
 
-            stage = "saving_ai_message_to_chat_core";
+            stage = "SAVING_AI_MESSAGE";
+
+            publishStageUpdate(
+                    client,
+                    commandId,
+                    savedUserMessage.conversationId().toString(),
+                    agentType,
+                    stage,
+                    startedAt,
+                    "Persisting AI response in chat-core"
+            );
 
             UUID aiClientMessageId = createDeterministicAiClientMessageId(
                     savedUserMessage.id(),
@@ -94,6 +137,8 @@ public class AiResponseOrchestrationService {
                     saveAiRequest
             );
 
+            long totalElapsedMs = elapsedMs(startedAt);
+
             Map<String, Object> payload = new HashMap<>();
             payload.put("commandId", commandId);
             payload.put("sourceMessageId", savedUserMessage.id().toString());
@@ -101,7 +146,9 @@ public class AiResponseOrchestrationService {
             payload.put("providerName", aiResponse.providerName());
             payload.put("primaryProviderName", aiResponse.primaryProviderName());
             payload.put("fallbackUsed", aiResponse.fallbackUsed());
-            payload.put("latencyMs", aiResponse.latencyMs());
+            payload.put("providerLatencyMs", aiResponse.latencyMs());
+            payload.put("totalElapsedMs", totalElapsedMs);
+            payload.put("finalStage", "AI_MESSAGE_SAVED");
             payload.put("message", savedAiMessage);
 
             ServerEvent aiMessageCreatedEvent = ServerEvent.of(
@@ -126,6 +173,9 @@ public class AiResponseOrchestrationService {
                     client,
                     commandId,
                     savedUserMessage.conversationId().toString(),
+                    agentType,
+                    stage,
+                    startedAt,
                     "AI flow failed at stage [" + stage + "] with downstream status "
                             + exception.getStatusCode().value()
                             + ". Body: "
@@ -136,6 +186,9 @@ public class AiResponseOrchestrationService {
                     client,
                     commandId,
                     savedUserMessage.conversationId().toString(),
+                    agentType,
+                    stage,
+                    startedAt,
                     "Unexpected error at stage [" + stage + "]: " + exception.getMessage()
             );
         }
@@ -167,6 +220,37 @@ public class AiResponseOrchestrationService {
                         message.agentType()
                 ))
                 .toList();
+    }
+
+    private void publishStageUpdate(
+            ConnectedClient client,
+            String commandId,
+            String conversationId,
+            String agentType,
+            String stage,
+            Instant startedAt,
+            String detail
+    ) {
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("commandId", commandId);
+        payload.put("agentType", agentType);
+        payload.put("stage", stage);
+        payload.put("detail", detail);
+        payload.put("elapsedMs", elapsedMs(startedAt));
+
+        ServerEvent event = ServerEvent.of(
+                "AI_STAGE_UPDATED",
+                conversationId,
+                payload
+        );
+
+        fanoutService.sendToClient(client, event);
+
+        fanoutService.sendToConversationExcept(
+                conversationId,
+                client.sessionId(),
+                event
+        );
     }
 
     private String truncateContextContent(String content) {
@@ -212,10 +296,16 @@ public class AiResponseOrchestrationService {
             ConnectedClient client,
             String commandId,
             String conversationId,
+            String agentType,
+            String failedStage,
+            Instant startedAt,
             String reason
     ) {
         Map<String, Object> payload = new HashMap<>();
         payload.put("commandId", commandId);
+        payload.put("agentType", agentType);
+        payload.put("failedStage", failedStage);
+        payload.put("elapsedMs", elapsedMs(startedAt));
         payload.put("reason", reason);
 
         fanoutService.sendToClient(
@@ -226,5 +316,9 @@ public class AiResponseOrchestrationService {
                         payload
                 )
         );
+    }
+
+    private long elapsedMs(Instant startedAt) {
+        return Duration.between(startedAt, Instant.now()).toMillis();
     }
 }
