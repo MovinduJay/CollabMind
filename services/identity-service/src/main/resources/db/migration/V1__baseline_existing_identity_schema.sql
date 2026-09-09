@@ -1,0 +1,3 @@
+-- Baseline migration for existing local development schema.
+-- The database schema was originally created by Hibernate during early development.
+-- Flyway starts managing schema changes from this baseline version onward.

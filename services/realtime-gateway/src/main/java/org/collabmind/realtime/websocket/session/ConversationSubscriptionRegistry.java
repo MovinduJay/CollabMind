@@ -2,6 +2,7 @@ package org.collabmind.realtime.websocket.session;
 
 import org.springframework.stereotype.Component;
 
+import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -12,7 +13,7 @@ public class ConversationSubscriptionRegistry {
     private final ConcurrentMap<String, Set<String>> sessionsByConversationId = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, Set<String>> conversationsBySessionId = new ConcurrentHashMap<>();
 
-    public void subscribe(String conversationId, String sessionId) {
+    public int subscribe(String conversationId, String sessionId) {
         sessionsByConversationId
                 .computeIfAbsent(conversationId, key -> ConcurrentHashMap.newKeySet())
                 .add(sessionId);
@@ -20,9 +21,11 @@ public class ConversationSubscriptionRegistry {
         conversationsBySessionId
                 .computeIfAbsent(sessionId, key -> ConcurrentHashMap.newKeySet())
                 .add(conversationId);
+
+        return subscriberCount(conversationId);
     }
 
-    public void unsubscribe(String conversationId, String sessionId) {
+    public int unsubscribe(String conversationId, String sessionId) {
         Set<String> sessions = sessionsByConversationId.get(conversationId);
 
         if (sessions != null) {
@@ -42,12 +45,14 @@ public class ConversationSubscriptionRegistry {
                 conversationsBySessionId.remove(sessionId);
             }
         }
+
+        return subscriberCount(conversationId);
     }
 
     public Set<String> removeSessionFromAllConversations(String sessionId) {
         Set<String> conversations = conversationsBySessionId.remove(sessionId);
 
-        if (conversations == null) {
+        if (conversations == null || conversations.isEmpty()) {
             return Set.of();
         }
 
@@ -69,7 +74,23 @@ public class ConversationSubscriptionRegistry {
     }
 
     public Set<String> getSubscribedSessions(String conversationId) {
-        return sessionsByConversationId.getOrDefault(conversationId, Set.of());
+        Set<String> sessions = sessionsByConversationId.get(conversationId);
+
+        if (sessions == null || sessions.isEmpty()) {
+            return Set.of();
+        }
+
+        return new HashSet<>(sessions);
+    }
+
+    public Set<String> getSubscribedConversations(String sessionId) {
+        Set<String> conversations = conversationsBySessionId.get(sessionId);
+
+        if (conversations == null || conversations.isEmpty()) {
+            return Set.of();
+        }
+
+        return new HashSet<>(conversations);
     }
 
     public boolean isSubscribed(String conversationId, String sessionId) {
@@ -77,6 +98,12 @@ public class ConversationSubscriptionRegistry {
     }
 
     public int subscriberCount(String conversationId) {
-        return getSubscribedSessions(conversationId).size();
+        Set<String> sessions = sessionsByConversationId.get(conversationId);
+
+        if (sessions == null) {
+            return 0;
+        }
+
+        return sessions.size();
     }
 }

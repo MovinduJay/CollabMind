@@ -77,7 +77,7 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
             return;
         }
 
-        ConnectedClient client = connectionRegistry.register(session, userId);
+        ConnectedClient client = connectionRegistry.register(session, userId, token);
 
         ServerEvent connectedEvent = ServerEvent.of(
                 "CONNECTED",
@@ -239,3 +239,5 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
         return null;
     }
 }
+
+

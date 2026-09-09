@@ -33,8 +33,7 @@ public class RealtimeFanoutService {
         WebSocketSession session = client.session();
 
         if (!session.isOpen()) {
-            connectionRegistry.unregister(client.sessionId());
-            subscriptionRegistry.removeSessionFromAllConversations(client.sessionId());
+            cleanupClosedClient(client);
             return;
         }
 
@@ -49,8 +48,7 @@ public class RealtimeFanoutService {
         } catch (JsonProcessingException exception) {
             throw new IllegalStateException("Failed to serialize server event", exception);
         } catch (IOException exception) {
-            connectionRegistry.unregister(client.sessionId());
-            subscriptionRegistry.removeSessionFromAllConversations(client.sessionId());
+            cleanupClosedClient(client);
         }
     }
 
@@ -78,5 +76,28 @@ public class RealtimeFanoutService {
     public void broadcast(ServerEvent event) {
         connectionRegistry.getAllClients()
                 .forEach(client -> sendToClient(client, event));
+    }
+
+    private void cleanupClosedClient(ConnectedClient client) {
+        connectionRegistry.unregister(client.sessionId());
+
+        subscriptionRegistry
+                .removeSessionFromAllConversations(client.sessionId())
+                .forEach(conversationId -> sendToConversation(
+                        conversationId,
+                        ServerEvent.of(
+                                "PRESENCE_UPDATED",
+                                conversationId,
+                                presencePayload(conversationId)
+                        )
+                ));
+    }
+
+    private java.util.Map<String, Object> presencePayload(String conversationId) {
+        java.util.Map<String, Object> payload = new java.util.HashMap<>();
+        payload.put("conversationId", conversationId);
+        payload.put("subscriberCount", subscriptionRegistry.subscriberCount(conversationId));
+        payload.put("subscribedSessions", subscriptionRegistry.getSubscribedSessions(conversationId).size());
+        return payload;
     }
 }

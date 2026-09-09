@@ -7,14 +7,10 @@ import jakarta.validation.constraints.Size;
 import java.util.UUID;
 
 public record SendMessageRequest(
-        @NotNull(message = "Sender user ID is required")
-        UUID senderId,
+        @NotNull UUID clientMessageId,
 
-        @NotNull(message = "Client message ID is required")
-        UUID clientMessageId,
-
-        @NotBlank(message = "Message content is required")
-        @Size(max = 4000, message = "Message content must be less than 4000 characters")
+        @NotBlank
+        @Size(max = 4000)
         String content
 ) {
 }

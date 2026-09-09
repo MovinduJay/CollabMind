@@ -11,7 +11,10 @@ import java.util.UUID;
 
 public interface MessageRepository extends JpaRepository<Message, UUID> {
 
-    Optional<Message> findBySenderIdAndClientMessageId(UUID senderId, UUID clientMessageId);
+    Optional<Message> findBySenderIdAndClientMessageId(
+            UUID senderId,
+            UUID clientMessageId
+    );
 
     @Query("""
             select m
@@ -20,5 +23,20 @@ public interface MessageRepository extends JpaRepository<Message, UUID> {
               and m.sequenceNumber > :afterSequence
             order by m.sequenceNumber asc
             """)
-    List<Message> findMessagesAfter(UUID conversationId, long afterSequence, Pageable pageable);
+    List<Message> findMessagesAfter(
+            UUID conversationId,
+            long afterSequence,
+            Pageable pageable
+    );
+
+    @Query("""
+            select m
+            from Message m
+            where m.conversationId = :conversationId
+            order by m.sequenceNumber desc
+            """)
+    List<Message> findLatestMessages(
+            UUID conversationId,
+            Pageable pageable
+    );
 }

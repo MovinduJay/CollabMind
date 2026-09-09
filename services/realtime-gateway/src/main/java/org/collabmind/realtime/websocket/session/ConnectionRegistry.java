@@ -15,20 +15,22 @@ public class ConnectionRegistry {
 
     private final ConcurrentMap<String, ConnectedClient> clientsBySessionId = new ConcurrentHashMap<>();
 
-    public ConnectedClient register(WebSocketSession session, UUID userId) {
+    public ConnectedClient register(
+            WebSocketSession session,
+            UUID userId,
+            String jwtToken
+    ) {
         ConnectedClient client = new ConnectedClient(
                 session.getId(),
                 userId,
+                jwtToken,
                 session,
                 Instant.now()
         );
 
         clientsBySessionId.put(session.getId(), client);
-        return client;
-    }
 
-    public void unregister(String sessionId) {
-        clientsBySessionId.remove(sessionId);
+        return client;
     }
 
     public Optional<ConnectedClient> findBySessionId(String sessionId) {
@@ -37,6 +39,10 @@ public class ConnectionRegistry {
 
     public Collection<ConnectedClient> getAllClients() {
         return clientsBySessionId.values();
+    }
+
+    public void unregister(String sessionId) {
+        clientsBySessionId.remove(sessionId);
     }
 
     public int activeConnectionCount() {

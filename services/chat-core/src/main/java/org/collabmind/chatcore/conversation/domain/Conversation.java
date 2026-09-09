@@ -1,12 +1,19 @@
 package org.collabmind.chatcore.conversation.domain;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.Instant;
 import java.util.UUID;
 
 @Entity
-@Table(name = "conversations")
+@Table(
+        name = "conversations",
+        indexes = {
+                @Index(name = "idx_conversations_created_by_user_id", columnList = "created_by_user_id"),
+                @Index(name = "idx_conversations_created_at", columnList = "created_at")
+        }
+)
 public class Conversation {
 
     @Id
@@ -16,28 +23,28 @@ public class Conversation {
     @Column(nullable = false, length = 120)
     private String name;
 
-    @Column(nullable = false)
+    @Column(name = "created_by_user_id", nullable = false)
     private UUID createdByUserId;
 
-    @Column(nullable = false)
-    private long nextSequence;
+    @Column(name = "next_sequence", nullable = false)
+    private long nextSequence = 1;
 
-    @Column(nullable = false)
+    @CreationTimestamp
+    @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
     protected Conversation() {
     }
 
     public Conversation(String name, UUID createdByUserId) {
-        this.name = name;
+        this.name = name.trim();
         this.createdByUserId = createdByUserId;
-        this.nextSequence = 1L;
-        this.createdAt = Instant.now();
+        this.nextSequence = 1;
     }
 
     public long allocateNextSequence() {
-        long allocatedSequence = this.nextSequence;
-        this.nextSequence++;
+        long allocatedSequence = nextSequence;
+        nextSequence++;
         return allocatedSequence;
     }
 
