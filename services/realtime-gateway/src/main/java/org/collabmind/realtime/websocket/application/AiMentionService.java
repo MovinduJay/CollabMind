@@ -2,34 +2,56 @@ package org.collabmind.realtime.websocket.application;
 
 import org.springframework.stereotype.Service;
 
+import java.util.Map;
 import java.util.Optional;
 
 @Service
 public class AiMentionService {
 
-    public Optional<String> detectAgentType(String message) {
-        if (message == null || message.isBlank()) {
+    private static final Map<String, String> AGENT_MENTIONS = Map.of(
+            "@planner", "PLANNER",
+            "@critic", "CRITIC",
+            "@summarizer", "SUMMARIZER",
+            "@researcher", "RESEARCHER",
+            "@shopping", "SHOPPING"
+    );
+
+    public Optional<String> detectAgentType(String content) {
+        return findMentionedAgentType(content);
+    }
+
+    public Optional<String> findAgentType(String content) {
+        return findMentionedAgentType(content);
+    }
+
+    public Optional<String> extractAgentType(String content) {
+        return findMentionedAgentType(content);
+    }
+
+    public Optional<String> detectMentionedAgentType(String content) {
+        return findMentionedAgentType(content);
+    }
+
+    public Optional<String> extractMentionedAgentType(String content) {
+        return findMentionedAgentType(content);
+    }
+
+    public Optional<String> findMentionedAgentType(String content) {
+        if (content == null || content.isBlank()) {
             return Optional.empty();
         }
 
-        String normalizedMessage = message.toLowerCase();
+        String normalizedContent = content.toLowerCase();
 
-        if (normalizedMessage.contains("@planner")) {
-            return Optional.of("PLANNER");
-        }
+        return AGENT_MENTIONS
+                .entrySet()
+                .stream()
+                .filter(entry -> normalizedContent.contains(entry.getKey()))
+                .map(Map.Entry::getValue)
+                .findFirst();
+    }
 
-        if (normalizedMessage.contains("@critic")) {
-            return Optional.of("CRITIC");
-        }
-
-        if (normalizedMessage.contains("@summarizer")) {
-            return Optional.of("SUMMARIZER");
-        }
-
-        if (normalizedMessage.contains("@researcher")) {
-            return Optional.of("RESEARCHER");
-        }
-
-        return Optional.empty();
+    public boolean hasAiMention(String content) {
+        return findMentionedAgentType(content).isPresent();
     }
 }

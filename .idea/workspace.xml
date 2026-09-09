@@ -4,7 +4,15 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="64296f3a-d178-4690-a0c3-b0da2f7d7a57" name="Changes" comment="Update Read me file" />
+    <list default="true" id="64296f3a-d178-4690-a0c3-b0da2f7d7a57" name="Changes" comment="Update Read me file">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/services/ai-orchestrator/src/main/java/org/collabmind/ai/agent/domain/AgentType.java" beforeDir="false" afterPath="$PROJECT_DIR$/services/ai-orchestrator/src/main/java/org/collabmind/ai/agent/domain/AgentType.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/services/ai-orchestrator/src/main/java/org/collabmind/ai/provider/gemini/GeminiAiProvider.java" beforeDir="false" afterPath="$PROJECT_DIR$/services/ai-orchestrator/src/main/java/org/collabmind/ai/provider/gemini/GeminiAiProvider.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/services/ai-orchestrator/src/main/java/org/collabmind/ai/provider/mock/MockAiProvider.java" beforeDir="false" afterPath="$PROJECT_DIR$/services/ai-orchestrator/src/main/java/org/collabmind/ai/provider/mock/MockAiProvider.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/services/ai-orchestrator/target/classes/org/collabmind/ai/provider/gemini/GeminiAiProvider.class" beforeDir="false" afterPath="$PROJECT_DIR$/services/ai-orchestrator/target/classes/org/collabmind/ai/provider/gemini/GeminiAiProvider.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/services/realtime-gateway/src/main/java/org/collabmind/realtime/websocket/application/AiMentionService.java" beforeDir="false" afterPath="$PROJECT_DIR$/services/realtime-gateway/src/main/java/org/collabmind/realtime/websocket/application/AiMentionService.java" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -175,7 +183,7 @@
       <workItem from="1788722954521" duration="3450000" />
       <workItem from="1788726620887" duration="11257000" />
       <workItem from="1788890971952" duration="1339000" />
-      <workItem from="1788924888558" duration="2358000" />
+      <workItem from="1788924888558" duration="2981000" />
     </task>
     <task id="LOCAL-00001" summary="Updates">
       <option name="closed" value="true" />

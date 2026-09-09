@@ -1,11 +1,20 @@
 package org.collabmind.ai.provider.mock;
 
-import org.collabmind.ai.agent.web.AiPromptRequest;
 import org.collabmind.ai.provider.application.AiProvider;
+import org.collabmind.ai.agent.web.AiPromptRequest;
+import org.collabmind.ai.tool.application.AiToolService;
+import org.collabmind.ai.tool.application.ToolCallRequest;
+import org.collabmind.ai.tool.application.ToolCallResponse;
 import org.springframework.stereotype.Component;
 
 @Component
 public class MockAiProvider implements AiProvider {
+
+    private final AiToolService aiToolService;
+
+    public MockAiProvider(AiToolService aiToolService) {
+        this.aiToolService = aiToolService;
+    }
 
     @Override
     public String providerName() {
@@ -17,72 +26,196 @@ public class MockAiProvider implements AiProvider {
             AiPromptRequest request,
             String contextSummary
     ) {
-        return switch (request.agentType()) {
-            case PLANNER -> generatePlannerResponse(request.message(), contextSummary);
-            case CRITIC -> generateCriticResponse(request.message(), contextSummary);
-            case SUMMARIZER -> generateSummarizerResponse(request.message(), contextSummary);
-            case RESEARCHER -> generateResearcherResponse(request.message(), contextSummary);
+        String agentType = normalizeAgentType(request.agentType() == null ? null : request.agentType().name());
+
+        return switch (agentType) {
+            case "PLANNER" -> plannerResponse(request, contextSummary);
+            case "CRITIC" -> criticResponse(request, contextSummary);
+            case "SUMMARIZER" -> summarizerResponse(request, contextSummary);
+            case "RESEARCHER" -> researcherResponse(request, contextSummary);
+            case "SHOPPING" -> shoppingResponse(request, contextSummary);
+            default -> defaultResponse(request, contextSummary);
         };
     }
 
-    private String generatePlannerResponse(String message, String contextSummary) {
+    private String plannerResponse(
+            AiPromptRequest request,
+            String contextSummary
+    ) {
         return """
-                I reviewed the recent conversation context before planning.
-                
-                %s
-                
                 Planner response:
-                1. Identify the main goal from the discussion.
-                2. Break the goal into small implementation tasks.
-                3. Prioritize tasks by dependency and risk.
-                4. Complete the next smallest useful feature first.
-                
-                Trigger message: "%s"
-                """.formatted(contextSummary, message);
+
+                Based on your message:
+                %s
+
+                Suggested next tasks:
+                1. Clarify the exact goal and expected output.
+                2. Break the work into small backend milestones.
+                3. Implement one testable feature and verify it end-to-end.
+
+                Context considered:
+                %s
+                """.formatted(
+                request.message(),
+                safeContext(contextSummary)
+        );
     }
 
-    private String generateCriticResponse(String message, String contextSummary) {
+    private String criticResponse(
+            AiPromptRequest request,
+            String contextSummary
+    ) {
         return """
-                I reviewed the recent conversation context before critiquing.
-                
-                %s
-                
                 Critic response:
-                1. Check whether the current idea is becoming too complex.
-                2. Identify the riskiest assumption.
-                3. Look for missing validation.
-                4. Reduce scope if the feature does not improve the core user flow.
-                
-                Trigger message: "%s"
-                """.formatted(contextSummary, message);
+
+                Main risks:
+                1. The feature may be too broad without a clear boundary.
+                2. Error handling and retry behaviour need to be explicit.
+                3. Testing should cover both success and failure paths.
+
+                Message reviewed:
+                %s
+
+                Context considered:
+                %s
+                """.formatted(
+                request.message(),
+                safeContext(contextSummary)
+        );
     }
 
-    private String generateSummarizerResponse(String message, String contextSummary) {
+    private String summarizerResponse(
+            AiPromptRequest request,
+            String contextSummary
+    ) {
         return """
-                I reviewed the recent conversation context before summarizing.
-                
-                %s
-                
                 Summary response:
-                The discussion should be converted into key decisions, open questions, and next actions.
-                
-                Trigger message: "%s"
-                """.formatted(contextSummary, message);
+
+                The current discussion is about:
+                %s
+
+                Key context:
+                %s
+                """.formatted(
+                request.message(),
+                safeContext(contextSummary)
+        );
     }
 
-    private String generateResearcherResponse(String message, String contextSummary) {
+    private String researcherResponse(
+            AiPromptRequest request,
+            String contextSummary
+    ) {
         return """
-                I reviewed the recent conversation context before suggesting research.
-                
-                %s
-                
                 Researcher response:
-                1. Find similar products or systems.
-                2. Compare the target users and use cases.
-                3. Validate demand before building too much.
-                4. Collect evidence for the next technical decision.
-                
-                Trigger message: "%s"
-                """.formatted(contextSummary, message);
+
+                Research direction:
+                1. Identify the core technical question.
+                2. Compare existing approaches.
+                3. Extract implementation constraints.
+                4. Recommend the smallest useful experiment.
+
+                User message:
+                %s
+
+                Context considered:
+                %s
+                """.formatted(
+                request.message(),
+                safeContext(contextSummary)
+        );
+    }
+
+    private String shoppingResponse(
+            AiPromptRequest request,
+            String contextSummary
+    ) {
+        ToolCallResponse toolResponse = aiToolService.invoke(
+                new ToolCallRequest(
+                        request.conversationId(),
+                        request.userId(),
+                        "shopping.search",
+                        request.message(),
+                        contextSummary
+                )
+        );
+
+        if (!toolResponse.success()) {
+            return """
+                    Shopping agent response:
+
+                    I tried to call the shopping tool, but it failed.
+
+                    Tool:
+                    %s
+
+                    Error:
+                    %s
+                    """.formatted(
+                    toolResponse.toolName(),
+                    toolResponse.errorMessage()
+            );
+        }
+
+        return """
+                Shopping agent response:
+
+                I used the shopping tool provider to understand the request.
+
+                Tool:
+                %s
+
+                Tool latency:
+                %d ms
+
+                Tool result:
+                %s
+
+                Final recommendation:
+                Start with option 1 if you want the safest gift. Pick option 2 if the person studies or works at a desk often. Pick option 3 if you want a simple lifestyle gift.
+                """.formatted(
+                toolResponse.toolName(),
+                toolResponse.latencyMs(),
+                toolResponse.result()
+        );
+    }
+
+    private String defaultResponse(
+            AiPromptRequest request,
+            String contextSummary
+    ) {
+        return """
+                Mock AI response:
+
+                Agent:
+                %s
+
+                Message:
+                %s
+
+                Context considered:
+                %s
+                """.formatted(
+                request.agentType(),
+                request.message(),
+                safeContext(contextSummary)
+        );
+    }
+
+    private String normalizeAgentType(String agentType) {
+        if (agentType == null || agentType.isBlank()) {
+            return "UNKNOWN";
+        }
+
+        return agentType.trim().toUpperCase();
+    }
+
+    private String safeContext(String contextSummary) {
+        if (contextSummary == null || contextSummary.isBlank()) {
+            return "No previous context.";
+        }
+
+        return contextSummary;
     }
 }
+
