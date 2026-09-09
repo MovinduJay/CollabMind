@@ -1,9 +1,12 @@
 package org.collabmind.toolmcp.shopping;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import org.collabmind.toolmcp.audit.ToolAuditService;
 import org.collabmind.toolmcp.github.GitHubToolService;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 
@@ -13,13 +16,16 @@ public class McpToolController {
 
     private final ShoppingSearchService shoppingSearchService;
     private final GitHubToolService gitHubToolService;
+    private final ToolAuditService toolAuditService;
 
     public McpToolController(
             ShoppingSearchService shoppingSearchService,
-            GitHubToolService gitHubToolService
+            GitHubToolService gitHubToolService,
+            ToolAuditService toolAuditService
     ) {
         this.shoppingSearchService = shoppingSearchService;
         this.gitHubToolService = gitHubToolService;
+        this.toolAuditService = toolAuditService;
     }
 
     @PostMapping
@@ -65,35 +71,75 @@ public class McpToolController {
             String id,
             JsonNode params
     ) {
+        Instant startedAt = Instant.now();
+
         String toolName = params.path("name").asText();
         JsonNode arguments = params.path("arguments");
 
         String userMessage = arguments.path("userMessage").asText("");
         String contextSummary = arguments.path("contextSummary").asText("");
 
-        String result = switch (toolName) {
-            case "shopping.search" -> shoppingSearchService.search(userMessage, contextSummary);
-            case "github.repo_summary" -> gitHubToolService.repoSummary(userMessage, contextSummary);
-            case "github.search_issues" -> gitHubToolService.searchIssues(userMessage, contextSummary);
-            default -> null;
-        };
+        try {
+            String result = switch (toolName) {
+                case "shopping.search" -> shoppingSearchService.search(userMessage, contextSummary);
+                case "github.repo_summary" -> gitHubToolService.repoSummary(userMessage, contextSummary);
+                case "github.search_issues" -> gitHubToolService.searchIssues(userMessage, contextSummary);
+                default -> null;
+            };
 
-        if (result == null) {
-            return errorResponse(id, -32602, "Unsupported tool: " + toolName);
+            long latencyMs = elapsedMs(startedAt);
+
+            if (result == null) {
+                String errorMessage = "Unsupported tool: " + toolName;
+
+                toolAuditService.recordFailure(
+                        id,
+                        "tools/call",
+                        toolName,
+                        errorMessage,
+                        latencyMs
+                );
+
+                return errorResponse(id, -32602, errorMessage);
+            }
+
+            toolAuditService.recordSuccess(
+                    id,
+                    "tools/call",
+                    toolName,
+                    latencyMs
+            );
+
+            return Map.of(
+                    "jsonrpc", "2.0",
+                    "id", id,
+                    "result", Map.of(
+                            "content", List.of(
+                                    Map.of(
+                                            "type", "text",
+                                            "text", result
+                                    )
+                            )
+                    )
+            );
+
+        } catch (Exception exception) {
+            long latencyMs = elapsedMs(startedAt);
+
+            toolAuditService.recordFailure(
+                    id,
+                    "tools/call",
+                    toolName,
+                    exception.getMessage(),
+                    latencyMs
+            );
+
+            return errorResponse(
+                    id,
+                    -32603,
+                    "Tool execution failed: " + exception.getMessage()
+            );
         }
-
-        return Map.of(
-                "jsonrpc", "2.0",
-                "id", id,
-                "result", Map.of(
-                        "content", List.of(
-                                Map.of(
-                                        "type", "text",
-                                        "text", result
-                                )
-                        )
-                )
-        );
     }
 
     private Map<String, Object> shoppingToolDefinition() {
@@ -172,5 +218,9 @@ public class McpToolController {
                         "message", message
                 )
         );
+    }
+
+    private long elapsedMs(Instant startedAt) {
+        return Duration.between(startedAt, Instant.now()).toMillis();
     }
 }

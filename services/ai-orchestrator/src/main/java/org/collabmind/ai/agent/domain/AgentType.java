@@ -5,7 +5,6 @@ public enum AgentType {
     CRITIC,
     SUMMARIZER,
     RESEARCHER,
-    SHOPPING
+    SHOPPING,
+    GITHUB
 }
-
-
