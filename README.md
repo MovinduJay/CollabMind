@@ -37,6 +37,7 @@ This project is built to demonstrate production-style backend engineering: micro
 | chat-core | 8081 | Conversations, memberships, message persistence, message history |
 | ai-orchestrator | 8084 | AI provider strategy, agent responses, audit logs |
 | realtime-gateway | 8083 | WebSocket auth, subscriptions, presence, fan-out, AI flow orchestration |
+| tool-mcp-server | 8085 | MCP-style tool bridge for external tool calls |
 
 ---
 
@@ -207,3 +208,39 @@ Most junior portfolio chat projects only show basic CRUD. CollabMind is designed
 ## Current Status
 
 The backend is functional locally with automated smoke tests. The current focus is backend architecture and production-style engineering rather than UI polish.
+
+---
+
+## MCP-Ready Tool Architecture
+
+CollabMind includes an MCP-ready tool abstraction inside `ai-orchestrator`.
+
+Current supported tool-style agent:
+
+```text
+@shopping
+```
+
+Example:
+
+```text
+@shopping find me a birthday gift under Rs. 10,000
+```
+
+Current flow:
+
+```text
+realtime-gateway
+? ai-orchestrator
+? AiToolService
+? MockShoppingToolProvider
+```
+
+The mock provider can later be replaced with a real MCP provider without changing the WebSocket or chat persistence flow.
+
+More details:
+
+```text
+docs/MCP_INTEGRATION.md
+```
+

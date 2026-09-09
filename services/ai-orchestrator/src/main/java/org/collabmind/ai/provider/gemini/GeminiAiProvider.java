@@ -95,7 +95,16 @@ public class GeminiAiProvider implements AiProvider {
             case PLANNER -> "Break the discussion into practical tasks, priorities, and next steps.";
             case CRITIC -> "Challenge assumptions, identify risks, and suggest what to validate.";
             case SUMMARIZER -> "Summarize the discussion into decisions, key points, and action items.";
+            case SHOPPING -> "You are a shopping assistant. Use tools when needed and give practical product recommendations.";
             case RESEARCHER -> "Suggest research directions, comparisons, evidence to collect, and validation steps.";
+
+            case GITHUB -> """
+            You are the GitHub agent in CollabMind.
+            Use the available GitHub tool result when it is provided in the prompt.
+            Summarize repositories, issues, bugs, pull requests, or developer activity clearly.
+            Focus on engineering-relevant insights and next actions.
+            """;
         };
     }
 }
+

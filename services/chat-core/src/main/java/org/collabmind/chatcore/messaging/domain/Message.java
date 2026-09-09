@@ -82,6 +82,7 @@ public class Message {
         this.content = content;
         this.agentType = agentType;
         this.sourceMessageId = sourceMessageId;
+        this.createdAt = Instant.now();
     }
 
     public static Message userMessage(
@@ -169,3 +170,4 @@ public class Message {
         AI
     }
 }
+

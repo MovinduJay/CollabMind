@@ -102,6 +102,7 @@ Assert-Health "identity-service" "$baseIdentity/actuator/health"
 Assert-Health "chat-core" "$baseChat/actuator/health"
 Assert-Health "ai-orchestrator" "http://localhost:8084/actuator/health"
 Assert-Health "realtime-gateway" "http://localhost:8083/actuator/health"
+Assert-Health "tool-mcp-server" "http://localhost:8085/actuator/health"
 
 Write-Host ""
 Write-Host "Registering two users..."
@@ -173,13 +174,17 @@ Send-WebSocketJson $socket @{
     conversationId = $conversation.id
     payload = @{
         clientMessageId = (New-Guid).ToString()
-        content = "@planner give me 3 next tasks only"
+        content = "@shopping find me a birthday gift under Rs. 10,000"
     }
 }
 
 Wait-ForEvent $socket "MESSAGE_CREATED" 10 | Out-Null
 Wait-ForEvent $socket "AI_STAGE_UPDATED" 10 | Out-Null
-Wait-ForEvent $socket "AI_MESSAGE_CREATED" 30 | Out-Null
+$aiMessageCreated = Wait-ForEvent $socket "AI_MESSAGE_CREATED" 30
+
+if ($aiMessageCreated.payload.message.content -notmatch "MCP tool bridge: shopping.search") {
+    throw "Expected AI message to include MCP shopping bridge result"
+}
 
 $socket.CloseAsync(
     [System.Net.WebSockets.WebSocketCloseStatus]::NormalClosure,
@@ -189,4 +194,5 @@ $socket.CloseAsync(
 
 Write-Host ""
 Write-Host "E2E realtime AI test passed."
+
 

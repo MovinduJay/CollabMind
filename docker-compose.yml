@@ -1,56 +1,183 @@
-services:
-  postgres-chat-core:
-    image: postgres:16
-    container_name: collabmind-postgres-chat-core
-    environment:
-      POSTGRES_DB: collabmind_chat
-      POSTGRES_USER: collabmind
-      POSTGRES_PASSWORD: collabmind_dev_password
-    ports:
-      - "5433:5432"
-    volumes:
-      - postgres_chat_core_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U collabmind -d collabmind_chat"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+name: collabmind
 
+services:
   postgres-identity:
     image: postgres:16
     container_name: collabmind-postgres-identity
     environment:
       POSTGRES_DB: collabmind_identity
-      POSTGRES_USER: collabmind
-      POSTGRES_PASSWORD: collabmind_dev_password
+      POSTGRES_USER: ${POSTGRES_USER:-collabmind}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-collabmind_dev_password}
     ports:
       - "5434:5432"
     volumes:
       - postgres_identity_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U collabmind -d collabmind_identity"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-collabmind} -d collabmind_identity"]
       interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 10
+
+  postgres-chat-core:
+    image: postgres:16
+    container_name: collabmind-postgres-chat-core
+    environment:
+      POSTGRES_DB: collabmind_chat
+      POSTGRES_USER: ${POSTGRES_USER:-collabmind}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-collabmind_dev_password}
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_chat_core_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-collabmind} -d collabmind_chat"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
 
   postgres-ai-orchestrator:
     image: postgres:16
     container_name: collabmind-postgres-ai-orchestrator
     environment:
       POSTGRES_DB: collabmind_ai
-      POSTGRES_USER: collabmind
-      POSTGRES_PASSWORD: collabmind_dev_password
+      POSTGRES_USER: ${POSTGRES_USER:-collabmind}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-collabmind_dev_password}
     ports:
       - "5435:5432"
     volumes:
       - postgres_ai_orchestrator_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U collabmind -d collabmind_ai"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-collabmind} -d collabmind_ai"]
       interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 10
+
+  identity-service:
+    container_name: collabmind-identity-service
+    build:
+      context: .
+      dockerfile: Dockerfile.service
+      args:
+        SERVICE_PATH: services/identity-service
+        JAVA_VERSION: 23
+    environment:
+      SERVER_PORT: 8082
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-identity:5432/collabmind_identity
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-collabmind}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-collabmind_dev_password}
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_FLYWAY_ENABLED: "false"
+      SPRING_JPA_SHOW_SQL: "false"
+      APP_JWT_SECRET: ${APP_JWT_SECRET:-collabmind-development-secret-key-change-this-later-123456789}
+      APP_JWT_EXPIRATION_MINUTES: 1440
+    ports:
+      - "8082:8082"
+    depends_on:
+      postgres-identity:
+        condition: service_healthy
+
+  chat-core:
+    container_name: collabmind-chat-core
+    build:
+      context: .
+      dockerfile: Dockerfile.service
+      args:
+        SERVICE_PATH: services/chat-core
+        JAVA_VERSION: 23
+    environment:
+      SERVER_PORT: 8081
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-chat-core:5432/collabmind_chat
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-collabmind}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-collabmind_dev_password}
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_FLYWAY_ENABLED: "false"
+      SPRING_JPA_SHOW_SQL: "false"
+      APP_JWT_SECRET: ${APP_JWT_SECRET:-collabmind-development-secret-key-change-this-later-123456789}
+    ports:
+      - "8081:8081"
+    depends_on:
+      postgres-chat-core:
+        condition: service_healthy
+      identity-service:
+        condition: service_started
+
+  ai-orchestrator:
+    container_name: collabmind-ai-orchestrator
+    build:
+      context: .
+      dockerfile: Dockerfile.service
+      args:
+        SERVICE_PATH: services/ai-orchestrator
+        JAVA_VERSION: 23
+    environment:
+      SERVER_PORT: 8084
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-ai-orchestrator:5432/collabmind_ai
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-collabmind}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-collabmind_dev_password}
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_FLYWAY_ENABLED: "false"
+      SPRING_JPA_SHOW_SQL: "false"
+      COLLABMIND_AI_PROVIDER: mock
+      COLLABMIND_AI_FALLBACK_PROVIDER: mock
+      COLLABMIND_AI_FALLBACK_ENABLED: "true"
+      COLLABMIND_TOOLS_SHOPPING_PROVIDER: mcp
+      COLLABMIND_TOOLS_MCP_SHOPPING_BASE_URL: http://tool-mcp-server:8085
+      COLLABMIND_TOOLS_GITHUB_PROVIDER: mcp
+      COLLABMIND_TOOLS_MCP_GITHUB_BASE_URL: http://tool-mcp-server:8085
+      COLLABMIND_TOOLS_SHOPPING_PROVIDER: mcp
+      COLLABMIND_TOOLS_MCP_SHOPPING_BASE_URL: http://tool-mcp-server:8085
+      COLLABMIND_TOOLS_GITHUB_PROVIDER: mcp
+      COLLABMIND_TOOLS_MCP_GITHUB_BASE_URL: http://tool-mcp-server:8085
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+    ports:
+      - "8084:8084"
+    depends_on:
+      postgres-ai-orchestrator:
+        condition: service_healthy
+      tool-mcp-server:
+        condition: service_started
+      tool-mcp-server:
+        condition: service_started
+
+  tool-mcp-server:
+    container_name: collabmind-tool-mcp-server
+    build:
+      context: .
+      dockerfile: Dockerfile.service
+      args:
+        SERVICE_PATH: services/tool-mcp-server
+        JAVA_VERSION: 23
+    environment:
+      SERVER_PORT: 8085
+      COLLABMIND_GITHUB_TOKEN: ${GITHUB_TOKEN:-}
+    ports:
+      - "8085:8085"
+
+  realtime-gateway:
+    container_name: collabmind-realtime-gateway
+    build:
+      context: .
+      dockerfile: Dockerfile.service
+      args:
+        SERVICE_PATH: services/realtime-gateway
+        JAVA_VERSION: 23
+    environment:
+      SERVER_PORT: 8083
+      COLLABMIND_CHAT_CORE_BASE_URL: http://chat-core:8081
+      COLLABMIND_AI_ORCHESTRATOR_BASE_URL: http://ai-orchestrator:8084
+      APP_JWT_SECRET: ${APP_JWT_SECRET:-collabmind-development-secret-key-change-this-later-123456789}
+    ports:
+      - "8083:8083"
+    depends_on:
+      chat-core:
+        condition: service_started
+      ai-orchestrator:
+        condition: service_started
 
 volumes:
-  postgres_chat_core_data:
   postgres_identity_data:
+  postgres_chat_core_data:
   postgres_ai_orchestrator_data:
+
+
+
