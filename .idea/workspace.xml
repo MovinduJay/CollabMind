@@ -62,7 +62,7 @@
     "Spring Boot.IdentityServiceApplication.executor": "Run",
     "Spring Boot.RealtimeGatewayApplication.executor": "Run",
     "Spring Boot.ToolMcpServerApplication.executor": "Run",
-    "git-widget-placeholder": "ai-orchestrator",
+    "git-widget-placeholder": "web-frontend",
     "kotlin-language-version-configured": "true",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
@@ -184,7 +184,7 @@
       <workItem from="1788722954521" duration="3450000" />
       <workItem from="1788726620887" duration="11257000" />
       <workItem from="1788890971952" duration="1339000" />
-      <workItem from="1788924888558" duration="9284000" />
+      <workItem from="1788924888558" duration="9936000" />
     </task>
     <task id="LOCAL-00001" summary="Updates">
       <option name="closed" value="true" />
