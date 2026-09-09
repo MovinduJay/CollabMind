@@ -4,7 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="64296f3a-d178-4690-a0c3-b0da2f7d7a57" name="Changes" comment="Update application properties" />
+    <list default="true" id="64296f3a-d178-4690-a0c3-b0da2f7d7a57" name="Changes" comment="Add flyway baseline migrations" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -174,7 +174,7 @@
       <workItem from="1788671168255" duration="1635000" />
       <workItem from="1788722954521" duration="3450000" />
       <workItem from="1788726620887" duration="11257000" />
-      <workItem from="1788890971952" duration="1045000" />
+      <workItem from="1788890971952" duration="1339000" />
     </task>
     <task id="LOCAL-00001" summary="Updates">
       <option name="closed" value="true" />
@@ -192,7 +192,15 @@
       <option name="project" value="LOCAL" />
       <updated>1788891880251</updated>
     </task>
-    <option name="localTasksCounter" value="3" />
+    <task id="LOCAL-00003" summary="Add flyway baseline migrations">
+      <option name="closed" value="true" />
+      <created>1788892191632</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1788892191637</updated>
+    </task>
+    <option name="localTasksCounter" value="4" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -216,6 +224,7 @@
   <component name="VcsManagerConfiguration">
     <MESSAGE value="Updates" />
     <MESSAGE value="Update application properties" />
-    <option name="LAST_COMMIT_MESSAGE" value="Update application properties" />
+    <MESSAGE value="Add flyway baseline migrations" />
+    <option name="LAST_COMMIT_MESSAGE" value="Add flyway baseline migrations" />
   </component>
 </project>
