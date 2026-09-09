@@ -122,8 +122,12 @@ services:
       COLLABMIND_AI_FALLBACK_ENABLED: "true"
       COLLABMIND_TOOLS_SHOPPING_PROVIDER: mcp
       COLLABMIND_TOOLS_MCP_SHOPPING_BASE_URL: http://tool-mcp-server:8085
+      COLLABMIND_TOOLS_GITHUB_PROVIDER: mcp
+      COLLABMIND_TOOLS_MCP_GITHUB_BASE_URL: http://tool-mcp-server:8085
       COLLABMIND_TOOLS_SHOPPING_PROVIDER: mcp
       COLLABMIND_TOOLS_MCP_SHOPPING_BASE_URL: http://tool-mcp-server:8085
+      COLLABMIND_TOOLS_GITHUB_PROVIDER: mcp
+      COLLABMIND_TOOLS_MCP_GITHUB_BASE_URL: http://tool-mcp-server:8085
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
     ports:
       - "8084:8084"
@@ -145,6 +149,7 @@ services:
         JAVA_VERSION: 23
     environment:
       SERVER_PORT: 8085
+      COLLABMIND_GITHUB_TOKEN: ${GITHUB_TOKEN:-}
     ports:
       - "8085:8085"
 
@@ -173,5 +178,6 @@ volumes:
   postgres_identity_data:
   postgres_chat_core_data:
   postgres_ai_orchestrator_data:
+
 
 

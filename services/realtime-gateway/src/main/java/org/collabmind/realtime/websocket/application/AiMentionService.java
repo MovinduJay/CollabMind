@@ -13,7 +13,8 @@ public class AiMentionService {
             "@critic", "CRITIC",
             "@summarizer", "SUMMARIZER",
             "@researcher", "RESEARCHER",
-            "@shopping", "SHOPPING"
+            "@shopping", "SHOPPING",
+            "@github", "GITHUB"
     );
 
     public Optional<String> detectAgentType(String content) {

@@ -1,6 +1,7 @@
 package org.collabmind.toolmcp.shopping;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import org.collabmind.toolmcp.github.GitHubToolService;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -11,9 +12,14 @@ import java.util.Map;
 public class McpToolController {
 
     private final ShoppingSearchService shoppingSearchService;
+    private final GitHubToolService gitHubToolService;
 
-    public McpToolController(ShoppingSearchService shoppingSearchService) {
+    public McpToolController(
+            ShoppingSearchService shoppingSearchService,
+            GitHubToolService gitHubToolService
+    ) {
         this.shoppingSearchService = shoppingSearchService;
+        this.gitHubToolService = gitHubToolService;
     }
 
     @PostMapping
@@ -32,7 +38,11 @@ public class McpToolController {
     public Map<String, Object> tools() {
         return Map.of(
                 "tools",
-                List.of(shoppingToolDefinition())
+                List.of(
+                        shoppingToolDefinition(),
+                        githubRepoSummaryToolDefinition(),
+                        githubSearchIssuesToolDefinition()
+                )
         );
     }
 
@@ -41,7 +51,12 @@ public class McpToolController {
                 "jsonrpc", "2.0",
                 "id", id,
                 "result", Map.of(
-                        "tools", List.of(shoppingToolDefinition())
+                        "tools",
+                        List.of(
+                                shoppingToolDefinition(),
+                                githubRepoSummaryToolDefinition(),
+                                githubSearchIssuesToolDefinition()
+                        )
                 )
         );
     }
@@ -53,17 +68,19 @@ public class McpToolController {
         String toolName = params.path("name").asText();
         JsonNode arguments = params.path("arguments");
 
-        if (!"shopping.search".equalsIgnoreCase(toolName)) {
-            return errorResponse(id, -32602, "Unsupported tool: " + toolName);
-        }
-
         String userMessage = arguments.path("userMessage").asText("");
         String contextSummary = arguments.path("contextSummary").asText("");
 
-        String result = shoppingSearchService.search(
-                userMessage,
-                contextSummary
-        );
+        String result = switch (toolName) {
+            case "shopping.search" -> shoppingSearchService.search(userMessage, contextSummary);
+            case "github.repo_summary" -> gitHubToolService.repoSummary(userMessage, contextSummary);
+            case "github.search_issues" -> gitHubToolService.searchIssues(userMessage, contextSummary);
+            default -> null;
+        };
+
+        if (result == null) {
+            return errorResponse(id, -32602, "Unsupported tool: " + toolName);
+        }
 
         return Map.of(
                 "jsonrpc", "2.0",
@@ -89,6 +106,48 @@ public class McpToolController {
                                 "userMessage", Map.of(
                                         "type", "string",
                                         "description", "The user's shopping request."
+                                ),
+                                "contextSummary", Map.of(
+                                        "type", "string",
+                                        "description", "Recent conversation context."
+                                )
+                        ),
+                        "required", List.of("userMessage")
+                )
+        );
+    }
+
+    private Map<String, Object> githubRepoSummaryToolDefinition() {
+        return Map.of(
+                "name", "github.repo_summary",
+                "description", "Summarizes a public GitHub repository using the GitHub API.",
+                "inputSchema", Map.of(
+                        "type", "object",
+                        "properties", Map.of(
+                                "userMessage", Map.of(
+                                        "type", "string",
+                                        "description", "Message containing a repository slug such as owner/repo."
+                                ),
+                                "contextSummary", Map.of(
+                                        "type", "string",
+                                        "description", "Recent conversation context."
+                                )
+                        ),
+                        "required", List.of("userMessage")
+                )
+        );
+    }
+
+    private Map<String, Object> githubSearchIssuesToolDefinition() {
+        return Map.of(
+                "name", "github.search_issues",
+                "description", "Searches public GitHub issues for a repository.",
+                "inputSchema", Map.of(
+                        "type", "object",
+                        "properties", Map.of(
+                                "userMessage", Map.of(
+                                        "type", "string",
+                                        "description", "Message containing a repository slug and issue search query."
                                 ),
                                 "contextSummary", Map.of(
                                         "type", "string",

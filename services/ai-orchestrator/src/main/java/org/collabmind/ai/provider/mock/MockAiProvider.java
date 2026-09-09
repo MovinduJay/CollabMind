@@ -34,6 +34,7 @@ public class MockAiProvider implements AiProvider {
             case "SUMMARIZER" -> summarizerResponse(request, contextSummary);
             case "RESEARCHER" -> researcherResponse(request, contextSummary);
             case "SHOPPING" -> shoppingResponse(request, contextSummary);
+            case "GITHUB" -> githubResponse(request, contextSummary);
             default -> defaultResponse(request, contextSummary);
         };
     }
@@ -180,6 +181,64 @@ public class MockAiProvider implements AiProvider {
         );
     }
 
+    private String githubResponse(
+            AiPromptRequest request,
+            String contextSummary
+    ) {
+        String message = request.message() == null
+                ? ""
+                : request.message().toLowerCase();
+
+        String toolName = message.contains("issue") || message.contains("bug")
+                ? "github.search_issues"
+                : "github.repo_summary";
+
+        ToolCallResponse toolResponse = aiToolService.invoke(
+                new ToolCallRequest(
+                        request.conversationId(),
+                        request.userId(),
+                        toolName,
+                        request.message(),
+                        contextSummary
+                )
+        );
+
+        if (!toolResponse.success()) {
+            return """
+                    GitHub agent response:
+
+                    I tried to call the GitHub tool, but it failed.
+
+                    Tool:
+                    %s
+
+                    Error:
+                    %s
+                    """.formatted(
+                    toolResponse.toolName(),
+                    toolResponse.errorMessage()
+            );
+        }
+
+        return """
+                GitHub agent response:
+
+                I used the GitHub MCP tool bridge to inspect the repository.
+
+                Tool:
+                %s
+
+                Tool latency:
+                %d ms
+
+                Tool result:
+                %s
+                """.formatted(
+                toolResponse.toolName(),
+                toolResponse.latencyMs(),
+                toolResponse.result()
+        );
+    }
     private String defaultResponse(
             AiPromptRequest request,
             String contextSummary
@@ -218,4 +277,5 @@ public class MockAiProvider implements AiProvider {
         return contextSummary;
     }
 }
+
 
