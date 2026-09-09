@@ -1,11 +1,17 @@
 package org.collabmind.ai.tool.application;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 import java.time.Duration;
 import java.time.Instant;
 
 @Component
+@ConditionalOnProperty(
+        name = "collabmind.tools.shopping.provider",
+        havingValue = "mock",
+        matchIfMissing = true
+)
 public class MockShoppingToolProvider implements AiToolProvider {
 
     private static final String TOOL_NAME = "shopping.search";
@@ -72,3 +78,4 @@ public class MockShoppingToolProvider implements AiToolProvider {
         );
     }
 }
+

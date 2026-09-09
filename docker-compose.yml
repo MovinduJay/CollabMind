@@ -120,12 +120,33 @@ services:
       COLLABMIND_AI_PROVIDER: mock
       COLLABMIND_AI_FALLBACK_PROVIDER: mock
       COLLABMIND_AI_FALLBACK_ENABLED: "true"
+      COLLABMIND_TOOLS_SHOPPING_PROVIDER: mcp
+      COLLABMIND_TOOLS_MCP_SHOPPING_BASE_URL: http://tool-mcp-server:8085
+      COLLABMIND_TOOLS_SHOPPING_PROVIDER: mcp
+      COLLABMIND_TOOLS_MCP_SHOPPING_BASE_URL: http://tool-mcp-server:8085
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
     ports:
       - "8084:8084"
     depends_on:
       postgres-ai-orchestrator:
         condition: service_healthy
+      tool-mcp-server:
+        condition: service_started
+      tool-mcp-server:
+        condition: service_started
+
+  tool-mcp-server:
+    container_name: collabmind-tool-mcp-server
+    build:
+      context: .
+      dockerfile: Dockerfile.service
+      args:
+        SERVICE_PATH: services/tool-mcp-server
+        JAVA_VERSION: 23
+    environment:
+      SERVER_PORT: 8085
+    ports:
+      - "8085:8085"
 
   realtime-gateway:
     container_name: collabmind-realtime-gateway
@@ -152,3 +173,5 @@ volumes:
   postgres_identity_data:
   postgres_chat_core_data:
   postgres_ai_orchestrator_data:
+
+

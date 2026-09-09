@@ -22,6 +22,7 @@ jobs:
           - chat-core
           - ai-orchestrator
           - realtime-gateway
+          - tool-mcp-server
 
     steps:
       - name: Checkout repository
@@ -37,3 +38,4 @@ jobs:
       - name: Build ${{ matrix.service }}
         working-directory: services/${{ matrix.service }}
         run: mvn -B clean package
+

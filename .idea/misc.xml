@@ -7,6 +7,7 @@
         <option value="$PROJECT_DIR$/services/chat-core/pom.xml" />
         <option value="$PROJECT_DIR$/services/identity-service/pom.xml" />
         <option value="$PROJECT_DIR$/pom.xml" />
+        <option value="$PROJECT_DIR$/services/tool-mcp-server/pom.xml" />
       </list>
     </option>
   </component>

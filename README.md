@@ -37,6 +37,7 @@ This project is built to demonstrate production-style backend engineering: micro
 | chat-core | 8081 | Conversations, memberships, message persistence, message history |
 | ai-orchestrator | 8084 | AI provider strategy, agent responses, audit logs |
 | realtime-gateway | 8083 | WebSocket auth, subscriptions, presence, fan-out, AI flow orchestration |
+| tool-mcp-server | 8085 | MCP-style tool bridge for external tool calls |
 
 ---
 
@@ -242,3 +243,4 @@ More details:
 ```text
 docs/MCP_INTEGRATION.md
 ```
+
