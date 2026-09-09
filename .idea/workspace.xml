@@ -4,17 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="64296f3a-d178-4690-a0c3-b0da2f7d7a57" name="Changes" comment="Update Read me file">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/services/ai-orchestrator/src/main/java/org/collabmind/ai/agent/domain/AgentType.java" beforeDir="false" afterPath="$PROJECT_DIR$/services/ai-orchestrator/src/main/java/org/collabmind/ai/agent/domain/AgentType.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/services/ai-orchestrator/src/main/java/org/collabmind/ai/common/config/SecurityConfig.java" beforeDir="false" afterPath="$PROJECT_DIR$/services/ai-orchestrator/src/main/java/org/collabmind/ai/common/config/SecurityConfig.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/services/ai-orchestrator/src/main/java/org/collabmind/ai/security/SecurityConfig.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/services/ai-orchestrator/target/classes/application.properties" beforeDir="false" afterPath="$PROJECT_DIR$/services/ai-orchestrator/target/classes/application.properties" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/services/ai-orchestrator/target/classes/org/collabmind/ai/common/config/SecurityConfig.class" beforeDir="false" afterPath="$PROJECT_DIR$/services/ai-orchestrator/target/classes/org/collabmind/ai/common/config/SecurityConfig.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/services/tool-mcp-server/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/services/tool-mcp-server/pom.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/services/tool-mcp-server/src/main/java/org/collabmind/toolmcp/shopping/McpToolController.java" beforeDir="false" afterPath="$PROJECT_DIR$/services/tool-mcp-server/src/main/java/org/collabmind/toolmcp/shopping/McpToolController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/services/tool-mcp-server/target/classes/org/collabmind/toolmcp/shopping/McpToolController.class" beforeDir="false" afterPath="$PROJECT_DIR$/services/tool-mcp-server/target/classes/org/collabmind/toolmcp/shopping/McpToolController.class" afterDir="false" />
-    </list>
+    <list default="true" id="64296f3a-d178-4690-a0c3-b0da2f7d7a57" name="Changes" comment="Update Read me file" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -194,7 +184,7 @@
       <workItem from="1788722954521" duration="3450000" />
       <workItem from="1788726620887" duration="11257000" />
       <workItem from="1788890971952" duration="1339000" />
-      <workItem from="1788924888558" duration="8955000" />
+      <workItem from="1788924888558" duration="9284000" />
     </task>
     <task id="LOCAL-00001" summary="Updates">
       <option name="closed" value="true" />
