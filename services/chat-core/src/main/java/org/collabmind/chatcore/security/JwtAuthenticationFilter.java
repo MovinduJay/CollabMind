@@ -1,5 +1,7 @@
 package org.collabmind.chatcore.security;
 
+
+import org.springframework.stereotype.Component;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -13,6 +15,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
 
+@Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtTokenService jwtTokenService;
@@ -61,3 +64,4 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
     }
 }
+
