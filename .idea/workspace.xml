@@ -6,6 +6,41 @@
   <component name="ChangeListManager">
     <list default="true" id="64296f3a-d178-4690-a0c3-b0da2f7d7a57" name="Changes" comment="Update Read me file">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/web/src/features/workspace/WorkspacePage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/apps/web/src/features/workspace/WorkspacePage.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/web/src/hooks/useRealtimeRoom.ts" beforeDir="false" afterPath="$PROJECT_DIR$/apps/web/src/hooks/useRealtimeRoom.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/services/chat-core/src/main/java/org/collabmind/chatcore/common/config/SecurityConfig.java" beforeDir="false" afterPath="$PROJECT_DIR$/services/chat-core/src/main/java/org/collabmind/chatcore/common/config/SecurityConfig.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/services/chat-core/src/main/java/org/collabmind/chatcore/security/JwtAuthenticationFilter.java" beforeDir="false" afterPath="$PROJECT_DIR$/services/chat-core/src/main/java/org/collabmind/chatcore/security/JwtAuthenticationFilter.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/services/chat-core/target/classes/application.properties" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/services/chat-core/target/classes/db/migration/V1__baseline_existing_chat_core_schema.sql" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/services/chat-core/target/classes/org/collabmind/chatcore/ChatCoreApplication.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/services/chat-core/target/classes/org/collabmind/chatcore/common/config/SecurityConfig.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/services/chat-core/target/classes/org/collabmind/chatcore/common/exception/ApiErrorResponse.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/services/chat-core/target/classes/org/collabmind/chatcore/common/exception/ConversationNotFoundException.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/services/chat-core/target/classes/org/collabmind/chatcore/common/exception/GlobalExceptionHandler.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/services/chat-core/target/classes/org/collabmind/chatcore/common/exception/UserNotConversationMemberException.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/services/chat-core/target/classes/org/collabmind/chatcore/common/web/HealthController.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/services/chat-core/target/classes/org/collabmind/chatcore/conversation/application/ConversationService.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/services/chat-core/target/classes/org/collabmind/chatcore/conversation/domain/Conversation.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/services/chat-core/target/classes/org/collabmind/chatcore/conversation/infrastructure/ConversationRepository.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/services/chat-core/target/classes/org/collabmind/chatcore/conversation/web/ConversationController.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/services/chat-core/target/classes/org/collabmind/chatcore/conversation/web/ConversationMemberResponse.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/services/chat-core/target/classes/org/collabmind/chatcore/conversation/web/ConversationMembershipResponse.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/services/chat-core/target/classes/org/collabmind/chatcore/conversation/web/ConversationResponse.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/services/chat-core/target/classes/org/collabmind/chatcore/conversation/web/CreateConversationRequest.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/services/chat-core/target/classes/org/collabmind/chatcore/membership/domain/ConversationMember$Role.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/services/chat-core/target/classes/org/collabmind/chatcore/membership/domain/ConversationMember.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/services/chat-core/target/classes/org/collabmind/chatcore/membership/infrastructure/ConversationMemberRepository.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/services/chat-core/target/classes/org/collabmind/chatcore/messaging/application/MessageService.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/services/chat-core/target/classes/org/collabmind/chatcore/messaging/domain/Message$MessageType.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/services/chat-core/target/classes/org/collabmind/chatcore/messaging/domain/Message.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/services/chat-core/target/classes/org/collabmind/chatcore/messaging/infrastructure/MessageRepository.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/services/chat-core/target/classes/org/collabmind/chatcore/messaging/web/MessageController.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/services/chat-core/target/classes/org/collabmind/chatcore/messaging/web/MessageResponse.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/services/chat-core/target/classes/org/collabmind/chatcore/messaging/web/SaveAiMessageRequest.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/services/chat-core/target/classes/org/collabmind/chatcore/messaging/web/SendMessageRequest.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/services/chat-core/target/classes/org/collabmind/chatcore/security/InvalidJwtTokenException.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/services/chat-core/target/classes/org/collabmind/chatcore/security/JwtAuthenticationFilter.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/services/chat-core/target/classes/org/collabmind/chatcore/security/JwtTokenService.class" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -50,31 +85,31 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "Application.RealtimeGatewayApplication.executor": "Run",
-    "RequestMappingsPanelOrder0": "0",
-    "RequestMappingsPanelOrder1": "1",
-    "RequestMappingsPanelWidth0": "75",
-    "RequestMappingsPanelWidth1": "75",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "SHARE_PROJECT_CONFIGURATION_FILES": "true",
-    "Spring Boot.AiOrchestratorApplication.executor": "Run",
-    "Spring Boot.ChatCoreApplication.executor": "Run",
-    "Spring Boot.IdentityServiceApplication.executor": "Run",
-    "Spring Boot.RealtimeGatewayApplication.executor": "Run",
-    "Spring Boot.ToolMcpServerApplication.executor": "Run",
-    "git-widget-placeholder": "web-frontend",
-    "kotlin-language-version-configured": "true",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "run.configurations.included.in.services": "true",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;Application.RealtimeGatewayApplication.executor&quot;: &quot;Run&quot;,
+    &quot;RequestMappingsPanelOrder0&quot;: &quot;0&quot;,
+    &quot;RequestMappingsPanelOrder1&quot;: &quot;1&quot;,
+    &quot;RequestMappingsPanelWidth0&quot;: &quot;75&quot;,
+    &quot;RequestMappingsPanelWidth1&quot;: &quot;75&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
+    &quot;Spring Boot.AiOrchestratorApplication.executor&quot;: &quot;Run&quot;,
+    &quot;Spring Boot.ChatCoreApplication.executor&quot;: &quot;Run&quot;,
+    &quot;Spring Boot.IdentityServiceApplication.executor&quot;: &quot;Run&quot;,
+    &quot;Spring Boot.RealtimeGatewayApplication.executor&quot;: &quot;Run&quot;,
+    &quot;Spring Boot.ToolMcpServerApplication.executor&quot;: &quot;Run&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;web-frontend&quot;,
+    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;run.configurations.included.in.services&quot;: &quot;true&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
-}]]></component>
+}</component>
   <component name="RunDashboard">
     <option name="configurationTypes">
       <set>
@@ -186,7 +221,7 @@
       <workItem from="1788722954521" duration="3450000" />
       <workItem from="1788726620887" duration="11257000" />
       <workItem from="1788890971952" duration="1339000" />
-      <workItem from="1788924888558" duration="16046000" />
+      <workItem from="1788924888558" duration="18124000" />
     </task>
     <task id="LOCAL-00001" summary="Updates">
       <option name="closed" value="true" />

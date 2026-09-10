@@ -117,11 +117,7 @@ export function WorkspacePage() {
       setActiveConversationId(conversation.id);
       navigate(`/r/${conversation.id}`);
       realtime.clear();
-      realtime.connect(guest.accessToken);
-
-      window.setTimeout(() => {
-        realtime.subscribe(conversation.id);
-      }, 600);
+      realtime.connect(guest.accessToken, conversation.id);
     } catch (exception) {
       setError(exception instanceof Error ? exception.message : "Could not create room.");
     }
@@ -142,11 +138,7 @@ export function WorkspacePage() {
       const history = await api.latestMessages(guest.accessToken, activeConversationId);
       realtime.replaceMessages(history);
 
-      realtime.connect(guest.accessToken);
-
-      window.setTimeout(() => {
-        realtime.subscribe(activeConversationId);
-      }, 600);
+      realtime.connect(guest.accessToken, activeConversationId);
     } catch (exception) {
       setError(exception instanceof Error ? exception.message : "Could not enter room.");
     }
@@ -157,7 +149,13 @@ export function WorkspacePage() {
       return;
     }
 
-    realtime.sendMessage(activeConversationId, messageInput.trim());
+    const sent = realtime.sendMessage(activeConversationId, messageInput.trim());
+
+    if (!sent) {
+      setError("Realtime connection is not ready. Click Enter room again.");
+      return;
+    }
+
     setMessageInput("");
   }
 
@@ -312,6 +310,9 @@ export function WorkspacePage() {
 
       <section className="room-grid">
         <Panel title="Conversation" description="Message the room or mention an AI agent.">
+          {error ? <div className="error-box">{error}</div> : null}
+          {realtime.lastError ? <div className="error-box">{realtime.lastError}</div> : null}
+
           <div className="prompt-row">
             {quickPrompts.map((prompt) => (
               <button
@@ -396,4 +397,6 @@ export function WorkspacePage() {
     </main>
   );
 }
+
+
 

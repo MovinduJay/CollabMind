@@ -10,11 +10,13 @@ function id() {
 
 export function useRealtimeRoom() {
   const socketRef = useRef<WebSocket | null>(null);
+  const activeConversationRef = useRef<string>("");
 
   const [status, setStatus] = useState<ConnectionStatus>("DISCONNECTED");
   const [events, setEvents] = useState<ServerEvent[]>([]);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [aiStages, setAiStages] = useState<string[]>([]);
+  const [lastError, setLastError] = useState("");
 
   const appendMessage = useCallback((message: ChatMessage) => {
     setMessages((current) => {
@@ -28,16 +30,56 @@ export function useRealtimeRoom() {
     });
   }, []);
 
-  const connect = useCallback((token: string) => {
-    socketRef.current?.close();
+  const sendCommand = useCallback((command: object) => {
+    const socket = socketRef.current;
 
+    if (!socket || socket.readyState !== WebSocket.OPEN) {
+      setLastError("Realtime connection is not ready yet.");
+      return false;
+    }
+
+    socket.send(JSON.stringify(command));
+    return true;
+  }, []);
+
+  const subscribe = useCallback((conversationId: string) => {
+    activeConversationRef.current = conversationId;
+
+    return sendCommand({
+      commandId: id(),
+      commandType: "SUBSCRIBE_CONVERSATION",
+      conversationId,
+      payload: {}
+    });
+  }, [sendCommand]);
+
+  const connect = useCallback((token: string, conversationId?: string) => {
+    socketRef.current?.close();
+    setLastError("");
     setStatus("CONNECTING");
+
+    if (conversationId) {
+      activeConversationRef.current = conversationId;
+    }
 
     const socket = new WebSocket(`${config.realtimeWs}?token=${encodeURIComponent(token)}`);
     socketRef.current = socket;
 
     socket.onopen = () => {
       setStatus("CONNECTED");
+
+      const roomToSubscribe = activeConversationRef.current;
+
+      if (roomToSubscribe) {
+        socket.send(
+          JSON.stringify({
+            commandId: id(),
+            commandType: "SUBSCRIBE_CONVERSATION",
+            conversationId: roomToSubscribe,
+            payload: {}
+          })
+        );
+      }
     };
 
     socket.onclose = () => {
@@ -46,12 +88,17 @@ export function useRealtimeRoom() {
 
     socket.onerror = () => {
       setStatus("DISCONNECTED");
+      setLastError("Realtime connection failed.");
     };
 
     socket.onmessage = (rawMessage) => {
       const event = JSON.parse(rawMessage.data) as ServerEvent;
 
       setEvents((current) => [event, ...current].slice(0, 80));
+
+      if (event.eventType === "SUBSCRIPTION_REJECTED") {
+        setLastError(event.payload?.reason ?? "Could not subscribe to this room.");
+      }
 
       if (event.eventType === "MESSAGE_CREATED" || event.eventType === "AI_MESSAGE_CREATED") {
         const message = event.payload?.message as ChatMessage | undefined;
@@ -86,30 +133,17 @@ export function useRealtimeRoom() {
     setStatus("DISCONNECTED");
   }, []);
 
-  const subscribe = useCallback((conversationId: string) => {
-    socketRef.current?.send(
-      JSON.stringify({
-        commandId: id(),
-        commandType: "SUBSCRIBE_CONVERSATION",
-        conversationId,
-        payload: {}
-      })
-    );
-  }, []);
-
   const sendMessage = useCallback((conversationId: string, content: string) => {
-    socketRef.current?.send(
-      JSON.stringify({
-        commandId: id(),
-        commandType: "SEND_MESSAGE",
-        conversationId,
-        payload: {
-          clientMessageId: id(),
-          content
-        }
-      })
-    );
-  }, []);
+    return sendCommand({
+      commandId: id(),
+      commandType: "SEND_MESSAGE",
+      conversationId,
+      payload: {
+        clientMessageId: id(),
+        content
+      }
+    });
+  }, [sendCommand]);
 
   const replaceMessages = useCallback((nextMessages: ChatMessage[]) => {
     setMessages(
@@ -123,6 +157,7 @@ export function useRealtimeRoom() {
     setEvents([]);
     setMessages([]);
     setAiStages([]);
+    setLastError("");
   }, []);
 
   return {
@@ -130,6 +165,7 @@ export function useRealtimeRoom() {
     events,
     messages,
     aiStages,
+    lastError,
     connect,
     disconnect,
     subscribe,
