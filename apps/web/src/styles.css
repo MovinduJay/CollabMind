@@ -374,3 +374,19 @@ label {
     grid-template-columns: 1fr;
   }
 }
+
+.room-divider {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 0.75rem;
+  color: #8f9db5;
+  font-size: 0.82rem;
+  font-weight: 800;
+  margin: 0.2rem 0;
+}
+
+.room-divider span {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.12);
+}

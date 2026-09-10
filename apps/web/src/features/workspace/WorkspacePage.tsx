@@ -20,6 +20,31 @@ function guestEmail() {
   return `guest+${crypto.randomUUID()}@collabmind.local`;
 }
 
+function extractConversationId(input: string) {
+  const value = input.trim();
+
+  if (!value) {
+    return "";
+  }
+
+  try {
+    const url = new URL(value);
+    const parts = url.pathname.split("/").filter(Boolean);
+    const roomIndex = parts.indexOf("r");
+
+    if (roomIndex >= 0 && parts[roomIndex + 1]) {
+      return parts[roomIndex + 1];
+    }
+
+    return parts[parts.length - 1] ?? "";
+  } catch {
+    return value
+      .replace(/^.*\/r\//, "")
+      .replace(/[?#].*$/, "")
+      .trim();
+  }
+}
+
 export function WorkspacePage() {
   const navigate = useNavigate();
   const params = useParams();
@@ -28,6 +53,7 @@ export function WorkspacePage() {
   const [session, setSession] = useState<AuthSession | null>(() => loadSession());
   const [displayName, setDisplayName] = useState("");
   const [roomName, setRoomName] = useState("Untitled room");
+  const [roomLinkInput, setRoomLinkInput] = useState("");
   const [activeConversationId, setActiveConversationId] = useState(params.conversationId ?? "");
   const [messageInput, setMessageInput] = useState("");
   const [error, setError] = useState("");
@@ -62,6 +88,20 @@ export function WorkspacePage() {
     setSession(nextSession);
 
     return nextSession;
+  }
+
+  function openSharedRoom() {
+    setError("");
+
+    const conversationId = extractConversationId(roomLinkInput);
+
+    if (!conversationId) {
+      setError("Paste a room link or room ID.");
+      return;
+    }
+
+    setActiveConversationId(conversationId);
+    navigate(`/r/${conversationId}`);
   }
 
   async function createRoom() {
@@ -173,12 +213,37 @@ export function WorkspacePage() {
               />
             </label>
 
-            {error ? <div className="error-box">{error}</div> : null}
-
             <button onClick={createRoom}>
               <Plus size={18} />
               Create room
             </button>
+
+            <div className="room-divider">
+              <span />
+              <strong>or join a room</strong>
+              <span />
+            </div>
+
+            <label>
+              Room link or room ID
+              <input
+                value={roomLinkInput}
+                onChange={(event) => setRoomLinkInput(event.target.value)}
+                placeholder="Paste a shared room link"
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") {
+                    openSharedRoom();
+                  }
+                }}
+              />
+            </label>
+
+            <button className="secondary-button" onClick={openSharedRoom}>
+              <Link2 size={18} />
+              Open room
+            </button>
+
+            {error ? <div className="error-box">{error}</div> : null}
           </div>
         </section>
       </main>
@@ -331,3 +396,4 @@ export function WorkspacePage() {
     </main>
   );
 }
+
