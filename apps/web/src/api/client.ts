@@ -1,5 +1,12 @@
 import { config } from "../config";
-import type { AuthSession, ChatMessage, Conversation, ToolAuditSummary } from "../types";
+import type {
+  AuthSession,
+  ChatMessage,
+  Conversation,
+  ConversationMember,
+  ToolAuditSummary,
+  UserProfile
+} from "../types";
 
 export class ApiError extends Error {
   constructor(
@@ -81,6 +88,17 @@ export const api = {
     });
   },
 
+  conversationMembers(token: string, conversationId: string) {
+    return request<ConversationMember[]>(
+      `${config.chatApi}/api/conversations/${conversationId}/members`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      }
+    );
+  },
+
   latestMessages(token: string, conversationId: string) {
     return request<ChatMessage[]>(
       `${config.chatApi}/api/conversations/${conversationId}/messages/latest?limit=50`,
@@ -90,6 +108,14 @@ export const api = {
         }
       }
     );
+  },
+
+  userProfiles(token: string, userIds: string[]) {
+    return request<UserProfile[]>(`${config.identityApi}/api/users/profiles`, {
+      method: "POST",
+      headers: jsonHeaders(token),
+      body: JSON.stringify({ userIds })
+    });
   },
 
   auditSummary() {

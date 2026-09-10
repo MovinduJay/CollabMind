@@ -12,6 +12,12 @@ export type Conversation = {
   createdAt: string;
 };
 
+export type ConversationMember = {
+  userId: string;
+  role: string;
+  joinedAt?: string | null;
+};
+
 export type ChatMessage = {
   id: string;
   conversationId: string;
@@ -31,6 +37,11 @@ export type ServerEvent = {
   conversationId: string | null;
   occurredAt: string;
   payload: any;
+};
+
+export type UserProfile = {
+  userId: string;
+  displayName: string;
 };
 
 export type ToolAuditSummary = {

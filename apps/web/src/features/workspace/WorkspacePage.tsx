@@ -1,5 +1,14 @@
-import React, { useEffect, useMemo, useState } from "react";
-import { Bot, Copy, Link2, MessageSquare, Plus, Send, Sparkles, Users } from "lucide-react";
+ï»¿import { useEffect, useMemo, useState } from "react";
+import {
+  Bot,
+  Copy,
+  Link2,
+  MessageSquare,
+  Plus,
+  Send,
+  Sparkles,
+  Users
+} from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import { api } from "../../api/client";
 import { Panel } from "../../components/Panel";
@@ -56,10 +65,14 @@ export function WorkspacePage() {
   const [roomLinkInput, setRoomLinkInput] = useState("");
   const [activeConversationId, setActiveConversationId] = useState(params.conversationId ?? "");
   const [messageInput, setMessageInput] = useState("");
+  const [memberNames, setMemberNames] = useState<Record<string, string>>({});
   const [error, setError] = useState("");
 
   const shareUrl = useMemo(() => {
-    if (!activeConversationId) return "";
+    if (!activeConversationId) {
+      return "";
+    }
+
     return `${window.location.origin}/r/${activeConversationId}`;
   }, [activeConversationId]);
 
@@ -68,6 +81,52 @@ export function WorkspacePage() {
       setActiveConversationId(params.conversationId);
     }
   }, [params.conversationId]);
+
+  useEffect(() => {
+    if (!session) {
+      return;
+    }
+
+    setMemberNames((current) => ({
+      ...current,
+      [session.userId]: session.displayName
+    }));
+  }, [session]);
+
+  useEffect(() => {
+    if (!session) {
+      return;
+    }
+
+    const missingSenderIds = Array.from(
+      new Set(
+        realtime.messages
+          .filter((message) => message.messageType === "USER")
+          .map((message) => message.senderId)
+      )
+    ).filter((senderId) => !memberNames[senderId]);
+
+    if (missingSenderIds.length === 0) {
+      return;
+    }
+
+    api.userProfiles(session.accessToken, missingSenderIds)
+      .then((profiles) => {
+        setMemberNames((current) => {
+          const next = { ...current };
+
+          profiles.forEach((profile) => {
+            next[profile.userId] = profile.displayName;
+          });
+
+          return next;
+        });
+      })
+      .catch(() => {
+        // Keep UI fallback only. Do not store "Member xxxx" permanently,
+        // because the profile endpoint may succeed on a later message.
+      });
+  }, [session, realtime.messages, memberNames]);
 
   async function ensureGuestSession(): Promise<AuthSession> {
     if (session) {
@@ -87,6 +146,11 @@ export function WorkspacePage() {
     saveSession(nextSession);
     setSession(nextSession);
 
+    setMemberNames((current) => ({
+      ...current,
+      [nextSession.userId]: nextSession.displayName
+    }));
+
     return nextSession;
   }
 
@@ -104,6 +168,43 @@ export function WorkspacePage() {
     navigate(`/r/${conversationId}`);
   }
 
+  async function loadRoomMemberNames(
+    token: string,
+    conversationId: string,
+    currentSession: AuthSession
+  ) {
+    try {
+      const members = await api.conversationMembers(token, conversationId);
+
+      const userIds = Array.from(
+        new Set([
+          currentSession.userId,
+          ...members.map((member) => member.userId)
+        ])
+      );
+
+      const profiles = await api.userProfiles(token, userIds);
+
+      setMemberNames((current) => {
+        const next: Record<string, string> = {
+          ...current,
+          [currentSession.userId]: currentSession.displayName
+        };
+
+        profiles.forEach((profile) => {
+          next[profile.userId] = profile.displayName;
+        });
+
+        return next;
+      });
+    } catch {
+      setMemberNames((current) => ({
+        ...current,
+        [currentSession.userId]: currentSession.displayName
+      }));
+    }
+  }
+
   async function createRoom() {
     setError("");
 
@@ -116,7 +217,12 @@ export function WorkspacePage() {
 
       setActiveConversationId(conversation.id);
       navigate(`/r/${conversation.id}`);
+
       realtime.clear();
+      realtime.replaceMessages([]);
+
+      await loadRoomMemberNames(guest.accessToken, conversation.id, guest);
+
       realtime.connect(guest.accessToken, conversation.id);
     } catch (exception) {
       setError(exception instanceof Error ? exception.message : "Could not create room.");
@@ -137,6 +243,8 @@ export function WorkspacePage() {
 
       const history = await api.latestMessages(guest.accessToken, activeConversationId);
       realtime.replaceMessages(history);
+
+      await loadRoomMemberNames(guest.accessToken, activeConversationId, guest);
 
       realtime.connect(guest.accessToken, activeConversationId);
     } catch (exception) {
@@ -160,7 +268,10 @@ export function WorkspacePage() {
   }
 
   async function copyLink() {
-    if (!shareUrl) return;
+    if (!shareUrl) {
+      return;
+    }
+
     await navigator.clipboard.writeText(shareUrl);
   }
 
@@ -168,10 +279,20 @@ export function WorkspacePage() {
     realtime.disconnect();
     realtime.clear();
     clearSession();
+
     setSession(null);
     setActiveConversationId("");
     setDisplayName("");
+    setMemberNames({});
     navigate("/");
+  }
+
+  function displaySenderName(senderId: string) {
+    if (senderId === session?.userId) {
+      return `${session.displayName} (you)`;
+    }
+
+    return memberNames[senderId] ?? `Member ${senderId.slice(0, 8)}`;
   }
 
   const hasRoom = Boolean(activeConversationId);
@@ -187,6 +308,7 @@ export function WorkspacePage() {
           </div>
 
           <h1>Create a temporary AI room.</h1>
+
           <p>
             Start a room, share the link, and chat with people plus AI agents.
             Rooms are designed to be temporary and inactivity-based.
@@ -258,6 +380,7 @@ export function WorkspacePage() {
           </div>
 
           <h1>Enter the room</h1>
+
           <p>Add your name to join this temporary conversation.</p>
 
           <label>
@@ -288,8 +411,10 @@ export function WorkspacePage() {
             <Sparkles size={16} />
             CollabMind Room
           </div>
+
           <h1>{roomName || "Temporary room"}</h1>
-          <p>Temporary room · Auto-delete after inactivity will be handled by backend TTL.</p>
+
+          <p>Temporary room - Auto-delete after inactivity will be handled by backend TTL.</p>
         </div>
 
         <div className="room-actions">
@@ -297,6 +422,7 @@ export function WorkspacePage() {
             <Copy size={16} />
             Copy link
           </button>
+
           <button className="secondary-button danger" onClick={leaveRoom}>
             Leave
           </button>
@@ -335,17 +461,20 @@ export function WorkspacePage() {
               </div>
             ) : (
               realtime.messages.map((message) => (
-                <article key={message.id} className={`chat-message ${message.messageType.toLowerCase()}`}>
+                <article
+                  key={message.id}
+                  className={`chat-message ${message.messageType.toLowerCase()}`}
+                >
                   <div className="message-header">
                     <strong>
                       {message.messageType === "AI"
                         ? `${message.agentType ?? "AI"} Agent`
-                        : message.senderId === session?.userId
-                          ? "You"
-                          : "Member"}
+                        : displaySenderName(message.senderId)}
                     </strong>
+
                     <span>#{message.sequenceNumber}</span>
                   </div>
+
                   <pre>{message.content}</pre>
                 </article>
               ))
@@ -397,6 +526,7 @@ export function WorkspacePage() {
     </main>
   );
 }
+
 
 
 
