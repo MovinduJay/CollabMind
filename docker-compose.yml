@@ -117,25 +117,21 @@ services:
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
       SPRING_FLYWAY_ENABLED: "false"
       SPRING_JPA_SHOW_SQL: "false"
-      COLLABMIND_AI_PROVIDER: mock
+      COLLABMIND_AI_PROVIDER: ${COLLABMIND_AI_PROVIDER:-openai}
       COLLABMIND_AI_FALLBACK_PROVIDER: mock
-      COLLABMIND_AI_FALLBACK_ENABLED: "true"
-      COLLABMIND_TOOLS_SHOPPING_PROVIDER: mcp
-      COLLABMIND_TOOLS_MCP_SHOPPING_BASE_URL: http://tool-mcp-server:8085
-      COLLABMIND_TOOLS_GITHUB_PROVIDER: mcp
-      COLLABMIND_TOOLS_MCP_GITHUB_BASE_URL: http://tool-mcp-server:8085
+      COLLABMIND_AI_FALLBACK_ENABLED: ${COLLABMIND_AI_FALLBACK_ENABLED:-false}
       COLLABMIND_TOOLS_SHOPPING_PROVIDER: mcp
       COLLABMIND_TOOLS_MCP_SHOPPING_BASE_URL: http://tool-mcp-server:8085
       COLLABMIND_TOOLS_GITHUB_PROVIDER: mcp
       COLLABMIND_TOOLS_MCP_GITHUB_BASE_URL: http://tool-mcp-server:8085
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_MODEL: ${OPENAI_MODEL:-gpt-5-nano}
     ports:
       - "8084:8084"
     depends_on:
       postgres-ai-orchestrator:
         condition: service_healthy
-      tool-mcp-server:
-        condition: service_started
       tool-mcp-server:
         condition: service_started
 

@@ -674,7 +674,6 @@ export function WorkspacePage() {
                   <div className={`chat-message ${message.messageType.toLowerCase()}`}>
                     {!isOwn ? <strong>{message.messageType === "AI" ? `${message.agentType ?? "AI"} Agent` : displaySenderName(message.senderId)}</strong> : null}
                     <pre>{renderMessageContent(message.content)}</pre>
-                    <small>#{message.sequenceNumber}</small>
                   </div>
                 </article>
               );
