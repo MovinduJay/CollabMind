@@ -1,8 +1,8 @@
-# CollabMind
+﻿# CollabMind
 
 CollabMind is a backend-focused, multi-service realtime collaboration platform with AI agents.
 
-Users can create conversations, join shared rooms, send realtime WebSocket messages, and mention AI agents such as `@planner`, `@critic`, `@summarizer`, and `@researcher`. The system persists chat history, broadcasts messages across active room subscribers, and asynchronously generates AI responses through a separate AI orchestration service.
+Users can create conversations, join shared rooms, send realtime WebSocket messages, and mention AI agents such as `@ai`, `@ai`, `@ai`, and `@researcher`. The system persists chat history, broadcasts messages across active room subscribers, and asynchronously generates AI responses through a separate AI orchestration service.
 
 This project is built to demonstrate production-style backend engineering: microservices, JWT authentication, WebSocket communication, async processing, database persistence, Flyway migrations, idempotency, rate limiting, and automated backend smoke tests.
 
@@ -78,7 +78,7 @@ JWT issuing and authentication
 3. realtime-gateway validates membership with chat-core.
 4. User sends a message through WebSocket.
 5. realtime-gateway persists the message in chat-core.
-6. realtime-gateway detects AI mention, for example @planner.
+6. realtime-gateway detects AI mention, for example @ai.
 7. AI request guard checks duplicate/rate-limit rules.
 8. realtime-gateway fetches recent user-only context from chat-core.
 9. realtime-gateway calls ai-orchestrator.
@@ -218,13 +218,13 @@ CollabMind includes an MCP-ready tool abstraction inside `ai-orchestrator`.
 Current supported tool-style agent:
 
 ```text
-@shopping
+@ai
 ```
 
 Example:
 
 ```text
-@shopping find me a birthday gift under Rs. 10,000
+@ai find me a birthday gift under Rs. 10,000
 ```
 
 Current flow:
@@ -243,4 +243,5 @@ More details:
 ```text
 docs/MCP_INTEGRATION.md
 ```
+
 

@@ -6,9 +6,13 @@
   <component name="ChangeListManager">
     <list default="true" id="64296f3a-d178-4690-a0c3-b0da2f7d7a57" name="Changes" comment="Update Read me file">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/web/src/api/client.ts" beforeDir="false" afterPath="$PROJECT_DIR$/apps/web/src/api/client.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/apps/web/src/features/workspace/WorkspacePage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/apps/web/src/features/workspace/WorkspacePage.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/web/src/types.ts" beforeDir="false" afterPath="$PROJECT_DIR$/apps/web/src/types.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/MCP_INTEGRATION.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/MCP_INTEGRATION.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/scripts/e2e-realtime-ai.ps1" beforeDir="false" afterPath="$PROJECT_DIR$/scripts/e2e-realtime-ai.ps1" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/scripts/e2e-realtime-github.ps1" beforeDir="false" afterPath="$PROJECT_DIR$/scripts/e2e-realtime-github.ps1" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/services/realtime-gateway/src/main/java/org/collabmind/realtime/websocket/application/AiMentionService.java" beforeDir="false" afterPath="$PROJECT_DIR$/services/realtime-gateway/src/main/java/org/collabmind/realtime/websocket/application/AiMentionService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/services/realtime-gateway/target/classes/org/collabmind/realtime/websocket/application/AiMentionService.class" beforeDir="false" afterPath="$PROJECT_DIR$/services/realtime-gateway/target/classes/org/collabmind/realtime/websocket/application/AiMentionService.class" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -53,32 +57,32 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "Application.RealtimeGatewayApplication.executor": "Run",
-    "RequestMappingsPanelOrder0": "0",
-    "RequestMappingsPanelOrder1": "1",
-    "RequestMappingsPanelWidth0": "75",
-    "RequestMappingsPanelWidth1": "75",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "SHARE_PROJECT_CONFIGURATION_FILES": "true",
-    "Spring Boot.AiOrchestratorApplication.executor": "Run",
-    "Spring Boot.ChatCoreApplication.executor": "Run",
-    "Spring Boot.IdentityServiceApplication.executor": "Run",
-    "Spring Boot.RealtimeGatewayApplication.executor": "Run",
-    "Spring Boot.ToolMcpServerApplication.executor": "Run",
-    "git-widget-placeholder": "web-frontend",
-    "kotlin-language-version-configured": "true",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "run.configurations.included.in.services": "true",
-    "ts.external.directory.path": "D:\\MyProjects\\CollabMind\\apps\\web\\node_modules\\typescript\\lib",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;Application.RealtimeGatewayApplication.executor&quot;: &quot;Run&quot;,
+    &quot;RequestMappingsPanelOrder0&quot;: &quot;0&quot;,
+    &quot;RequestMappingsPanelOrder1&quot;: &quot;1&quot;,
+    &quot;RequestMappingsPanelWidth0&quot;: &quot;75&quot;,
+    &quot;RequestMappingsPanelWidth1&quot;: &quot;75&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
+    &quot;Spring Boot.AiOrchestratorApplication.executor&quot;: &quot;Run&quot;,
+    &quot;Spring Boot.ChatCoreApplication.executor&quot;: &quot;Run&quot;,
+    &quot;Spring Boot.IdentityServiceApplication.executor&quot;: &quot;Run&quot;,
+    &quot;Spring Boot.RealtimeGatewayApplication.executor&quot;: &quot;Run&quot;,
+    &quot;Spring Boot.ToolMcpServerApplication.executor&quot;: &quot;Run&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;web-frontend&quot;,
+    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;run.configurations.included.in.services&quot;: &quot;true&quot;,
+    &quot;ts.external.directory.path&quot;: &quot;D:\\MyProjects\\CollabMind\\apps\\web\\node_modules\\typescript\\lib&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
-}]]></component>
+}</component>
   <component name="RunDashboard">
     <option name="configurationTypes">
       <set>
@@ -190,7 +194,7 @@
       <workItem from="1788722954521" duration="3450000" />
       <workItem from="1788726620887" duration="11257000" />
       <workItem from="1788890971952" duration="1339000" />
-      <workItem from="1788924888558" duration="27213000" />
+      <workItem from="1788924888558" duration="31895000" />
     </task>
     <task id="LOCAL-00001" summary="Updates">
       <option name="closed" value="true" />

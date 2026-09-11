@@ -2,20 +2,14 @@ package org.collabmind.realtime.websocket.application;
 
 import org.springframework.stereotype.Service;
 
-import java.util.Map;
 import java.util.Optional;
+import java.util.regex.Pattern;
 
 @Service
 public class AiMentionService {
 
-    private static final Map<String, String> AGENT_MENTIONS = Map.of(
-            "@planner", "PLANNER",
-            "@critic", "CRITIC",
-            "@summarizer", "SUMMARIZER",
-            "@researcher", "RESEARCHER",
-            "@shopping", "SHOPPING",
-            "@github", "GITHUB"
-    );
+    private static final Pattern REPO_PATTERN =
+            Pattern.compile("(?i)[a-z0-9_.-]+/[a-z0-9_.-]+");
 
     public Optional<String> detectAgentType(String content) {
         return findMentionedAgentType(content);
@@ -42,17 +36,81 @@ public class AiMentionService {
             return Optional.empty();
         }
 
-        String normalizedContent = content.toLowerCase();
+        String normalized = content.toLowerCase();
 
-        return AGENT_MENTIONS
-                .entrySet()
-                .stream()
-                .filter(entry -> normalizedContent.contains(entry.getKey()))
-                .map(Map.Entry::getValue)
-                .findFirst();
+        if (!normalized.contains("@ai")) {
+            return Optional.empty();
+        }
+
+        if (looksLikeGithubRequest(normalized)) {
+            return Optional.of("GITHUB");
+        }
+
+        if (looksLikeShoppingRequest(normalized)) {
+            return Optional.of("SHOPPING");
+        }
+
+        if (looksLikeSummaryRequest(normalized)) {
+            return Optional.of("SUMMARIZER");
+        }
+
+        if (looksLikeCriticRequest(normalized)) {
+            return Optional.of("CRITIC");
+        }
+
+        if (looksLikePlanningRequest(normalized)) {
+            return Optional.of("PLANNER");
+        }
+
+        return Optional.of("RESEARCHER");
     }
 
     public boolean hasAiMention(String content) {
         return findMentionedAgentType(content).isPresent();
+    }
+
+    private boolean looksLikeGithubRequest(String content) {
+        return content.contains("github")
+                || content.contains("repo")
+                || content.contains("repository")
+                || content.contains("issue")
+                || content.contains("pull request")
+                || content.contains("pr ")
+                || REPO_PATTERN.matcher(content).find();
+    }
+
+    private boolean looksLikeShoppingRequest(String content) {
+        return content.contains("shopping")
+                || content.contains("buy")
+                || content.contains("gift")
+                || content.contains("product")
+                || content.contains("price")
+                || content.contains("budget")
+                || content.contains("rs.")
+                || content.contains("lkr");
+    }
+
+    private boolean looksLikeSummaryRequest(String content) {
+        return content.contains("summarize")
+                || content.contains("summary")
+                || content.contains("recap")
+                || content.contains("what did we decide");
+    }
+
+    private boolean looksLikeCriticRequest(String content) {
+        return content.contains("critic")
+                || content.contains("risk")
+                || content.contains("risks")
+                || content.contains("weakness")
+                || content.contains("problem")
+                || content.contains("what could go wrong");
+    }
+
+    private boolean looksLikePlanningRequest(String content) {
+        return content.contains("plan")
+                || content.contains("steps")
+                || content.contains("tasks")
+                || content.contains("roadmap")
+                || content.contains("next");
     }
 }

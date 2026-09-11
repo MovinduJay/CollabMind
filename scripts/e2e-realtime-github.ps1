@@ -1,4 +1,4 @@
-$ErrorActionPreference = "Stop"
+﻿$ErrorActionPreference = "Stop"
 
 $baseIdentity = "http://localhost:8082"
 $baseChat = "http://localhost:8081"
@@ -174,7 +174,7 @@ Send-WebSocketJson $socket @{
     conversationId = $conversation.id
     payload = @{
         clientMessageId = (New-Guid).ToString()
-        content = "@github summarize octocat/Hello-World"
+        content = "@ai summarize octocat/Hello-World"
     }
 }
 
@@ -194,6 +194,7 @@ $socket.CloseAsync(
 
 Write-Host ""
 Write-Host "E2E realtime GitHub MCP test passed."
+
 
 
 

@@ -1,4 +1,4 @@
-
+﻿
 ---
 
 ## Implemented MCP Bridge MVP
@@ -47,4 +47,5 @@ collabmind.tools.shopping.provider=mcp
 collabmind.tools.mcp-shopping.base-url=http://localhost:8085
 ```
 
-This makes `@shopping` a real cross-service tool call instead of only a mock in-process response.
+This makes `@ai` a real cross-service tool call instead of only a mock in-process response.
+

@@ -17,12 +17,12 @@ import { clearSession, loadSession, saveSession } from "../auth/session";
 import type { AuthSession } from "../../types";
 
 const quickPrompts = [
-  "@planner give me a clean 3-step plan for building this SaaS MVP",
-  "@critic what are the biggest risks in this product idea?",
-  "@summarizer summarize the key decisions from this room",
-  "@shopping find me a birthday gift under Rs. 10,000",
-  "@github summarize octocat/Hello-World",
-  "@github search issues in spring-projects/spring-petclinic about docker"
+  "@ai give me a clean 3-step plan for building this SaaS MVP",
+  "@ai what are the biggest risks in this product idea?",
+  "@ai summarize the key decisions from this room",
+  "@ai find me a birthday gift under Rs. 10,000",
+  "@ai summarize octocat/Hello-World",
+  "@ai search issues in spring-projects/spring-petclinic about docker"
 ];
 
 function guestEmail() {
@@ -435,7 +435,7 @@ export function WorkspacePage() {
       </section>
 
       <section className="room-grid">
-        <Panel title="Conversation" description="Message the room or mention an AI agent.">
+        <Panel title="Conversation" description="Message the room or mention @ai.">
           {error ? <div className="error-box">{error}</div> : null}
           {realtime.lastError ? <div className="error-box">{realtime.lastError}</div> : null}
 
@@ -457,7 +457,7 @@ export function WorkspacePage() {
               <div className="empty-state">
                 <MessageSquare size={34} />
                 <strong>No messages yet</strong>
-                <span>Start the conversation or mention @planner, @shopping, or @github.</span>
+                <span>Start the conversation or mention @ai.</span>
               </div>
             ) : (
               realtime.messages.map((message) => (
@@ -526,6 +526,7 @@ export function WorkspacePage() {
     </main>
   );
 }
+
 
 
 
