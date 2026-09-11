@@ -71,6 +71,11 @@ function renderMessageContent(content: string) {
   );
 }
 
+function splitAiResponse(content: string) {
+  const sections = content.split(/\n\s*\n/).map((section) => section.trim()).filter(Boolean);
+  return sections.length > 0 ? sections : [content];
+}
+
 export function WorkspacePage() {
   const navigate = useNavigate();
   const params = useParams();
@@ -346,6 +351,10 @@ export function WorkspacePage() {
     setShowEmojiPicker(false);
   }
 
+  function selectAiMention() {
+    setMessageInput((current) => current.replace(/(^|\s)@[a-z]*$/i, "$1@ai "));
+  }
+
   async function copyLink() {
     if (!shareUrl) {
       return;
@@ -395,6 +404,7 @@ export function WorkspacePage() {
 
   const hasRoom = Boolean(activeConversationId);
   const isInRoom = Boolean(session && hasRoom && realtime.status === "CONNECTED");
+  const showAiSuggestion = /(^|\s)@[a-z]*$/i.test(messageInput);
   const initials = (session?.displayName || displayName || "CM")
     .split(" ")
     .map((part) => part[0])
@@ -664,6 +674,7 @@ export function WorkspacePage() {
           ) : (
             realtime.messages.map((message) => {
               const isOwn = message.messageType === "USER" && message.senderId === session?.userId;
+              const messageParts = message.messageType === "AI" ? splitAiResponse(message.content) : [message.content];
               return (
                 <article key={message.id} className={`message-row ${isOwn ? "own" : ""}`}>
                   {!isOwn ? (
@@ -671,17 +682,39 @@ export function WorkspacePage() {
                       {message.messageType === "AI" ? <Bot size={17} /> : displaySenderName(message.senderId).slice(0, 1).toUpperCase()}
                     </span>
                   ) : null}
-                  <div className={`chat-message ${message.messageType.toLowerCase()}`}>
-                    {!isOwn ? <strong>{message.messageType === "AI" ? `${message.agentType ?? "AI"} Agent` : displaySenderName(message.senderId)}</strong> : null}
-                    <pre>{renderMessageContent(message.content)}</pre>
+                  <div className="message-stack">
+                    {messageParts.map((part, partIndex) => (
+                      <div
+                        className={`chat-message ${message.messageType.toLowerCase()} ${partIndex > 0 ? "continued" : ""}`}
+                        key={`${message.id}-${partIndex}`}
+                        style={message.messageType === "AI" ? { animationDelay: `${partIndex * 160}ms` } : undefined}
+                      >
+                        {!isOwn && partIndex === 0 ? <strong>{message.messageType === "AI" ? `${message.agentType === "RESEARCHER" ? "AI" : message.agentType ?? "AI"} Agent` : displaySenderName(message.senderId)}</strong> : null}
+                        <pre>{renderMessageContent(part)}</pre>
+                      </div>
+                    ))}
                   </div>
                 </article>
               );
             })
           )}
+          {realtime.isAiTyping ? (
+            <div className="message-row ai-typing-row" aria-label="AI is typing">
+              <span className="message-avatar ai"><Bot size={17} /></span>
+              <div className="typing-bubble"><span /><span /><span /></div>
+            </div>
+          ) : null}
         </div>
 
         <div className="composer">
+          {showAiSuggestion ? (
+            <div className="mention-picker">
+              <button onClick={selectAiMention}>
+                <span className="mention-avatar"><Bot size={18} /></span>
+                <span><strong>@ai</strong><small>Ask the AI assistant</small></span>
+              </button>
+            </div>
+          ) : null}
           <div className="emoji-wrap">
             <button
               className={`composer-icon ${showEmojiPicker ? "selected" : ""}`}
@@ -705,7 +738,14 @@ export function WorkspacePage() {
             value={messageInput}
             onChange={(event) => setMessageInput(event.target.value)}
             placeholder={isInRoom ? "Type a message" : "Enter the room to start chatting"}
-            onKeyDown={(event) => { if (event.key === "Enter") sendMessage(); }}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" && showAiSuggestion) {
+                event.preventDefault();
+                selectAiMention();
+              } else if (event.key === "Enter") {
+                sendMessage();
+              }
+            }}
           />
           {realtime.status === "CONNECTED" ? (
             <button className="send-button" onClick={sendMessage} disabled={!messageInput.trim()} aria-label="Send message"><Send size={19} /></button>

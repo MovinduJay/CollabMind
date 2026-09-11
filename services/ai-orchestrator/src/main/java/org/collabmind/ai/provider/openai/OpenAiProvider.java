@@ -106,8 +106,8 @@ public class OpenAiProvider implements AiProvider {
             case PLANNER -> "Break the discussion into practical tasks, priorities, and next steps.";
             case CRITIC -> "Challenge assumptions, identify risks, and suggest what to validate.";
             case SUMMARIZER -> "Summarize the discussion into decisions, key points, and action items.";
-            case RESEARCHER -> "Suggest research directions, comparisons, evidence, and validation steps.";
-            case SHOPPING -> "Give practical product recommendations using any supplied tool context.";
+            case RESEARCHER -> "Answer the user's request directly. Only discuss research methodology when the user explicitly asks for it.";
+            case SHOPPING -> "Give direct, practical recommendations for products, restaurants, food, or places. Lead with useful options, not a research plan.";
             case GITHUB -> "Explain repository or issue information with engineering insights and next actions.";
         };
     }
