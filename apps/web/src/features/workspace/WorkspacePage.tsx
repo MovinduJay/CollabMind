@@ -314,19 +314,37 @@ export function WorkspacePage() {
     return (
       <main className="landing-shell">
         <section className="landing-hero">
-          <div className="brand-pill">
-            <Sparkles size={18} />
-            CollabMind
+          <div className="landing-intro">
+            <div className="brand-pill">
+              <span className="landing-logo"><Sparkles size={18} /></span>
+              CollabMind
+            </div>
+
+            <div className="landing-copy">
+              <span className="eyebrow">AI-powered group chat</span>
+              <h1>Think better,<br />together.</h1>
+              <p>
+                Open a private room, invite your team, and bring AI into the
+                conversation whenever you need it.
+              </p>
+            </div>
+
+            <div className="landing-features">
+              <span><MessageSquare size={16} /> Real-time chat</span>
+              <span><Bot size={16} /> AI on demand</span>
+              <span><Link2 size={16} /> One-link invites</span>
+            </div>
           </div>
 
-          <h1>Create a temporary AI room.</h1>
-
-          <p>
-            Start a room, share the link, and chat with people plus AI agents.
-            Rooms are designed to be temporary and inactivity-based.
-          </p>
-
           <div className="create-card">
+            <div className="create-card-heading">
+              <span className="card-icon"><Plus size={19} /></span>
+              <div>
+                <h2>Start a new room</h2>
+                <p>No account needed. Just add your name.</p>
+              </div>
+            </div>
+
             <label>
               Your name
               <input
@@ -347,7 +365,7 @@ export function WorkspacePage() {
 
             <button onClick={createRoom}>
               <Plus size={18} />
-              Create room
+              Create and enter room
             </button>
 
             <div className="room-divider">
@@ -372,10 +390,12 @@ export function WorkspacePage() {
 
             <button className="secondary-button" onClick={openSharedRoom}>
               <Link2 size={18} />
-              Open room
+              Join existing room
             </button>
 
             {error ? <div className="error-box">{error}</div> : null}
+
+            <small className="privacy-note">Temporary rooms automatically expire after inactivity.</small>
           </div>
         </section>
       </main>
