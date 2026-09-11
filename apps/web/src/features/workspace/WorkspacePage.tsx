@@ -30,6 +30,12 @@ const quickPrompts = [
   "@ai search issues in spring-projects/spring-petclinic about docker"
 ];
 
+const chatEmojis = [
+  "😀", "😂", "😍", "🥳", "😎", "🤔", "😅", "😭",
+  "👍", "👏", "🙏", "💪", "🙌", "🔥", "❤️", "✨",
+  "✅", "🎉", "💡", "🚀", "👀", "🤝", "💯", "😊"
+];
+
 function guestEmail() {
   return `guest+${crypto.randomUUID()}@collabmind.local`;
 }
@@ -81,6 +87,7 @@ export function WorkspacePage() {
   const [openMenu, setOpenMenu] = useState<"sidebar" | "conversation" | null>(null);
   const [inviteCopied, setInviteCopied] = useState(false);
   const [showParticipants, setShowParticipants] = useState(false);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 
   const shareUrl = useMemo(() => {
     if (!activeConversationId) {
@@ -108,6 +115,27 @@ export function WorkspacePage() {
       [session.userId]: session.displayName
     }));
   }, [session]);
+
+  useEffect(() => {
+    if (!openMenu && !showEmojiPicker && !showParticipants) {
+      return;
+    }
+
+    function closeFloatingUi(event: PointerEvent) {
+      const target = event.target as HTMLElement;
+
+      if (target.closest(".menu-wrap, .emoji-wrap, .participants-panel, .participants-button")) {
+        return;
+      }
+
+      setOpenMenu(null);
+      setShowEmojiPicker(false);
+      setShowParticipants(false);
+    }
+
+    document.addEventListener("pointerdown", closeFloatingUi);
+    return () => document.removeEventListener("pointerdown", closeFloatingUi);
+  }, [openMenu, showEmojiPicker, showParticipants]);
 
   useEffect(() => {
     if (!session) {
@@ -310,6 +338,12 @@ export function WorkspacePage() {
     }
 
     setMessageInput("");
+    setShowEmojiPicker(false);
+  }
+
+  function addEmoji(emoji: string) {
+    setMessageInput((current) => `${current}${emoji}`);
+    setShowEmojiPicker(false);
   }
 
   async function copyLink() {
@@ -506,7 +540,7 @@ export function WorkspacePage() {
               className={`icon-button ${openMenu === "sidebar" ? "selected" : ""}`}
               aria-label="More options"
               aria-expanded={openMenu === "sidebar"}
-              onClick={() => setOpenMenu((current) => current === "sidebar" ? null : "sidebar")}
+              onClick={() => { setOpenMenu((current) => current === "sidebar" ? null : "sidebar"); setShowEmojiPicker(false); setShowParticipants(false); }}
             ><MoreVertical size={20} /></button>
             {openMenu === "sidebar" ? (
               <div className="dropdown-menu sidebar-menu">
@@ -553,7 +587,7 @@ export function WorkspacePage() {
             <span>{isInRoom ? "online" : "connecting..."}</span>
           </div>
           <div className="chat-header-actions">
-            <button className="header-action" onClick={() => setShowParticipants(true)} title="View participants">
+            <button className="header-action participants-button" onClick={() => { setShowParticipants((current) => !current); setOpenMenu(null); setShowEmojiPicker(false); }} title="View participants">
               <Users size={18} /><span>Participants</span>
             </button>
             <button className={`header-action ${inviteCopied ? "copied" : ""}`} onClick={copyLink} disabled={!shareUrl} title="Copy invite link">
@@ -565,7 +599,7 @@ export function WorkspacePage() {
                 className={`icon-button ${openMenu === "conversation" ? "selected" : ""}`}
                 aria-label="Conversation options"
                 aria-expanded={openMenu === "conversation"}
-                onClick={() => setOpenMenu((current) => current === "conversation" ? null : "conversation")}
+                onClick={() => { setOpenMenu((current) => current === "conversation" ? null : "conversation"); setShowEmojiPicker(false); setShowParticipants(false); }}
               ><MoreVertical size={20} /></button>
               {openMenu === "conversation" ? (
                 <div className="dropdown-menu conversation-menu">
@@ -649,7 +683,24 @@ export function WorkspacePage() {
         </div>
 
         <div className="composer">
-          <button className="composer-icon" aria-label="Emoji"><Smile size={21} /></button>
+          <div className="emoji-wrap">
+            <button
+              className={`composer-icon ${showEmojiPicker ? "selected" : ""}`}
+              aria-label="Choose emoji"
+              aria-expanded={showEmojiPicker}
+              onClick={() => { setShowEmojiPicker((current) => !current); setOpenMenu(null); setShowParticipants(false); }}
+            ><Smile size={21} /></button>
+            {showEmojiPicker ? (
+              <div className="emoji-picker" role="dialog" aria-label="Emoji picker">
+                <div className="emoji-picker-title">Choose an emoji</div>
+                <div className="emoji-grid">
+                  {chatEmojis.map((emoji) => (
+                    <button key={emoji} onClick={() => addEmoji(emoji)} aria-label={`Insert ${emoji}`}>{emoji}</button>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+          </div>
           <button className="composer-icon attachment" aria-label="Attach file"><Paperclip size={20} /></button>
           <input
             value={messageInput}
