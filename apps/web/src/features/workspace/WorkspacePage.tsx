@@ -3,15 +3,19 @@ import {
   Bot,
   Copy,
   Link2,
+  LogOut,
   MessageSquare,
+  MoreVertical,
+  Paperclip,
   Plus,
+  Search,
   Send,
+  Smile,
   Sparkles,
   Users
 } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import { api } from "../../api/client";
-import { Panel } from "../../components/Panel";
 import { useRealtimeRoom } from "../../hooks/useRealtimeRoom";
 import { clearSession, loadSession, saveSession } from "../auth/session";
 import type { AuthSession } from "../../types";
@@ -86,6 +90,8 @@ export function WorkspacePage() {
     if (!session) {
       return;
     }
+
+    setDisplayName((current) => current || session.displayName);
 
     setMemberNames((current) => ({
       ...current,
@@ -297,8 +303,14 @@ export function WorkspacePage() {
 
   const hasRoom = Boolean(activeConversationId);
   const isInRoom = Boolean(session && hasRoom && realtime.status === "CONNECTED");
+  const initials = (session?.displayName || displayName || "CM")
+    .split(" ")
+    .map((part) => part[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
 
-  if (!session && !hasRoom) {
+  if (!hasRoom) {
     return (
       <main className="landing-shell">
         <section className="landing-hero">
@@ -404,124 +416,115 @@ export function WorkspacePage() {
   }
 
   return (
-    <main className="room-shell">
-      <header className="room-header">
-        <div>
-          <div className="brand-pill">
-            <Sparkles size={16} />
-            CollabMind Room
+    <main className="chat-app">
+      <aside className="chat-sidebar">
+        <header className="sidebar-header">
+          <div className="brand-lockup">
+            <span className="brand-logo"><Sparkles size={18} /></span>
+            <strong>CollabMind</strong>
           </div>
+          <button className="icon-button" aria-label="More options"><MoreVertical size={20} /></button>
+        </header>
 
-          <h1>{roomName || "Temporary room"}</h1>
-
-          <p>Temporary room - Auto-delete after inactivity will be handled by backend TTL.</p>
+        <div className="sidebar-search">
+          <Search size={17} />
+          <input aria-label="Search conversations" placeholder="Search conversations" />
         </div>
 
-        <div className="room-actions">
-          <button className="secondary-button" onClick={copyLink} disabled={!shareUrl}>
-            <Copy size={16} />
-            Copy link
+        <div className="conversation-label">Conversations</div>
+        <button className="conversation-item active">
+          <span className="room-avatar"><Users size={19} /></span>
+          <span className="conversation-copy">
+            <span className="conversation-title">
+              <strong>{roomName || "Temporary room"}</strong>
+              <small>now</small>
+            </span>
+            <span className="conversation-preview">
+              {realtime.messages[realtime.messages.length - 1]?.content || "Start the conversation"}
+            </span>
+          </span>
+        </button>
+
+        <footer className="sidebar-profile">
+          <span className="user-avatar">{initials}</span>
+          <span><strong>{session?.displayName}</strong><small>Online</small></span>
+          <button className="icon-button" onClick={leaveRoom} aria-label="Leave room" title="Leave room">
+            <LogOut size={18} />
           </button>
+        </footer>
+      </aside>
 
-          <button className="secondary-button danger" onClick={leaveRoom}>
-            Leave
-          </button>
-        </div>
-      </header>
-
-      <section className="share-bar">
-        <Link2 size={16} />
-        <span>{shareUrl}</span>
-      </section>
-
-      <section className="room-grid">
-        <Panel title="Conversation" description="Message the room or mention @ai.">
-          {error ? <div className="error-box">{error}</div> : null}
-          {realtime.lastError ? <div className="error-box">{realtime.lastError}</div> : null}
-
-          <div className="prompt-row">
-            {quickPrompts.map((prompt) => (
-              <button
-                key={prompt}
-                className="prompt-chip"
-                onClick={() => setMessageInput(prompt)}
-              >
-                <Bot size={14} />
-                {prompt}
-              </button>
-            ))}
+      <section className="chat-main">
+        <header className="chat-header">
+          <span className="room-avatar"><Users size={19} /></span>
+          <div className="chat-heading">
+            <strong>{roomName || "Temporary room"}</strong>
+            <span>{isInRoom ? "online" : "connecting..."}</span>
           </div>
+          <div className="chat-header-actions">
+            <button className="header-action" onClick={copyLink} disabled={!shareUrl} title="Copy invite link">
+              <Copy size={18} /><span>Invite</span>
+            </button>
+            <button className="icon-button" aria-label="Conversation options"><MoreVertical size={20} /></button>
+          </div>
+        </header>
 
-          <div className="message-list">
-            {realtime.messages.length === 0 ? (
-              <div className="empty-state">
-                <MessageSquare size={34} />
-                <strong>No messages yet</strong>
-                <span>Start the conversation or mention @ai.</span>
+        <div className="message-area">
+          {(error || realtime.lastError) ? (
+            <div className="error-box">{error || realtime.lastError}</div>
+          ) : null}
+
+          <div className="day-divider"><span>Today</span></div>
+
+          {realtime.messages.length === 0 ? (
+            <div className="welcome-message">
+              <span className="welcome-icon"><Bot size={25} /></span>
+              <h2>Start a conversation</h2>
+              <p>Chat with your team, or mention <strong>@ai</strong> to bring an AI agent into the discussion.</p>
+              <div className="prompt-row">
+                {quickPrompts.slice(0, 3).map((prompt) => (
+                  <button key={prompt} className="prompt-chip" onClick={() => setMessageInput(prompt)}>
+                    {prompt.replace("@ai ", "")}
+                  </button>
+                ))}
               </div>
-            ) : (
-              realtime.messages.map((message) => (
-                <article
-                  key={message.id}
-                  className={`chat-message ${message.messageType.toLowerCase()}`}
-                >
-                  <div className="message-header">
-                    <strong>
-                      {message.messageType === "AI"
-                        ? `${message.agentType ?? "AI"} Agent`
-                        : displaySenderName(message.senderId)}
-                    </strong>
-
-                    <span>#{message.sequenceNumber}</span>
-                  </div>
-
-                  <pre>{message.content}</pre>
-                </article>
-              ))
-            )}
-          </div>
-
-          <div className="composer">
-            <input
-              value={messageInput}
-              onChange={(event) => setMessageInput(event.target.value)}
-              placeholder={isInRoom ? "Type a message..." : "Click Enter room first..."}
-              onKeyDown={(event) => {
-                if (event.key === "Enter") {
-                  sendMessage();
-                }
-              }}
-            />
-
-            {realtime.status === "CONNECTED" ? (
-              <button onClick={sendMessage} disabled={!messageInput.trim()}>
-                <Send size={16} />
-                Send
-              </button>
-            ) : (
-              <button onClick={enterRoom}>
-                Enter room
-              </button>
-            )}
-          </div>
-        </Panel>
-
-        <aside className="agent-panel">
-          <Panel title="AI Activity" description="Agent progress appears while AI is responding.">
-            <div className="activity-list">
-              {realtime.aiStages.length === 0 ? (
-                <p className="muted">No AI activity yet.</p>
-              ) : (
-                realtime.aiStages.map((stage, index) => (
-                  <div className="activity-item" key={`${stage}-${index}`}>
-                    <Bot size={14} />
-                    <span>{stage}</span>
-                  </div>
-                ))
-              )}
             </div>
-          </Panel>
-        </aside>
+          ) : (
+            realtime.messages.map((message) => {
+              const isOwn = message.messageType === "USER" && message.senderId === session?.userId;
+              return (
+                <article key={message.id} className={`message-row ${isOwn ? "own" : ""}`}>
+                  {!isOwn ? (
+                    <span className={`message-avatar ${message.messageType === "AI" ? "ai" : ""}`}>
+                      {message.messageType === "AI" ? <Bot size={17} /> : displaySenderName(message.senderId).slice(0, 1).toUpperCase()}
+                    </span>
+                  ) : null}
+                  <div className={`chat-message ${message.messageType.toLowerCase()}`}>
+                    {!isOwn ? <strong>{message.messageType === "AI" ? `${message.agentType ?? "AI"} Agent` : displaySenderName(message.senderId)}</strong> : null}
+                    <pre>{message.content}</pre>
+                    <small>#{message.sequenceNumber}</small>
+                  </div>
+                </article>
+              );
+            })
+          )}
+        </div>
+
+        <div className="composer">
+          <button className="composer-icon" aria-label="Emoji"><Smile size={21} /></button>
+          <button className="composer-icon attachment" aria-label="Attach file"><Paperclip size={20} /></button>
+          <input
+            value={messageInput}
+            onChange={(event) => setMessageInput(event.target.value)}
+            placeholder={isInRoom ? "Type a message" : "Enter the room to start chatting"}
+            onKeyDown={(event) => { if (event.key === "Enter") sendMessage(); }}
+          />
+          {realtime.status === "CONNECTED" ? (
+            <button className="send-button" onClick={sendMessage} disabled={!messageInput.trim()} aria-label="Send message"><Send size={19} /></button>
+          ) : (
+            <button className="enter-button" onClick={enterRoom}>Enter room</button>
+          )}
+        </div>
       </section>
     </main>
   );
