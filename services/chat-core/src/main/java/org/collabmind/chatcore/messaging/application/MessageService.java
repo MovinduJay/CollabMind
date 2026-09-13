@@ -3,6 +3,7 @@ package org.collabmind.chatcore.messaging.application;
 import org.collabmind.chatcore.common.exception.ConversationNotFoundException;
 import org.collabmind.chatcore.conversation.domain.Conversation;
 import org.collabmind.chatcore.conversation.infrastructure.ConversationRepository;
+import org.collabmind.chatcore.conversation.application.RoomActivityService;
 import org.collabmind.chatcore.membership.infrastructure.ConversationMemberRepository;
 import org.collabmind.chatcore.messaging.domain.Message;
 import org.collabmind.chatcore.messaging.infrastructure.MessageRepository;
@@ -25,15 +26,18 @@ public class MessageService {
     private final ConversationRepository conversationRepository;
     private final ConversationMemberRepository memberRepository;
     private final MessageRepository messageRepository;
+    private final RoomActivityService roomActivityService;
 
     public MessageService(
             ConversationRepository conversationRepository,
             ConversationMemberRepository memberRepository,
-            MessageRepository messageRepository
+            MessageRepository messageRepository,
+            RoomActivityService roomActivityService
     ) {
         this.conversationRepository = conversationRepository;
         this.memberRepository = memberRepository;
         this.messageRepository = messageRepository;
+        this.roomActivityService = roomActivityService;
     }
 
     @Transactional
@@ -45,7 +49,7 @@ public class MessageService {
     ) {
         requireConversationMember(conversationId, senderUserId);
 
-        return messageRepository
+        MessageResponse response = messageRepository
                 .findBySenderIdAndClientMessageId(senderUserId, clientMessageId)
                 .map(MessageResponse::from)
                 .orElseGet(() -> createUserMessage(
@@ -54,6 +58,8 @@ public class MessageService {
                         clientMessageId,
                         content
                 ));
+        roomActivityService.touch(conversationId);
+        return response;
     }
 
     @Transactional
@@ -67,7 +73,7 @@ public class MessageService {
     ) {
         requireConversationMember(conversationId, authenticatedUserId);
 
-        return messageRepository
+        MessageResponse response = messageRepository
                 .findBySenderIdAndClientMessageId(AI_SENDER_ID, clientMessageId)
                 .map(MessageResponse::from)
                 .orElseGet(() -> createAiMessage(
@@ -77,6 +83,8 @@ public class MessageService {
                         agentType,
                         content
                 ));
+        roomActivityService.touch(conversationId);
+        return response;
     }
 
     @Transactional(readOnly = true)

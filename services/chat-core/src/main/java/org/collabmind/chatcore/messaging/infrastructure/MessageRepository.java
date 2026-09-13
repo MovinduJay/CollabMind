@@ -10,6 +10,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface MessageRepository extends JpaRepository<Message, UUID> {
+    void deleteByConversationId(UUID conversationId);
 
     Optional<Message> findBySenderIdAndClientMessageId(
             UUID senderId,
