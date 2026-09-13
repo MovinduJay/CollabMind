@@ -723,7 +723,9 @@ export function WorkspacePage() {
               const kapruka = message.messageType === "AI"
                 ? parseKaprukaMessage(message.content)
                 : { text: message.content, products: [] as KaprukaProduct[] };
-              const messageParts = message.messageType === "AI" ? splitAiResponse(kapruka.text) : [message.content];
+              const messageParts = message.messageType === "AI"
+                ? (kapruka.products.length > 0 ? [] : splitAiResponse(kapruka.text))
+                : [message.content];
               return (
                 <article key={message.id} className={`message-row ${isOwn ? "own" : ""}`}>
                   {!isOwn ? (
@@ -732,6 +734,9 @@ export function WorkspacePage() {
                     </span>
                   ) : null}
                   <div className="message-stack">
+                    {kapruka.products.length > 0 && !isOwn ? (
+                      <strong className="product-agent-label">{agentDisplayName(message.agentType)}</strong>
+                    ) : null}
                     {messageParts.map((part, partIndex) => (
                       <div
                         className={`chat-message ${message.messageType.toLowerCase()} ${partIndex > 0 ? "continued" : ""}`}
