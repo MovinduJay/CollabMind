@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.UUID;
 
 public interface ConversationMemberRepository extends JpaRepository<ConversationMember, UUID> {
+    void deleteByConversationId(UUID conversationId);
 
     boolean existsByConversationIdAndUserId(UUID conversationId, UUID userId);
 

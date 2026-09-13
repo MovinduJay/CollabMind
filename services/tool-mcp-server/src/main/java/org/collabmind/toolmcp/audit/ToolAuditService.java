@@ -1,6 +1,8 @@
 package org.collabmind.toolmcp.audit;
 
 import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.kafka.core.KafkaTemplate;
 
 import java.util.Deque;
 import java.util.List;
@@ -16,6 +18,14 @@ public class ToolAuditService {
     private static final int MAX_LIMIT = 100;
 
     private final Deque<ToolInvocationRecord> recentRecords = new ConcurrentLinkedDeque<>();
+    private final KafkaTemplate<String, ToolInvocationRecord> kafka;
+    private final String topic;
+
+    public ToolAuditService(KafkaTemplate<String, ToolInvocationRecord> kafka,
+                            @Value("${collabmind.kafka.tool-invoked-topic}") String topic) {
+        this.kafka = kafka;
+        this.topic = topic;
+    }
 
     public void recordSuccess(
             String jsonRpcId,
@@ -98,6 +108,11 @@ public class ToolAuditService {
 
     private void addRecord(ToolInvocationRecord record) {
         recentRecords.addFirst(record);
+        try {
+            kafka.send(topic, record.toolName(), record).get(10, java.util.concurrent.TimeUnit.SECONDS);
+        } catch (Exception exception) {
+            throw new IllegalStateException("Could not publish durable ToolInvoked event", exception);
+        }
 
         while (recentRecords.size() > MAX_RECENT_RECORDS) {
             recentRecords.pollLast();

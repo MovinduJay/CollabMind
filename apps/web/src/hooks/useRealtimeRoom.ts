@@ -16,6 +16,7 @@ export function useRealtimeRoom() {
   const [events, setEvents] = useState<ServerEvent[]>([]);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [aiStages, setAiStages] = useState<string[]>([]);
+  const [isAiTyping, setIsAiTyping] = useState(false);
   const [lastError, setLastError] = useState("");
 
   const appendMessage = useCallback((message: ChatMessage) => {
@@ -106,21 +107,27 @@ export function useRealtimeRoom() {
         if (message) {
           appendMessage(message);
         }
+
+        if (event.eventType === "AI_MESSAGE_CREATED") {
+          setIsAiTyping(false);
+        }
       }
 
       if (event.eventType === "AI_STAGE_UPDATED") {
+        setIsAiTyping(true);
         const stage = [
           event.payload?.agentType ?? "AI",
           event.payload?.stage ?? "UNKNOWN",
           event.payload?.detail ?? ""
-        ].join(" · ");
+        ].join(" Â· ");
 
         setAiStages((current) => [stage, ...current].slice(0, 20));
       }
 
       if (event.eventType === "AI_RESPONSE_FAILED") {
+        setIsAiTyping(false);
         setAiStages((current) => [
-          `FAILED · ${event.payload?.reason ?? "AI response failed"}`,
+          `FAILED Â· ${event.payload?.reason ?? "AI response failed"}`,
           ...current
         ].slice(0, 20));
       }
@@ -157,6 +164,7 @@ export function useRealtimeRoom() {
     setEvents([]);
     setMessages([]);
     setAiStages([]);
+    setIsAiTyping(false);
     setLastError("");
   }, []);
 
@@ -165,6 +173,7 @@ export function useRealtimeRoom() {
     events,
     messages,
     aiStages,
+    isAiTyping,
     lastError,
     connect,
     disconnect,

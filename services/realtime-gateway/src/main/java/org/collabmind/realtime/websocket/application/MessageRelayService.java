@@ -7,6 +7,7 @@ import org.collabmind.realtime.chatcore.client.ChatCoreSendMessageRequest;
 import org.collabmind.realtime.websocket.protocol.ClientCommand;
 import org.collabmind.realtime.websocket.protocol.ServerEvent;
 import org.collabmind.realtime.websocket.session.ConnectedClient;
+import org.collabmind.realtime.event.RealtimeEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClientResponseException;
 
@@ -22,20 +23,20 @@ public class MessageRelayService {
     private final ChatCoreClient chatCoreClient;
     private final RealtimeFanoutService fanoutService;
     private final AiMentionService aiMentionService;
-    private final AiResponseOrchestrationService aiResponseOrchestrationService;
+    private final RealtimeEventPublisher eventPublisher;
 
     public MessageRelayService(
             ObjectMapper objectMapper,
             ChatCoreClient chatCoreClient,
             RealtimeFanoutService fanoutService,
             AiMentionService aiMentionService,
-            AiResponseOrchestrationService aiResponseOrchestrationService
+            RealtimeEventPublisher eventPublisher
     ) {
         this.objectMapper = objectMapper;
         this.chatCoreClient = chatCoreClient;
         this.fanoutService = fanoutService;
         this.aiMentionService = aiMentionService;
-        this.aiResponseOrchestrationService = aiResponseOrchestrationService;
+        this.eventPublisher = eventPublisher;
     }
 
     public void relaySendMessage(ConnectedClient client, ClientCommand command) {
@@ -89,14 +90,7 @@ public class MessageRelayService {
             messagePayload.put("commandId", command.commandId());
             messagePayload.put("message", savedMessage);
 
-            fanoutService.sendToConversation(
-                    savedMessage.conversationId().toString(),
-                    ServerEvent.of(
-                            "MESSAGE_CREATED",
-                            savedMessage.conversationId().toString(),
-                            messagePayload
-                    )
-            );
+            eventPublisher.messageCreated(command.commandId(), savedMessage);
 
             Optional<String> agentType = aiMentionService.detectAgentType(savedMessage.content());
 
@@ -115,9 +109,10 @@ public class MessageRelayService {
                         )
                 );
 
-                aiResponseOrchestrationService.generateAndPersistAiResponse(
-                        client,
+                eventPublisher.aiRequested(
+                        client.jwtToken(),
                         command.commandId(),
+                        client.userId(),
                         savedMessage,
                         detectedAgentType
                 );

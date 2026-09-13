@@ -1,166 +1,56 @@
 package org.collabmind.realtime.websocket.application;
 
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 
 import java.time.Duration;
-import java.time.Instant;
-import java.util.Iterator;
-import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ConcurrentSkipListSet;
-import java.util.concurrent.atomic.AtomicReference;
 
 @Component
 public class AiRequestGuard {
+    private final StringRedisTemplate redis;
+    private final Duration cooldown;
+    private final Duration requestTtl;
 
-    private static final long COOLDOWN_MS = 3_000;
-    private static final long COOLDOWN_ENTRY_TTL_MS = 300_000;
+    public AiRequestGuard(StringRedisTemplate redis,
+                          @Value("${collabmind.ai.rate-limit-seconds:3}") long cooldownSeconds,
+                          @Value("${collabmind.ai.request-ttl-seconds:300}") long requestTtlSeconds) {
+        this.redis = redis;
+        this.cooldown = Duration.ofSeconds(cooldownSeconds);
+        this.requestTtl = Duration.ofSeconds(requestTtlSeconds);
+    }
 
-    private final ConcurrentSkipListSet<String> inFlightRequestKeys = new ConcurrentSkipListSet<>();
-    private final ConcurrentMap<String, Instant> lastAcceptedAtByCooldownKey = new ConcurrentHashMap<>();
-
-    public Decision tryBegin(
-            UUID userId,
-            UUID conversationId,
-            UUID sourceMessageId,
-            String agentType
-    ) {
-        cleanupOldCooldownEntries();
-
-        String requestKey = requestKey(conversationId, sourceMessageId, agentType);
-
-        if (!inFlightRequestKeys.add(requestKey)) {
-            return Decision.rejected(
-                    "AI_REQUEST_DUPLICATE_IGNORED",
-                    "Duplicate AI request ignored because the same source message and agent are already being processed.",
-                    requestKey,
-                    0
-            );
+    public Decision tryBegin(UUID userId, UUID conversationId, UUID sourceMessageId, String agentType) {
+        String requestKey = "ai:inflight:" + conversationId + ":" + sourceMessageId + ":" + normalize(agentType);
+        String completedKey = requestKey.replace("ai:inflight:", "ai:completed:");
+        if (Boolean.TRUE.equals(redis.hasKey(completedKey))) {
+            return Decision.rejected("AI_REQUEST_DUPLICATE_IGNORED", "This AI request was already completed.", requestKey, 0);
+        }
+        if (!Boolean.TRUE.equals(redis.opsForValue().setIfAbsent(requestKey, "1", requestTtl))) {
+            return Decision.rejected("AI_REQUEST_DUPLICATE_IGNORED", "This AI request is already being processed.", requestKey, 0);
         }
 
-        String cooldownKey = cooldownKey(userId, conversationId, agentType);
-        Instant now = Instant.now();
-        AtomicReference<Instant> previousAcceptedAtRef = new AtomicReference<>();
-
-        lastAcceptedAtByCooldownKey.compute(
-                cooldownKey,
-                (key, previousAcceptedAt) -> {
-                    previousAcceptedAtRef.set(previousAcceptedAt);
-
-                    if (previousAcceptedAt == null) {
-                        return now;
-                    }
-
-                    long elapsedMs = Duration.between(previousAcceptedAt, now).toMillis();
-
-                    if (elapsedMs >= COOLDOWN_MS) {
-                        return now;
-                    }
-
-                    return previousAcceptedAt;
-                }
-        );
-
-        Instant previousAcceptedAt = previousAcceptedAtRef.get();
-
-        if (previousAcceptedAt != null) {
-            long elapsedMs = Duration.between(previousAcceptedAt, now).toMillis();
-
-            if (elapsedMs < COOLDOWN_MS) {
-                inFlightRequestKeys.remove(requestKey);
-
-                long retryAfterMs = Math.max(0, COOLDOWN_MS - elapsedMs);
-
-                return Decision.rejected(
-                        "AI_RATE_LIMITED",
-                        "AI request rate limited to protect the system from repeated expensive LLM calls.",
-                        requestKey,
-                        retryAfterMs
-                );
-            }
+        String rateKey = "ai:rate:" + userId + ":" + conversationId + ":" + normalize(agentType);
+        if (!Boolean.TRUE.equals(redis.opsForValue().setIfAbsent(rateKey, "1", cooldown))) {
+            redis.delete(requestKey);
+            Long ttl = redis.getExpire(rateKey);
+            return Decision.rejected("AI_RATE_LIMITED", "Please wait before requesting another AI response.", requestKey, Math.max(0, ttl == null ? 0 : ttl * 1000));
         }
-
         return Decision.accepted(requestKey);
     }
 
     public void complete(String requestKey) {
-        if (requestKey == null || requestKey.isBlank()) {
-            return;
-        }
-
-        inFlightRequestKeys.remove(requestKey);
+        redis.delete(requestKey);
+        redis.opsForValue().set(requestKey.replace("ai:inflight:", "ai:completed:"), "1", requestTtl);
     }
 
-    private String requestKey(
-            UUID conversationId,
-            UUID sourceMessageId,
-            String agentType
-    ) {
-        return conversationId + ":" + sourceMessageId + ":" + normalizeAgent(agentType);
-    }
+    public void fail(String requestKey) { redis.delete(requestKey); }
 
-    private String cooldownKey(
-            UUID userId,
-            UUID conversationId,
-            String agentType
-    ) {
-        return userId + ":" + conversationId + ":" + normalizeAgent(agentType);
-    }
+    private String normalize(String value) { return value == null ? "UNKNOWN" : value.trim().toUpperCase(); }
 
-    private String normalizeAgent(String agentType) {
-        if (agentType == null || agentType.isBlank()) {
-            return "UNKNOWN";
-        }
-
-        return agentType.trim().toUpperCase();
-    }
-
-    private void cleanupOldCooldownEntries() {
-        Instant cutoff = Instant.now().minusMillis(COOLDOWN_ENTRY_TTL_MS);
-
-        Iterator<Map.Entry<String, Instant>> iterator = lastAcceptedAtByCooldownKey.entrySet().iterator();
-
-        while (iterator.hasNext()) {
-            Map.Entry<String, Instant> entry = iterator.next();
-
-            if (entry.getValue().isBefore(cutoff)) {
-                iterator.remove();
-            }
-        }
-    }
-
-    public record Decision(
-            boolean accepted,
-            String eventType,
-            String reason,
-            String requestKey,
-            long retryAfterMs
-    ) {
-        public static Decision accepted(String requestKey) {
-            return new Decision(
-                    true,
-                    null,
-                    null,
-                    requestKey,
-                    0
-            );
-        }
-
-        public static Decision rejected(
-                String eventType,
-                String reason,
-                String requestKey,
-                long retryAfterMs
-        ) {
-            return new Decision(
-                    false,
-                    eventType,
-                    reason,
-                    requestKey,
-                    retryAfterMs
-            );
-        }
+    public record Decision(boolean accepted, String eventType, String reason, String requestKey, long retryAfterMs) {
+        public static Decision accepted(String key) { return new Decision(true, null, null, key, 0); }
+        public static Decision rejected(String type, String reason, String key, long retry) { return new Decision(false, type, reason, key, retry); }
     }
 }

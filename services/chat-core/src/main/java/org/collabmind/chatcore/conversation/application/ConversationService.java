@@ -20,13 +20,16 @@ public class ConversationService {
 
     private final ConversationRepository conversationRepository;
     private final ConversationMemberRepository memberRepository;
+    private final RoomActivityService roomActivityService;
 
     public ConversationService(
             ConversationRepository conversationRepository,
-            ConversationMemberRepository memberRepository
+            ConversationMemberRepository memberRepository,
+            RoomActivityService roomActivityService
     ) {
         this.conversationRepository = conversationRepository;
         this.memberRepository = memberRepository;
+        this.roomActivityService = roomActivityService;
     }
 
     @Transactional
@@ -48,6 +51,7 @@ public class ConversationService {
         );
 
         memberRepository.save(owner);
+        roomActivityService.touch(savedConversation.getId());
 
         return ConversationResponse.from(savedConversation, 1);
     }
@@ -101,6 +105,7 @@ public class ConversationService {
         }
 
         long memberCount = memberRepository.countByConversationId(conversationId);
+        roomActivityService.touch(conversationId);
 
         return ConversationResponse.from(conversation, memberCount);
     }

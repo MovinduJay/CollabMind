@@ -98,6 +98,7 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
                 .orElseThrow(() -> new IllegalStateException("WebSocket session is not registered"));
 
         ClientCommand command = objectMapper.readValue(message.getPayload(), ClientCommand.class);
+        subscriptionRegistry.heartbeat(session.getId(), client.userId());
 
         if ("PING".equalsIgnoreCase(command.commandType())) {
             ServerEvent pongEvent = ServerEvent.of(

@@ -6,5 +6,6 @@ public enum AgentType {
     SUMMARIZER,
     RESEARCHER,
     SHOPPING,
-    GITHUB
+    GITHUB,
+    KAPRUKA
 }

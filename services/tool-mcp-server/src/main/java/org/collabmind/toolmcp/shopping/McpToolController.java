@@ -3,6 +3,7 @@ package org.collabmind.toolmcp.shopping;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.collabmind.toolmcp.audit.ToolAuditService;
 import org.collabmind.toolmcp.github.GitHubToolService;
+import org.collabmind.toolmcp.kapruka.KaprukaSearchService;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.Duration;
@@ -17,15 +18,18 @@ public class McpToolController {
     private final ShoppingSearchService shoppingSearchService;
     private final GitHubToolService gitHubToolService;
     private final ToolAuditService toolAuditService;
+    private final KaprukaSearchService kaprukaSearchService;
 
     public McpToolController(
             ShoppingSearchService shoppingSearchService,
             GitHubToolService gitHubToolService,
-            ToolAuditService toolAuditService
+            ToolAuditService toolAuditService,
+            KaprukaSearchService kaprukaSearchService
     ) {
         this.shoppingSearchService = shoppingSearchService;
         this.gitHubToolService = gitHubToolService;
         this.toolAuditService = toolAuditService;
+        this.kaprukaSearchService = kaprukaSearchService;
     }
 
     @PostMapping
@@ -46,6 +50,7 @@ public class McpToolController {
                 "tools",
                 List.of(
                         shoppingToolDefinition(),
+                        kaprukaSearchToolDefinition(),
                         githubRepoSummaryToolDefinition(),
                         githubSearchIssuesToolDefinition()
                 )
@@ -60,6 +65,7 @@ public class McpToolController {
                         "tools",
                         List.of(
                                 shoppingToolDefinition(),
+                                kaprukaSearchToolDefinition(),
                                 githubRepoSummaryToolDefinition(),
                                 githubSearchIssuesToolDefinition()
                         )
@@ -82,6 +88,7 @@ public class McpToolController {
         try {
             String result = switch (toolName) {
                 case "shopping.search" -> shoppingSearchService.search(userMessage, contextSummary);
+                case "kapruka.search" -> kaprukaSearchService.search(userMessage, contextSummary);
                 case "github.repo_summary" -> gitHubToolService.repoSummary(userMessage, contextSummary);
                 case "github.search_issues" -> gitHubToolService.searchIssues(userMessage, contextSummary);
                 default -> null;
@@ -157,6 +164,20 @@ public class McpToolController {
                                         "type", "string",
                                         "description", "Recent conversation context."
                                 )
+                        ),
+                        "required", List.of("userMessage")
+                )
+        );
+    }
+
+    private Map<String, Object> kaprukaSearchToolDefinition() {
+        return Map.of(
+                "name", "kapruka.search",
+                "description", "Searches the live Kapruka product catalog for purchasable products.",
+                "inputSchema", Map.of(
+                        "type", "object",
+                        "properties", Map.of(
+                                "userMessage", Map.of("type", "string", "description", "The user's Kapruka shopping request.")
                         ),
                         "required", List.of("userMessage")
                 )

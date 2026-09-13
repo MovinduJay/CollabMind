@@ -1,4 +1,4 @@
-$ErrorActionPreference = "Stop"
+﻿$ErrorActionPreference = "Stop"
 
 $baseIdentity = "http://localhost:8082"
 $baseChat = "http://localhost:8081"
@@ -174,7 +174,7 @@ Send-WebSocketJson $socket @{
     conversationId = $conversation.id
     payload = @{
         clientMessageId = (New-Guid).ToString()
-        content = "@shopping find me a birthday gift under Rs. 10,000"
+        content = "@ai find me a birthday gift under Rs. 10,000"
     }
 }
 
@@ -194,5 +194,6 @@ $socket.CloseAsync(
 
 Write-Host ""
 Write-Host "E2E realtime AI test passed."
+
 
 

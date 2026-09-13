@@ -19,9 +19,11 @@ public class AiAgentService {
     private final AiProvider fallbackProvider;
     private final boolean fallbackEnabled;
     private final AiRequestLogRepository auditLogRepository;
+    private final List<AgentContextEnricher> contextEnrichers;
 
     public AiAgentService(
             List<AiProvider> aiProviders,
+            List<AgentContextEnricher> contextEnrichers,
             AiRequestLogRepository auditLogRepository,
             @Value("${collabmind.ai.provider:mock}") String selectedProviderName,
             @Value("${collabmind.ai.fallback-provider:mock}") String fallbackProviderName,
@@ -31,6 +33,7 @@ public class AiAgentService {
         this.fallbackProvider = resolveProvider(aiProviders, fallbackProviderName);
         this.fallbackEnabled = fallbackEnabled;
         this.auditLogRepository = auditLogRepository;
+        this.contextEnrichers = contextEnrichers;
     }
 
     public AiPromptResponse generateResponse(AiPromptRequest request) {
@@ -38,7 +41,8 @@ public class AiAgentService {
                 ? List.of()
                 : request.contextMessages();
 
-        String contextSummary = buildContextSummary(contextMessages);
+        AgentContextEnrichment enrichment = enrichContext(request, buildContextSummary(contextMessages));
+        String contextSummary = enrichment.contextSummary();
         long overallStartedAtNanos = System.nanoTime();
 
         try {
@@ -64,7 +68,7 @@ public class AiAgentService {
                     primaryProvider.providerName(),
                     false,
                     calculateLatencyMs(overallStartedAtNanos),
-                    primaryResult.response(),
+                    attach(primaryResult.response(), enrichment.responseAttachment()),
                     Instant.now()
             );
 
@@ -109,7 +113,7 @@ public class AiAgentService {
                         primaryProvider.providerName(),
                         true,
                         calculateLatencyMs(overallStartedAtNanos),
-                        fallbackResult.response(),
+                        attach(fallbackResult.response(), enrichment.responseAttachment()),
                         Instant.now()
                 );
 
@@ -202,6 +206,23 @@ public class AiAgentService {
         }
 
         return builder.toString();
+    }
+
+    private AgentContextEnrichment enrichContext(AiPromptRequest request, String contextSummary) {
+        AgentContextEnrichment enrichment = AgentContextEnrichment.contextOnly(contextSummary);
+        for (AgentContextEnricher enricher : contextEnrichers) {
+            if (enricher.supports(request.agentType())) {
+                enrichment = enricher.enrich(request, enrichment.contextSummary());
+            }
+        }
+        return enrichment;
+    }
+
+    private String attach(String response, String attachment) {
+        if (attachment == null || attachment.isBlank()) {
+            return response;
+        }
+        return response + "\n\n" + attachment;
     }
 
     private record ProviderCallResult(
