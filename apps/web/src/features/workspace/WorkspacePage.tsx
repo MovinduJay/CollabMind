@@ -66,9 +66,15 @@ function extractConversationId(input: string) {
 }
 
 function renderMessageContent(content: string) {
-  return content.split(/(@ai\b)/gi).map((part, index) =>
-    /^@ai$/i.test(part) ? <strong className="ai-mention" key={index}>{part}</strong> : part
+  return content.split(/(@(?:ai|kapruka)\b)/gi).map((part, index) =>
+    /^@(?:ai|kapruka)$/i.test(part) ? <strong className="ai-mention" key={index}>{part}</strong> : part
   );
+}
+
+function agentDisplayName(agentType?: string | null) {
+  if (!agentType || agentType === "RESEARCHER") return "AI Agent";
+  if (agentType === "KAPRUKA") return "Kapruka Agent";
+  return `${agentType} Agent`;
 }
 
 function splitAiResponse(content: string) {
@@ -351,8 +357,8 @@ export function WorkspacePage() {
     setShowEmojiPicker(false);
   }
 
-  function selectAiMention() {
-    setMessageInput((current) => current.replace(/(^|\s)@[a-z]*$/i, "$1@ai "));
+  function selectMention(mention: "ai" | "kapruka") {
+    setMessageInput((current) => current.replace(/(^|\s)@[a-z]*$/i, `$1@${mention} `));
   }
 
   async function copyLink() {
@@ -405,6 +411,11 @@ export function WorkspacePage() {
   const hasRoom = Boolean(activeConversationId);
   const isInRoom = Boolean(session && hasRoom && realtime.status === "CONNECTED");
   const showAiSuggestion = /(^|\s)@[a-z]*$/i.test(messageInput);
+  const mentionQuery = messageInput.match(/(?:^|\s)@([a-z]*)$/i)?.[1]?.toLowerCase() ?? "";
+  const mentionOptions = [
+    { id: "ai" as const, label: "@ai", description: "Ask the AI assistant" },
+    { id: "kapruka" as const, label: "@kapruka", description: "Search live Kapruka products" }
+  ].filter((option) => option.id.startsWith(mentionQuery));
   const initials = (session?.displayName || displayName || "CM")
     .split(" ")
     .map((part) => part[0])
@@ -689,7 +700,7 @@ export function WorkspacePage() {
                         key={`${message.id}-${partIndex}`}
                         style={message.messageType === "AI" ? { animationDelay: `${partIndex * 160}ms` } : undefined}
                       >
-                        {!isOwn && partIndex === 0 ? <strong>{message.messageType === "AI" ? `${message.agentType === "RESEARCHER" ? "AI" : message.agentType ?? "AI"} Agent` : displaySenderName(message.senderId)}</strong> : null}
+                        {!isOwn && partIndex === 0 ? <strong>{message.messageType === "AI" ? agentDisplayName(message.agentType) : displaySenderName(message.senderId)}</strong> : null}
                         <pre>{renderMessageContent(part)}</pre>
                       </div>
                     ))}
@@ -709,10 +720,12 @@ export function WorkspacePage() {
         <div className="composer">
           {showAiSuggestion ? (
             <div className="mention-picker">
-              <button onClick={selectAiMention}>
-                <span className="mention-avatar"><Bot size={18} /></span>
-                <span><strong>@ai</strong><small>Ask the AI assistant</small></span>
-              </button>
+              {mentionOptions.map((option) => (
+                <button key={option.id} onClick={() => selectMention(option.id)}>
+                  <span className="mention-avatar"><Bot size={18} /></span>
+                  <span><strong>{option.label}</strong><small>{option.description}</small></span>
+                </button>
+              ))}
             </div>
           ) : null}
           <div className="emoji-wrap">
@@ -741,7 +754,7 @@ export function WorkspacePage() {
             onKeyDown={(event) => {
               if (event.key === "Enter" && showAiSuggestion) {
                 event.preventDefault();
-                selectAiMention();
+                selectMention(mentionOptions[0]?.id ?? "ai");
               } else if (event.key === "Enter") {
                 sendMessage();
               }

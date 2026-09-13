@@ -38,6 +38,10 @@ public class AiMentionService {
 
         String normalized = content.toLowerCase();
 
+        if (normalized.matches("(?s).*@kapruka\\b.*")) {
+            return Optional.of("KAPRUKA");
+        }
+
         if (!normalized.contains("@ai")) {
             return Optional.empty();
         }

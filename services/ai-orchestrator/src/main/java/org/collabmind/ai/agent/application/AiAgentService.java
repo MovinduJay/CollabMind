@@ -19,9 +19,11 @@ public class AiAgentService {
     private final AiProvider fallbackProvider;
     private final boolean fallbackEnabled;
     private final AiRequestLogRepository auditLogRepository;
+    private final List<AgentContextEnricher> contextEnrichers;
 
     public AiAgentService(
             List<AiProvider> aiProviders,
+            List<AgentContextEnricher> contextEnrichers,
             AiRequestLogRepository auditLogRepository,
             @Value("${collabmind.ai.provider:mock}") String selectedProviderName,
             @Value("${collabmind.ai.fallback-provider:mock}") String fallbackProviderName,
@@ -31,6 +33,7 @@ public class AiAgentService {
         this.fallbackProvider = resolveProvider(aiProviders, fallbackProviderName);
         this.fallbackEnabled = fallbackEnabled;
         this.auditLogRepository = auditLogRepository;
+        this.contextEnrichers = contextEnrichers;
     }
 
     public AiPromptResponse generateResponse(AiPromptRequest request) {
@@ -38,7 +41,7 @@ public class AiAgentService {
                 ? List.of()
                 : request.contextMessages();
 
-        String contextSummary = buildContextSummary(contextMessages);
+        String contextSummary = enrichContext(request, buildContextSummary(contextMessages));
         long overallStartedAtNanos = System.nanoTime();
 
         try {
@@ -202,6 +205,16 @@ public class AiAgentService {
         }
 
         return builder.toString();
+    }
+
+    private String enrichContext(AiPromptRequest request, String contextSummary) {
+        String enriched = contextSummary;
+        for (AgentContextEnricher enricher : contextEnrichers) {
+            if (enricher.supports(request.agentType())) {
+                enriched = enricher.enrich(request, enriched);
+            }
+        }
+        return enriched;
     }
 
     private record ProviderCallResult(

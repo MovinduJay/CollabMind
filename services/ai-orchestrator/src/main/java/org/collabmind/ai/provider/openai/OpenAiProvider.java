@@ -109,6 +109,7 @@ public class OpenAiProvider implements AiProvider {
             case RESEARCHER -> "Answer the user's request directly. Only discuss research methodology when the user explicitly asks for it.";
             case SHOPPING -> "Give direct, practical recommendations for products, restaurants, food, or places. Lead with useful options, not a research plan.";
             case GITHUB -> "Explain repository or issue information with engineering insights and next actions.";
+            case KAPRUKA -> "Recommend only products present in the supplied LIVE KAPRUKA MCP RESULTS. Include their exact names, prices, and direct URLs. Never invent availability or promise delivery; say delivery must be checked for the selected product and city.";
         };
     }
 }

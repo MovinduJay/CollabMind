@@ -35,6 +35,7 @@ public class MockAiProvider implements AiProvider {
             case "RESEARCHER" -> researcherResponse(request, contextSummary);
             case "SHOPPING" -> shoppingResponse(request, contextSummary);
             case "GITHUB" -> githubResponse(request, contextSummary);
+            case "KAPRUKA" -> kaprukaResponse(contextSummary);
             default -> defaultResponse(request, contextSummary);
         };
     }
@@ -238,6 +239,10 @@ public class MockAiProvider implements AiProvider {
                 toolResponse.latencyMs(),
                 toolResponse.result()
         );
+    }
+
+    private String kaprukaResponse(String contextSummary) {
+        return "Kapruka Agent\n\n" + safeContext(contextSummary);
     }
     private String defaultResponse(
             AiPromptRequest request,

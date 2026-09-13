@@ -104,6 +104,7 @@ public class GeminiAiProvider implements AiProvider {
             Summarize repositories, issues, bugs, pull requests, or developer activity clearly.
             Focus on engineering-relevant insights and next actions.
             """;
+            case KAPRUKA -> "Use only the supplied live Kapruka MCP products. Include exact prices and links, and do not claim delivery availability without a product-and-city check.";
         };
     }
 }
