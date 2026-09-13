@@ -168,6 +168,7 @@ services:
       COLLABMIND_TOOLS_MCP_SHOPPING_BASE_URL: http://tool-mcp-server:8085
       COLLABMIND_TOOLS_GITHUB_PROVIDER: mcp
       COLLABMIND_TOOLS_MCP_GITHUB_BASE_URL: http://tool-mcp-server:8085
+      COLLABMIND_TOOLS_MCP_KAPRUKA_BASE_URL: http://tool-mcp-server:8085
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       OPENAI_MODEL: ${OPENAI_MODEL:-gpt-5-nano}
