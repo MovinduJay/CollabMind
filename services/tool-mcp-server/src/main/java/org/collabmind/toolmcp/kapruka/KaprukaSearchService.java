@@ -13,7 +13,7 @@ public class KaprukaSearchService {
         this.catalog = catalog;
     }
 
-    public String search(String userMessage) {
-        return catalog.search(queryParser.parse(userMessage));
+    public String search(String userMessage, String contextSummary) {
+        return catalog.search(queryParser.parse(userMessage, contextSummary));
     }
 }

@@ -88,7 +88,7 @@ public class McpToolController {
         try {
             String result = switch (toolName) {
                 case "shopping.search" -> shoppingSearchService.search(userMessage, contextSummary);
-                case "kapruka.search" -> kaprukaSearchService.search(userMessage);
+                case "kapruka.search" -> kaprukaSearchService.search(userMessage, contextSummary);
                 case "github.repo_summary" -> gitHubToolService.repoSummary(userMessage, contextSummary);
                 case "github.search_issues" -> gitHubToolService.searchIssues(userMessage, contextSummary);
                 default -> null;

@@ -26,9 +26,9 @@ class KaprukaSearchQueryParserTest {
     }
 
     @Test
-    void preservesConversationalMeTokenRequiredByKaprukaCakeSearch() {
+    void extractsProductTermsFromConversationalCakeSearch() {
         assertThat(parser.parse("@kapruka show me birthday cakes under Rs. 10,000").query())
-                .isEqualTo("me birthday cakes");
+                .isEqualTo("birthday cakes");
     }
 
     @Test
@@ -37,5 +37,24 @@ class KaprukaSearchQueryParserTest {
 
         assertThat(criteria.query()).isEqualTo("cakes");
         assertThat(criteria.maxPrice()).isEqualByComparingTo(new BigDecimal("10000"));
+    }
+
+    @Test
+    void correctsCommonTyposAndRemovesArticles() {
+        KaprukaSearchCriteria criteria = parser.parse("@kapruka ned a cake under 10k");
+
+        assertThat(criteria.query()).isEqualTo("cake");
+        assertThat(criteria.maxPrice()).isEqualByComparingTo(new BigDecimal("10000"));
+    }
+
+    @Test
+    void carriesProductIntentIntoARefinement() {
+        KaprukaSearchCriteria criteria = parser.parse(
+                "@kapruka show cheaper ones under 8k",
+                "Recent conversation context:\n- #1 [USER] @kapruka need birthday cakes under 10k"
+        );
+
+        assertThat(criteria.query()).isEqualTo("birthday cakes");
+        assertThat(criteria.maxPrice()).isEqualByComparingTo(new BigDecimal("8000"));
     }
 }
