@@ -131,7 +131,7 @@ function KaprukaProductCarousel({ products }: { products: KaprukaProduct[] }) {
   return (
     <section className="kapruka-showcase" aria-label="Kapruka products">
       <header className="kapruka-showcase-header">
-        <div><strong>Here are the results</strong><span>{products.length} options from Kapruka</span></div>
+        <span>{products.length} products from Kapruka</span>
         {products.length > 4 ? (
           <div className="kapruka-carousel-actions">
             <button onClick={() => move(-1)} aria-label="Previous products"><ChevronLeft size={18} /></button>
@@ -781,7 +781,10 @@ export function WorkspacePage() {
                   ) : null}
                   <div className="message-stack">
                     {kapruka.products.length > 0 && !isOwn ? (
-                      <strong className="product-agent-label">{agentDisplayName(message.agentType)}</strong>
+                      <div className="chat-message ai kapruka-intro">
+                        <strong>{agentDisplayName(message.agentType)}</strong>
+                        <pre>Here are the results.</pre>
+                      </div>
                     ) : null}
                     {messageParts.map((part, partIndex) => (
                       <div
