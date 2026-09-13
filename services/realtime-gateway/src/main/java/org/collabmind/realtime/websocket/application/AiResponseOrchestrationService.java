@@ -8,8 +8,6 @@ import org.collabmind.realtime.chatcore.client.ChatCoreClient;
 import org.collabmind.realtime.chatcore.client.ChatCoreMessageResponse;
 import org.collabmind.realtime.chatcore.client.ChatCoreSaveAiMessageRequest;
 import org.collabmind.realtime.websocket.protocol.ServerEvent;
-import org.collabmind.realtime.websocket.session.ConnectedClient;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClientResponseException;
 
@@ -48,9 +46,9 @@ public class AiResponseOrchestrationService {
         this.aiRequestGuard = aiRequestGuard;
     }
 
-    @Async("aiTaskExecutor")
     public CompletableFuture<Void> generateAndPersistAiResponse(
-            ConnectedClient client,
+            UUID userId,
+            String jwtToken,
             String commandId,
             ChatCoreMessageResponse savedUserMessage,
             String agentType
@@ -58,10 +56,11 @@ public class AiResponseOrchestrationService {
         Instant startedAt = Instant.now();
         String stage = "STARTING_AI_FLOW";
         AiRequestGuard.Decision guardDecision = null;
+        boolean completed = false;
 
         try {
             guardDecision = aiRequestGuard.tryBegin(
-                    client.userId(),
+                    userId,
                     savedUserMessage.conversationId(),
                     savedUserMessage.id(),
                     agentType
@@ -69,7 +68,6 @@ public class AiResponseOrchestrationService {
 
             if (!guardDecision.accepted()) {
                 sendAiGuardRejected(
-                        client,
                         commandId,
                         savedUserMessage.conversationId().toString(),
                         savedUserMessage.id().toString(),
@@ -81,7 +79,6 @@ public class AiResponseOrchestrationService {
             }
 
             publishStageUpdate(
-                    client,
                     commandId,
                     savedUserMessage.conversationId().toString(),
                     agentType,
@@ -93,7 +90,6 @@ public class AiResponseOrchestrationService {
             stage = "FETCHING_CONTEXT";
 
             publishStageUpdate(
-                    client,
                     commandId,
                     savedUserMessage.conversationId().toString(),
                     agentType,
@@ -103,14 +99,13 @@ public class AiResponseOrchestrationService {
             );
 
             List<AiContextMessage> contextMessages = fetchRecentUserContext(
-                    client,
+                    jwtToken,
                     savedUserMessage
             );
 
             stage = "CALLING_AI_ORCHESTRATOR";
 
             publishStageUpdate(
-                    client,
                     commandId,
                     savedUserMessage.conversationId().toString(),
                     agentType,
@@ -121,7 +116,7 @@ public class AiResponseOrchestrationService {
 
             AiPromptRequest aiRequest = new AiPromptRequest(
                     savedUserMessage.conversationId(),
-                    client.userId(),
+                    userId,
                     agentType,
                     savedUserMessage.content(),
                     contextMessages
@@ -132,7 +127,6 @@ public class AiResponseOrchestrationService {
             stage = "SAVING_AI_MESSAGE";
 
             publishStageUpdate(
-                    client,
                     commandId,
                     savedUserMessage.conversationId().toString(),
                     agentType,
@@ -157,7 +151,7 @@ public class AiResponseOrchestrationService {
 
             ChatCoreMessageResponse savedAiMessage = chatCoreClient.saveAiMessage(
                     savedUserMessage.conversationId(),
-                    client.jwtToken(),
+                    jwtToken,
                     saveAiRequest
             );
 
@@ -181,20 +175,11 @@ public class AiResponseOrchestrationService {
                     payload
             );
 
-            fanoutService.sendToClient(
-                    client,
-                    aiMessageCreatedEvent
-            );
-
-            fanoutService.sendToConversationExcept(
-                    savedAiMessage.conversationId().toString(),
-                    client.sessionId(),
-                    aiMessageCreatedEvent
-            );
+            fanoutService.sendToConversation(savedAiMessage.conversationId().toString(), aiMessageCreatedEvent);
+            completed = true;
 
         } catch (RestClientResponseException exception) {
             sendAiFailed(
-                    client,
                     commandId,
                     savedUserMessage.conversationId().toString(),
                     agentType,
@@ -205,9 +190,9 @@ public class AiResponseOrchestrationService {
                             + ". Body: "
                             + exception.getResponseBodyAsString()
             );
+            throw exception;
         } catch (Exception exception) {
             sendAiFailed(
-                    client,
                     commandId,
                     savedUserMessage.conversationId().toString(),
                     agentType,
@@ -215,9 +200,11 @@ public class AiResponseOrchestrationService {
                     startedAt,
                     "Unexpected error at stage [" + stage + "]: " + exception.getMessage()
             );
+            throw new IllegalStateException("AI job failed at " + stage, exception);
         } finally {
             if (guardDecision != null && guardDecision.accepted()) {
-                aiRequestGuard.complete(guardDecision.requestKey());
+                if (completed) aiRequestGuard.complete(guardDecision.requestKey());
+                else aiRequestGuard.fail(guardDecision.requestKey());
             }
         }
 
@@ -225,7 +212,7 @@ public class AiResponseOrchestrationService {
     }
 
     private List<AiContextMessage> fetchRecentUserContext(
-            ConnectedClient client,
+            String jwtToken,
             ChatCoreMessageResponse savedUserMessage
     ) {
         long afterSequence = Math.max(
@@ -237,7 +224,7 @@ public class AiResponseOrchestrationService {
                         savedUserMessage.conversationId(),
                         afterSequence,
                         CONTEXT_MESSAGE_LIMIT,
-                        client.jwtToken()
+                        jwtToken
                 )
                 .stream()
                 .filter(message -> USER_MESSAGE_TYPE.equalsIgnoreCase(message.messageType()))
@@ -251,7 +238,6 @@ public class AiResponseOrchestrationService {
     }
 
     private void publishStageUpdate(
-            ConnectedClient client,
             String commandId,
             String conversationId,
             String agentType,
@@ -272,13 +258,7 @@ public class AiResponseOrchestrationService {
                 payload
         );
 
-        fanoutService.sendToClient(client, event);
-
-        fanoutService.sendToConversationExcept(
-                conversationId,
-                client.sessionId(),
-                event
-        );
+        fanoutService.sendToConversation(conversationId, event);
     }
 
     private String truncateContextContent(String content) {
@@ -321,7 +301,6 @@ public class AiResponseOrchestrationService {
     }
 
     private void sendAiGuardRejected(
-            ConnectedClient client,
             String commandId,
             String conversationId,
             String sourceMessageId,
@@ -336,18 +315,10 @@ public class AiResponseOrchestrationService {
         payload.put("requestKey", decision.requestKey());
         payload.put("retryAfterMs", decision.retryAfterMs());
 
-        fanoutService.sendToClient(
-                client,
-                ServerEvent.of(
-                        decision.eventType(),
-                        conversationId,
-                        payload
-                )
-        );
+        fanoutService.sendToConversation(conversationId, ServerEvent.of(decision.eventType(), conversationId, payload));
     }
 
     private void sendAiFailed(
-            ConnectedClient client,
             String commandId,
             String conversationId,
             String agentType,
@@ -362,14 +333,7 @@ public class AiResponseOrchestrationService {
         payload.put("elapsedMs", elapsedMs(startedAt));
         payload.put("reason", reason);
 
-        fanoutService.sendToClient(
-                client,
-                ServerEvent.of(
-                        "AI_RESPONSE_FAILED",
-                        conversationId,
-                        payload
-                )
-        );
+        fanoutService.sendToConversation(conversationId, ServerEvent.of("AI_RESPONSE_FAILED", conversationId, payload));
     }
 
     private long elapsedMs(Instant startedAt) {
