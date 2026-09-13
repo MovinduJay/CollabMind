@@ -22,7 +22,7 @@ public class KaprukaAgentContextEnricher implements AgentContextEnricher {
     }
 
     @Override
-    public String enrich(AiPromptRequest request, String contextSummary) {
+    public AgentContextEnrichment enrich(AiPromptRequest request, String contextSummary) {
         ToolCallResponse response = aiToolService.invoke(new ToolCallRequest(
                 request.conversationId(),
                 request.userId(),
@@ -33,6 +33,10 @@ public class KaprukaAgentContextEnricher implements AgentContextEnricher {
         if (!response.success()) {
             throw new IllegalStateException("Live Kapruka catalog search failed: " + response.errorMessage());
         }
-        return contextSummary + "\n\nLIVE KAPRUKA MCP RESULTS (authoritative):\n" + response.result();
+        String catalogJson = response.result().trim();
+        return new AgentContextEnrichment(
+                contextSummary + "\n\nLIVE KAPRUKA MCP RESULTS (authoritative JSON):\n" + catalogJson,
+                "[[KAPRUKA_PRODUCTS]]" + catalogJson + "[[/KAPRUKA_PRODUCTS]]"
+        );
     }
 }

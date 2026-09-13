@@ -46,7 +46,7 @@ public class HttpKaprukaMcpClient implements KaprukaCatalogPort {
             parameters.put("limit", criteria.limit());
             parameters.put("in_stock_only", true);
             parameters.put("sort", "relevance");
-            parameters.put("response_format", "markdown");
+            parameters.put("response_format", "json");
             if (criteria.minPrice() != null) parameters.put("min_price", criteria.minPrice());
             if (criteria.maxPrice() != null) parameters.put("max_price", criteria.maxPrice());
 

@@ -24,4 +24,10 @@ class KaprukaSearchQueryParserTest {
     void usesSafeGiftFallbackForAnEmptyIntent() {
         assertThat(parser.parse("@kapruka show me something").query()).isEqualTo("gifts");
     }
+
+    @Test
+    void preservesConversationalMeTokenRequiredByKaprukaCakeSearch() {
+        assertThat(parser.parse("@kapruka show me birthday cakes under Rs. 10,000").query())
+                .isEqualTo("me birthday cakes");
+    }
 }

@@ -82,6 +82,41 @@ function splitAiResponse(content: string) {
   return sections.length > 0 ? sections : [content];
 }
 
+type KaprukaProduct = {
+  id: string;
+  name: string;
+  summary?: string;
+  price?: { amount?: number | null; currency?: string };
+  in_stock?: boolean;
+  image_url?: string | null;
+  url: string;
+};
+
+function parseKaprukaMessage(content: string) {
+  const pattern = /\[\[KAPRUKA_PRODUCTS\]\]([\s\S]*?)\[\[\/KAPRUKA_PRODUCTS\]\]/;
+  const match = content.match(pattern);
+  if (!match) return { text: content, products: [] as KaprukaProduct[] };
+
+  try {
+    const payload = JSON.parse(match[1]) as { results?: KaprukaProduct[] };
+    return {
+      text: content.replace(pattern, "").trim(),
+      products: Array.isArray(payload.results) ? payload.results : []
+    };
+  } catch {
+    return { text: content.replace(pattern, "").trim(), products: [] as KaprukaProduct[] };
+  }
+}
+
+function formatKaprukaPrice(product: KaprukaProduct) {
+  const amount = product.price?.amount;
+  if (typeof amount !== "number") return "View price";
+  if ((product.price?.currency ?? "LKR") === "LKR") {
+    return `Rs. ${amount.toLocaleString("en-LK", { maximumFractionDigits: 2 })}`;
+  }
+  return `${product.price?.currency} ${amount.toLocaleString("en-LK", { maximumFractionDigits: 2 })}`;
+}
+
 export function WorkspacePage() {
   const navigate = useNavigate();
   const params = useParams();
@@ -685,7 +720,10 @@ export function WorkspacePage() {
           ) : (
             realtime.messages.map((message) => {
               const isOwn = message.messageType === "USER" && message.senderId === session?.userId;
-              const messageParts = message.messageType === "AI" ? splitAiResponse(message.content) : [message.content];
+              const kapruka = message.messageType === "AI"
+                ? parseKaprukaMessage(message.content)
+                : { text: message.content, products: [] as KaprukaProduct[] };
+              const messageParts = message.messageType === "AI" ? splitAiResponse(kapruka.text) : [message.content];
               return (
                 <article key={message.id} className={`message-row ${isOwn ? "own" : ""}`}>
                   {!isOwn ? (
@@ -704,6 +742,30 @@ export function WorkspacePage() {
                         <pre>{renderMessageContent(part)}</pre>
                       </div>
                     ))}
+                    {kapruka.products.length > 0 ? (
+                      <div className="kapruka-products" aria-label="Kapruka products">
+                        {kapruka.products.map((product) => (
+                          <a
+                            className="kapruka-product-card"
+                            href={product.url}
+                            target="_blank"
+                            rel="noreferrer"
+                            key={product.id}
+                          >
+                            <span className="kapruka-product-image">
+                              {product.image_url ? <img src={product.image_url} alt={product.name} loading="lazy" /> : <Bot size={28} />}
+                            </span>
+                            <span className="kapruka-product-copy">
+                              <strong>{product.name}</strong>
+                              <span className="kapruka-product-price">{formatKaprukaPrice(product)}</span>
+                              <small className={product.in_stock ? "in-stock" : "out-of-stock"}>
+                                {product.in_stock ? "In stock" : "Check availability"}
+                              </small>
+                            </span>
+                          </a>
+                        ))}
+                      </div>
+                    ) : null}
                   </div>
                 </article>
               );

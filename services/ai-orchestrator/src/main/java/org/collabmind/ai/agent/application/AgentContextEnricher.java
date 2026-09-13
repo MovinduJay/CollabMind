@@ -7,5 +7,5 @@ public interface AgentContextEnricher {
 
     boolean supports(AgentType agentType);
 
-    String enrich(AiPromptRequest request, String contextSummary);
+    AgentContextEnrichment enrich(AiPromptRequest request, String contextSummary);
 }

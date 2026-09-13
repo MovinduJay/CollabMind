@@ -41,7 +41,8 @@ public class AiAgentService {
                 ? List.of()
                 : request.contextMessages();
 
-        String contextSummary = enrichContext(request, buildContextSummary(contextMessages));
+        AgentContextEnrichment enrichment = enrichContext(request, buildContextSummary(contextMessages));
+        String contextSummary = enrichment.contextSummary();
         long overallStartedAtNanos = System.nanoTime();
 
         try {
@@ -67,7 +68,7 @@ public class AiAgentService {
                     primaryProvider.providerName(),
                     false,
                     calculateLatencyMs(overallStartedAtNanos),
-                    primaryResult.response(),
+                    attach(primaryResult.response(), enrichment.responseAttachment()),
                     Instant.now()
             );
 
@@ -112,7 +113,7 @@ public class AiAgentService {
                         primaryProvider.providerName(),
                         true,
                         calculateLatencyMs(overallStartedAtNanos),
-                        fallbackResult.response(),
+                        attach(fallbackResult.response(), enrichment.responseAttachment()),
                         Instant.now()
                 );
 
@@ -207,14 +208,21 @@ public class AiAgentService {
         return builder.toString();
     }
 
-    private String enrichContext(AiPromptRequest request, String contextSummary) {
-        String enriched = contextSummary;
+    private AgentContextEnrichment enrichContext(AiPromptRequest request, String contextSummary) {
+        AgentContextEnrichment enrichment = AgentContextEnrichment.contextOnly(contextSummary);
         for (AgentContextEnricher enricher : contextEnrichers) {
             if (enricher.supports(request.agentType())) {
-                enriched = enricher.enrich(request, enriched);
+                enrichment = enricher.enrich(request, enrichment.contextSummary());
             }
         }
-        return enriched;
+        return enrichment;
+    }
+
+    private String attach(String response, String attachment) {
+        if (attachment == null || attachment.isBlank()) {
+            return response;
+        }
+        return response + "\n\n" + attachment;
     }
 
     private record ProviderCallResult(
