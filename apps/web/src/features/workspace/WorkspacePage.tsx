@@ -1,8 +1,11 @@
 ﻿import { useEffect, useMemo, useState } from "react";
 import {
   Bot,
+  ChevronLeft,
+  ChevronRight,
   Check,
   Copy,
+  ExternalLink,
   Link2,
   LogOut,
   MessageSquare,
@@ -15,6 +18,7 @@ import {
   Users,
   X
 } from "lucide-react";
+import { useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { api, ApiError } from "../../api/client";
 import { useRealtimeRoom } from "../../hooks/useRealtimeRoom";
@@ -115,6 +119,48 @@ function formatKaprukaPrice(product: KaprukaProduct) {
     return `Rs. ${amount.toLocaleString("en-LK", { maximumFractionDigits: 2 })}`;
   }
   return `${product.price?.currency} ${amount.toLocaleString("en-LK", { maximumFractionDigits: 2 })}`;
+}
+
+function KaprukaProductCarousel({ products }: { products: KaprukaProduct[] }) {
+  const trackRef = useRef<HTMLDivElement>(null);
+
+  function move(direction: -1 | 1) {
+    trackRef.current?.scrollBy({ left: direction * trackRef.current.clientWidth, behavior: "smooth" });
+  }
+
+  return (
+    <section className="kapruka-showcase" aria-label="Kapruka products">
+      <header className="kapruka-showcase-header">
+        <div><strong>Here are the results</strong><span>{products.length} options from Kapruka</span></div>
+        {products.length > 4 ? (
+          <div className="kapruka-carousel-actions">
+            <button onClick={() => move(-1)} aria-label="Previous products"><ChevronLeft size={18} /></button>
+            <button onClick={() => move(1)} aria-label="Next products"><ChevronRight size={18} /></button>
+          </div>
+        ) : null}
+      </header>
+      <div className="kapruka-products" ref={trackRef}>
+        {products.map((product) => (
+          <a className="kapruka-product-card" href={product.url} target="_blank" rel="noreferrer" key={product.id}>
+            <span className="kapruka-product-image">
+              {product.image_url ? <img src={product.image_url} alt={product.name} loading="lazy" /> : <Bot size={28} />}
+              <span className="kapruka-source">Kapruka</span>
+            </span>
+            <span className="kapruka-product-copy">
+              <strong>{product.name}</strong>
+              <span className="kapruka-product-footer">
+                <span>
+                  <b className="kapruka-product-price">{formatKaprukaPrice(product)}</b>
+                  <small className={product.in_stock ? "in-stock" : "out-of-stock"}>{product.in_stock ? "In stock" : "Check availability"}</small>
+                </span>
+                <i aria-hidden="true"><ExternalLink size={16} /></i>
+              </span>
+            </span>
+          </a>
+        ))}
+      </div>
+    </section>
+  );
 }
 
 export function WorkspacePage() {
@@ -748,28 +794,7 @@ export function WorkspacePage() {
                       </div>
                     ))}
                     {kapruka.products.length > 0 ? (
-                      <div className="kapruka-products" aria-label="Kapruka products">
-                        {kapruka.products.map((product) => (
-                          <a
-                            className="kapruka-product-card"
-                            href={product.url}
-                            target="_blank"
-                            rel="noreferrer"
-                            key={product.id}
-                          >
-                            <span className="kapruka-product-image">
-                              {product.image_url ? <img src={product.image_url} alt={product.name} loading="lazy" /> : <Bot size={28} />}
-                            </span>
-                            <span className="kapruka-product-copy">
-                              <strong>{product.name}</strong>
-                              <span className="kapruka-product-price">{formatKaprukaPrice(product)}</span>
-                              <small className={product.in_stock ? "in-stock" : "out-of-stock"}>
-                                {product.in_stock ? "In stock" : "Check availability"}
-                              </small>
-                            </span>
-                          </a>
-                        ))}
-                      </div>
+                      <KaprukaProductCarousel products={kapruka.products} />
                     ) : null}
                   </div>
                 </article>
