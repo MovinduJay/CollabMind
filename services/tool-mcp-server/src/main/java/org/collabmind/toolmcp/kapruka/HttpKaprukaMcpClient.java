@@ -40,8 +40,21 @@ public class HttpKaprukaMcpClient implements KaprukaCatalogPort {
             String sessionId = initialize();
             notifyInitialized(sessionId);
 
+            String result = invokeSearch(criteria, criteria.query(), sessionId);
+            if (result.startsWith("No products found") && !criteria.query().toLowerCase().startsWith("me ")) {
+                result = invokeSearch(criteria, "me " + criteria.query(), sessionId);
+            }
+            return result;
+        } catch (KaprukaMcpException exception) {
+            throw exception;
+        } catch (Exception exception) {
+            throw new KaprukaMcpException("Kapruka MCP request failed", exception);
+        }
+    }
+
+    private String invokeSearch(KaprukaSearchCriteria criteria, String query, String sessionId) throws Exception {
             Map<String, Object> parameters = new LinkedHashMap<>();
-            parameters.put("q", criteria.query());
+            parameters.put("q", query);
             parameters.put("currency", criteria.currency());
             parameters.put("limit", criteria.limit());
             parameters.put("in_stock_only", true);
@@ -70,11 +83,6 @@ public class HttpKaprukaMcpClient implements KaprukaCatalogPort {
                 throw new KaprukaMcpException(reason);
             }
             return text;
-        } catch (KaprukaMcpException exception) {
-            throw exception;
-        } catch (Exception exception) {
-            throw new KaprukaMcpException("Kapruka MCP request failed", exception);
-        }
     }
 
     private String initialize() throws Exception {

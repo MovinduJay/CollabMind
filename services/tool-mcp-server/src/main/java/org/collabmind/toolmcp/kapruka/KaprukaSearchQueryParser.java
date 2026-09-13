@@ -11,17 +11,17 @@ import java.util.regex.Pattern;
 public class KaprukaSearchQueryParser {
 
     private static final Pattern MAX_PRICE = Pattern.compile(
-            "(?i)(?:under|below|less than|max(?:imum)?|budget(?: of| is)?|up to)\\s*(?:rs\\.?|lkr)?\\s*([0-9][0-9,]*(?:\\.[0-9]+)?)"
+            "(?i)(?:under|below|less than|max(?:imum)?|budget(?: of| is)?|up to)\\s*(?:rs\\.?|lkr)?\\s*([0-9][0-9,]*(?:\\.[0-9]+)?)(k)?\\b"
     );
     private static final Pattern MIN_PRICE = Pattern.compile(
-            "(?i)(?:over|above|more than|min(?:imum)?|from)\\s*(?:rs\\.?|lkr)?\\s*([0-9][0-9,]*(?:\\.[0-9]+)?)"
+            "(?i)(?:over|above|more than|min(?:imum)?|from)\\s*(?:rs\\.?|lkr)?\\s*([0-9][0-9,]*(?:\\.[0-9]+)?)(k)?\\b"
     );
 
     public KaprukaSearchCriteria parse(String userMessage) {
         String message = userMessage == null ? "" : userMessage.trim();
         String query = message
                 .replaceAll("(?i)@kapruka\\b", " ")
-                .replaceAll("(?i)(?:under|below|less than|max(?:imum)?|budget(?: of| is)?|up to|over|above|more than|min(?:imum)?|from)\\s*(?:rs\\.?|lkr)?\\s*[0-9][0-9,]*(?:\\.[0-9]+)?", " ")
+                .replaceAll("(?i)(?:under|below|less than|max(?:imum)?|budget(?: of| is)?|up to|over|above|more than|min(?:imum)?|from)\\s*(?:rs\\.?|lkr)?\\s*[0-9][0-9,]*(?:\\.[0-9]+)?k?\\b", " ")
                 .replaceAll("(?i)\\b(?:please|show|find|search|recommend|suggest|give me|need|want|looking for|some|anything|something|about|like)\\b", " ")
                 .replaceAll("\\s+", " ")
                 .trim();
@@ -41,7 +41,11 @@ public class KaprukaSearchQueryParser {
 
     private BigDecimal price(Pattern pattern, String message) {
         Matcher matcher = pattern.matcher(message);
-        return matcher.find() ? new BigDecimal(matcher.group(1).replace(",", "")) : null;
+        if (!matcher.find()) {
+            return null;
+        }
+        BigDecimal amount = new BigDecimal(matcher.group(1).replace(",", ""));
+        return matcher.group(2) == null ? amount : amount.multiply(BigDecimal.valueOf(1000));
     }
 
     private String detectCurrency(String message) {

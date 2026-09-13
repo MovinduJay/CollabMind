@@ -30,4 +30,12 @@ class KaprukaSearchQueryParserTest {
         assertThat(parser.parse("@kapruka show me birthday cakes under Rs. 10,000").query())
                 .isEqualTo("me birthday cakes");
     }
+
+    @Test
+    void expandsKSuffixAndRemovesItFromTheSearchQuery() {
+        KaprukaSearchCriteria criteria = parser.parse("@kapruka need cakes under 10k");
+
+        assertThat(criteria.query()).isEqualTo("cakes");
+        assertThat(criteria.maxPrice()).isEqualByComparingTo(new BigDecimal("10000"));
+    }
 }
