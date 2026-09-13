@@ -52,7 +52,7 @@ public class ConversationSubscriptionService {
                 return;
             }
 
-            int subscriberCount = subscriptionRegistry.subscribe(conversationId, client.sessionId());
+            int subscriberCount = subscriptionRegistry.subscribe(conversationId, client.sessionId(), client.userId());
 
             Map<String, Object> payload = new HashMap<>();
             payload.put("commandId", command.commandId());
@@ -138,6 +138,7 @@ public class ConversationSubscriptionService {
         payload.put("conversationId", conversationId);
         payload.put("subscriberCount", subscriptionRegistry.subscriberCount(conversationId));
         payload.put("subscribedSessions", subscriptionRegistry.getSubscribedSessions(conversationId).size());
+        payload.put("activeUserIds", subscriptionRegistry.activeUserIds(conversationId));
         return payload;
     }
 

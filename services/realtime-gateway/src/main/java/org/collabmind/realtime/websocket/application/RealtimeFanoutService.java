@@ -6,6 +6,10 @@ import org.collabmind.realtime.websocket.protocol.ServerEvent;
 import org.collabmind.realtime.websocket.session.ConnectedClient;
 import org.collabmind.realtime.websocket.session.ConnectionRegistry;
 import org.collabmind.realtime.websocket.session.ConversationSubscriptionRegistry;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.connection.Message;
+import org.springframework.data.redis.connection.MessageListener;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
@@ -13,91 +17,86 @@ import org.springframework.web.socket.WebSocketSession;
 import java.io.IOException;
 
 @Service
-public class RealtimeFanoutService {
+public class RealtimeFanoutService implements MessageListener {
 
-    private final ConnectionRegistry connectionRegistry;
-    private final ConversationSubscriptionRegistry subscriptionRegistry;
+    private final ConnectionRegistry connections;
+    private final ConversationSubscriptionRegistry subscriptions;
     private final ObjectMapper objectMapper;
+    private final StringRedisTemplate redis;
+    private final String channel;
 
-    public RealtimeFanoutService(
-            ConnectionRegistry connectionRegistry,
-            ConversationSubscriptionRegistry subscriptionRegistry,
-            ObjectMapper objectMapper
-    ) {
-        this.connectionRegistry = connectionRegistry;
-        this.subscriptionRegistry = subscriptionRegistry;
+    public RealtimeFanoutService(ConnectionRegistry connections,
+                                 ConversationSubscriptionRegistry subscriptions,
+                                 ObjectMapper objectMapper,
+                                 StringRedisTemplate redis,
+                                 @Value("${collabmind.redis.realtime-channel:collabmind:realtime}") String channel) {
+        this.connections = connections;
+        this.subscriptions = subscriptions;
         this.objectMapper = objectMapper;
+        this.redis = redis;
+        this.channel = channel;
     }
 
     public void sendToClient(ConnectedClient client, ServerEvent event) {
         WebSocketSession session = client.session();
-
         if (!session.isOpen()) {
             cleanupClosedClient(client);
             return;
         }
-
         try {
             String json = objectMapper.writeValueAsString(event);
-
             synchronized (session) {
-                if (session.isOpen()) {
-                    session.sendMessage(new TextMessage(json));
-                }
+                if (session.isOpen()) session.sendMessage(new TextMessage(json));
             }
-        } catch (JsonProcessingException exception) {
-            throw new IllegalStateException("Failed to serialize server event", exception);
-        } catch (IOException exception) {
+        } catch (JsonProcessingException e) {
+            throw new IllegalStateException("Failed to serialize server event", e);
+        } catch (IOException e) {
             cleanupClosedClient(client);
         }
     }
 
     public void sendToConversation(String conversationId, ServerEvent event) {
-        subscriptionRegistry.getSubscribedSessions(conversationId)
-                .stream()
-                .map(connectionRegistry::findBySessionId)
-                .flatMap(java.util.Optional::stream)
-                .forEach(client -> sendToClient(client, event));
+        publish(new FanoutEnvelope(conversationId, null, false, event));
     }
 
-    public void sendToConversationExcept(
-            String conversationId,
-            String excludedSessionId,
-            ServerEvent event
-    ) {
-        subscriptionRegistry.getSubscribedSessions(conversationId)
-                .stream()
-                .filter(sessionId -> !sessionId.equals(excludedSessionId))
-                .map(connectionRegistry::findBySessionId)
-                .flatMap(java.util.Optional::stream)
-                .forEach(client -> sendToClient(client, event));
+    public void sendToConversationExcept(String conversationId, String excludedSessionId, ServerEvent event) {
+        publish(new FanoutEnvelope(conversationId, excludedSessionId, false, event));
     }
 
     public void broadcast(ServerEvent event) {
-        connectionRegistry.getAllClients()
-                .forEach(client -> sendToClient(client, event));
+        publish(new FanoutEnvelope(null, null, true, event));
+    }
+
+    @Override
+    public void onMessage(Message message, byte[] pattern) {
+        try {
+            FanoutEnvelope envelope = objectMapper.readValue(message.getBody(), FanoutEnvelope.class);
+            if (envelope.broadcast()) {
+                connections.getAllClients().forEach(client -> sendToClient(client, envelope.event()));
+                return;
+            }
+            subscriptions.getSubscribedSessions(envelope.conversationId()).stream()
+                    .filter(id -> envelope.excludedSessionId() == null || !id.equals(envelope.excludedSessionId()))
+                    .map(connections::findBySessionId)
+                    .flatMap(java.util.Optional::stream)
+                    .forEach(client -> sendToClient(client, envelope.event()));
+        } catch (Exception ignored) {
+            // Malformed Pub/Sub payloads are isolated from WebSocket delivery.
+        }
+    }
+
+    private void publish(FanoutEnvelope envelope) {
+        try {
+            redis.convertAndSend(channel, objectMapper.writeValueAsString(envelope));
+        } catch (JsonProcessingException e) {
+            throw new IllegalStateException("Failed to serialize distributed fanout event", e);
+        }
     }
 
     private void cleanupClosedClient(ConnectedClient client) {
-        connectionRegistry.unregister(client.sessionId());
-
-        subscriptionRegistry
-                .removeSessionFromAllConversations(client.sessionId())
-                .forEach(conversationId -> sendToConversation(
-                        conversationId,
-                        ServerEvent.of(
-                                "PRESENCE_UPDATED",
-                                conversationId,
-                                presencePayload(conversationId)
-                        )
-                ));
+        connections.unregister(client.sessionId());
+        subscriptions.removeSessionFromAllConversations(client.sessionId());
     }
 
-    private java.util.Map<String, Object> presencePayload(String conversationId) {
-        java.util.Map<String, Object> payload = new java.util.HashMap<>();
-        payload.put("conversationId", conversationId);
-        payload.put("subscriberCount", subscriptionRegistry.subscriberCount(conversationId));
-        payload.put("subscribedSessions", subscriptionRegistry.getSubscribedSessions(conversationId).size());
-        return payload;
-    }
+    public record FanoutEnvelope(String conversationId, String excludedSessionId, boolean broadcast, ServerEvent event) {}
 }
