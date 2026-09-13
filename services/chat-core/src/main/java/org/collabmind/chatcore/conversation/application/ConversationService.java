@@ -1,6 +1,7 @@
 package org.collabmind.chatcore.conversation.application;
 
 import org.collabmind.chatcore.common.exception.ConversationNotFoundException;
+import org.collabmind.chatcore.common.exception.UserNotConversationMemberException;
 import org.collabmind.chatcore.conversation.domain.Conversation;
 import org.collabmind.chatcore.conversation.infrastructure.ConversationRepository;
 import org.collabmind.chatcore.conversation.web.ConversationMemberResponse;
@@ -110,6 +111,25 @@ public class ConversationService {
         return ConversationResponse.from(conversation, memberCount);
     }
 
+    @Transactional
+    public ConversationResponse renameConversation(
+            UUID conversationId,
+            String name,
+            UUID authenticatedUserId
+    ) {
+        Conversation conversation = conversationRepository.findById(conversationId)
+                .orElseThrow(() -> new ConversationNotFoundException(conversationId));
+
+        requireConversationMember(conversationId, authenticatedUserId);
+        conversation.rename(name);
+        roomActivityService.touch(conversationId);
+
+        return ConversationResponse.from(
+                conversationRepository.save(conversation),
+                memberRepository.countByConversationId(conversationId)
+        );
+    }
+
     @Transactional(readOnly = true)
     public List<ConversationMemberResponse> listMembers(
             UUID conversationId,
@@ -159,7 +179,7 @@ public class ConversationService {
         );
 
         if (!member) {
-            throw new IllegalArgumentException("User is not a member of this conversation");
+            throw new UserNotConversationMemberException(authenticatedUserId, conversationId);
         }
     }
 }

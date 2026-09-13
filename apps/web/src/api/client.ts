@@ -72,6 +72,14 @@ export const api = {
     });
   },
 
+  renameConversation(token: string, conversationId: string, name: string) {
+    return request<Conversation>(`${config.chatApi}/api/conversations/${conversationId}`, {
+      method: "PATCH",
+      headers: jsonHeaders(token),
+      body: JSON.stringify({ name })
+    });
+  },
+
   listConversations(token: string) {
     return request<Conversation[]>(`${config.chatApi}/api/conversations`, {
       headers: {
@@ -81,7 +89,7 @@ export const api = {
   },
 
   joinConversation(token: string, conversationId: string) {
-    return request(`${config.chatApi}/api/conversations/${conversationId}/members`, {
+    return request<Conversation>(`${config.chatApi}/api/conversations/${conversationId}/members`, {
       method: "POST",
       headers: jsonHeaders(token),
       body: JSON.stringify({})

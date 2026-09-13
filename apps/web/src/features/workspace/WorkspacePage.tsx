@@ -11,6 +11,7 @@ import {
   MessageSquare,
   MoreVertical,
   Paperclip,
+  Pencil,
   Plus,
   Search,
   Send,
@@ -180,6 +181,9 @@ export function WorkspacePage() {
   const [inviteCopied, setInviteCopied] = useState(false);
   const [showParticipants, setShowParticipants] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [editingRoomName, setEditingRoomName] = useState(false);
+  const [roomNameDraft, setRoomNameDraft] = useState("");
+  const [savingRoomName, setSavingRoomName] = useState(false);
 
   const shareUrl = useMemo(() => {
     if (!activeConversationId) {
@@ -372,6 +376,7 @@ export function WorkspacePage() {
       }
 
       setActiveConversationId(conversation.id);
+      setRoomName(conversation.name);
       navigate(`/r/${conversation.id}`);
 
       realtime.clear();
@@ -395,16 +400,19 @@ export function WorkspacePage() {
         throw new Error("Room link is missing.");
       }
 
+      let conversation;
       try {
-        await api.joinConversation(guest.accessToken, activeConversationId);
+        conversation = await api.joinConversation(guest.accessToken, activeConversationId);
       } catch (exception) {
         if (!(exception instanceof ApiError) || exception.status !== 401) {
           throw exception;
         }
 
         guest = await ensureGuestSession(true);
-        await api.joinConversation(guest.accessToken, activeConversationId);
+        conversation = await api.joinConversation(guest.accessToken, activeConversationId);
       }
+
+      setRoomName(conversation.name);
 
       const history = await api.latestMessages(guest.accessToken, activeConversationId);
       realtime.replaceMessages(history);
@@ -431,6 +439,31 @@ export function WorkspacePage() {
 
     setMessageInput("");
     setShowEmojiPicker(false);
+  }
+
+  function beginRoomNameEdit() {
+    setRoomNameDraft(roomName || "Untitled room");
+    setEditingRoomName(true);
+  }
+
+  async function saveRoomName() {
+    const name = roomNameDraft.trim();
+    if (!session || !activeConversationId || !name || name === roomName) {
+      setEditingRoomName(false);
+      return;
+    }
+
+    setSavingRoomName(true);
+    setError("");
+    try {
+      const conversation = await api.renameConversation(session.accessToken, activeConversationId, name);
+      setRoomName(conversation.name);
+      setEditingRoomName(false);
+    } catch (exception) {
+      setError(exception instanceof Error ? exception.message : "Could not rename the room.");
+    } finally {
+      setSavingRoomName(false);
+    }
   }
 
   function addEmoji(emoji: string) {
@@ -685,7 +718,26 @@ export function WorkspacePage() {
         <header className="chat-header">
           <span className="room-avatar"><Users size={19} /></span>
           <div className="chat-heading">
-            <strong>{roomName || "Temporary room"}</strong>
+            {editingRoomName ? (
+              <input
+                className="room-name-input"
+                value={roomNameDraft}
+                maxLength={120}
+                autoFocus
+                disabled={savingRoomName}
+                aria-label="Room title"
+                onChange={(event) => setRoomNameDraft(event.target.value)}
+                onBlur={saveRoomName}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") event.currentTarget.blur();
+                  if (event.key === "Escape") setEditingRoomName(false);
+                }}
+              />
+            ) : (
+              <button className="room-name-button" onClick={beginRoomNameEdit} title="Edit room title">
+                <strong>{roomName || "Temporary room"}</strong><Pencil size={13} />
+              </button>
+            )}
             <span>{isInRoom ? "online" : "connecting..."}</span>
           </div>
           <div className="chat-header-actions">
