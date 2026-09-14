@@ -1,0 +1,161 @@
+name: CI
+
+on:
+  push:
+    branches: [main, web-frontend, "feature/**"]
+  pull_request:
+    branches: [main, web-frontend]
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  frontend-quality:
+    name: Frontend quality, tests, and build
+    runs-on: ubuntu-latest
+    defaults: { run: { working-directory: apps/web } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: apps/web/package-lock.json
+      - run: npm ci
+      - run: npm audit --audit-level=high
+      - run: npm run lint
+      - run: npm run format:check
+      - run: npm run test:coverage
+      - run: npm run build
+      - name: Upload frontend coverage
+        uses: actions/upload-artifact@v4
+        with:
+          {
+            name: frontend-coverage,
+            path: apps/web/coverage/,
+            retention-days: 14,
+          }
+
+  backend-tests:
+    name: Test ${{ matrix.service }} on Java ${{ matrix.java }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { service: identity-service, java: "21" }
+          - { service: chat-core, java: "21" }
+          - { service: ai-orchestrator, java: "21" }
+          - { service: realtime-gateway, java: "21" }
+          - { service: tool-mcp-server, java: "23" }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          {
+            distribution: temurin,
+            java-version: "${{ matrix.java }}",
+            cache: maven,
+          }
+      - name: Test and package
+        working-directory: services/${{ matrix.service }}
+        run: mvn -B --no-transfer-progress clean verify
+      - name: Upload JUnit reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: junit-${{ matrix.service }}
+          path: services/${{ matrix.service }}/target/surefire-reports/
+          retention-days: 14
+
+  distributed-integration:
+    name: Redis and Kafka integration
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: "21", cache: maven }
+      - name: Run Testcontainers suite
+        working-directory: services/realtime-gateway
+        run: mvn -B --no-transfer-progress -Dtest=DistributedInfrastructureContainerTest test
+
+  browser-tests:
+    name: Playwright browser journeys
+    runs-on: ubuntu-latest
+    needs: frontend-quality
+    defaults: { run: { working-directory: apps/web } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          {
+            node-version: "22",
+            cache: npm,
+            cache-dependency-path: apps/web/package-lock.json,
+          }
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e -- --project=chromium
+      - name: Upload Playwright evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          {
+            name: playwright-report,
+            path: apps/web/playwright-report/,
+            retention-days: 14,
+          }
+
+  kubernetes-validation:
+    name: Kubernetes schema and security checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: azure/setup-kubectl@v4
+        with: { version: latest }
+      - name: Render Kustomize manifests
+        run: kubectl kustomize deploy/kubernetes/base > rendered-kubernetes.yaml
+      - name: Confirm complete workload set
+        run: |
+          test "$(grep -c '^kind: Deployment' rendered-kubernetes.yaml)" -eq 6
+      - name: Scan Kubernetes configuration
+        uses: aquasecurity/trivy-action@0.36.0
+        with:
+          scan-type: config
+          scan-ref: deploy/kubernetes
+          severity: HIGH,CRITICAL
+          exit-code: "1"
+
+  full-stack-smoke:
+    name: Full-stack container smoke test
+    runs-on: ubuntu-latest
+    needs: [frontend-quality, backend-tests]
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: "22" }
+      - name: Build and start the complete stack
+        run: docker compose up -d --build
+      - name: Exercise health and authenticated API flow
+        run: bash scripts/ci/full-stack-smoke.sh
+      - uses: grafana/setup-k6-action@v1
+        with: { k6-version: "1.7.1" }
+      - name: Run WebSocket load smoke thresholds
+        env: { K6_SMOKE: "true" }
+        run: k6 run tests/load/realtime-websocket.js
+      - name: Capture service logs
+        if: failure()
+        run: docker compose logs --no-color > full-stack.log
+      - name: Upload failure logs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          { name: full-stack-logs, path: full-stack.log, retention-days: 14 }
+      - name: Stop stack
+        if: always()
+        run: docker compose down -v

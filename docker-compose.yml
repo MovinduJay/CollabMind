@@ -41,6 +41,18 @@ services:
       timeout: 5s
       retries: 20
 
+  kafka-init:
+    image: apache/kafka:3.8.0
+    depends_on:
+      kafka:
+        condition: service_healthy
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        for topic in collabmind.message-created.v1 collabmind.ai-requested.v1 collabmind.ai-requested.v1.DLT collabmind.tool-invoked.v1; do
+          /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:29092 --create --if-not-exists --topic "$$topic" --partitions 3 --replication-factor 1
+        done
+
   postgres-identity:
     image: postgres:16
     container_name: collabmind-postgres-identity
@@ -116,6 +128,14 @@ services:
       postgres-identity:
         condition: service_healthy
 
+  web:
+    container_name: collabmind-web
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+    ports:
+      - "5173:8080"
+
   chat-core:
     container_name: collabmind-chat-core
     build:
@@ -182,6 +202,8 @@ services:
         condition: service_started
       kafka:
         condition: service_healthy
+      kafka-init:
+        condition: service_completed_successfully
 
   tool-mcp-server:
     container_name: collabmind-tool-mcp-server
@@ -198,6 +220,8 @@ services:
     depends_on:
       kafka:
         condition: service_healthy
+      kafka-init:
+        condition: service_completed_successfully
     ports:
       - "8085:8085"
 
