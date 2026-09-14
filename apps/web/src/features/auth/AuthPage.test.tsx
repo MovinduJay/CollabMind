@@ -5,7 +5,10 @@ import { api } from "../../api/client";
 import { AuthPage } from "./AuthPage";
 
 vi.mock("../../api/client", async () => {
-  const actual = await vi.importActual<typeof import("../../api/client")>("../../api/client");
+  const actual =
+    await vi.importActual<typeof import("../../api/client")>(
+      "../../api/client",
+    );
   return { ...actual, api: { register: vi.fn(), login: vi.fn() } };
 });
 
@@ -18,13 +21,20 @@ describe("AuthPage", () => {
     expect(screen.getByLabelText("Display name")).toBeVisible();
     expect(screen.getByLabelText("Email")).toBeVisible();
     expect(screen.getByLabelText("Password")).toBeVisible();
-    expect(screen.getByRole("button", { name: "Create account" })).toBeEnabled();
+    expect(
+      screen.getByRole("button", { name: "Create account" }),
+    ).toBeEnabled();
   });
 
   it("switches to login and returns the authenticated session", async () => {
     const user = userEvent.setup();
     const onAuthenticated = vi.fn();
-    const session = { accessToken: "token", userId: "user-1", displayName: "Maya", email: "maya@example.com" };
+    const session = {
+      accessToken: "token",
+      userId: "user-1",
+      displayName: "Maya",
+      email: "maya@example.com",
+    };
     vi.mocked(api.login).mockResolvedValue(session);
     render(<AuthPage onAuthenticated={onAuthenticated} />);
 
@@ -35,7 +45,10 @@ describe("AuthPage", () => {
     await user.type(screen.getByLabelText("Password"), "secret123");
     await user.click(screen.getByRole("button", { name: "Enter workspace" }));
 
-    expect(api.login).toHaveBeenCalledWith({ email: "maya@example.com", password: "secret123" });
+    expect(api.login).toHaveBeenCalledWith({
+      email: "maya@example.com",
+      password: "secret123",
+    });
     expect(onAuthenticated).toHaveBeenCalledWith(session);
   });
 });

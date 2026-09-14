@@ -8,22 +8,26 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 0,
   workers: 1,
   reporter: process.env.CI
-    ? [["line"], ["html", { open: "never" }], ["junit", { outputFile: "test-results/e2e.xml" }]]
+    ? [
+        ["line"],
+        ["html", { open: "never" }],
+        ["junit", { outputFile: "test-results/e2e.xml" }],
+      ]
     : "list",
   use: {
     baseURL: "http://127.0.0.1:5173",
     trace: "on-first-retry",
     screenshot: "only-on-failure",
-    video: "retain-on-failure"
+    video: "retain-on-failure",
   },
   projects: [
     { name: "chromium", use: { ...devices["Desktop Chrome"] } },
-    { name: "mobile-chrome", use: { ...devices["Pixel 7"] } }
+    { name: "mobile-chrome", use: { ...devices["Pixel 7"] } },
   ],
   webServer: {
     command: "npm run dev",
     url: "http://127.0.0.1:5173",
     reuseExistingServer: !process.env.CI,
-    timeout: 120_000
-  }
+    timeout: 120_000,
+  },
 });

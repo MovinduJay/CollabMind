@@ -11,7 +11,7 @@ type AuthPageProps = {
 export function AuthPage({ onAuthenticated }: AuthPageProps) {
   const [mode, setMode] = useState<"register" | "login">("register");
   const [displayName, setDisplayName] = useState("Movindu");
-  const [email, setEmail] = useState(`movindu+${Date.now()}@example.com`);
+  const [email, setEmail] = useState(() => `movindu+${Date.now()}@example.com`);
   const [password, setPassword] = useState("password123");
   const [error, setError] = useState("");
 
@@ -19,9 +19,10 @@ export function AuthPage({ onAuthenticated }: AuthPageProps) {
     setError("");
 
     try {
-      const session = mode === "register"
-        ? await api.register({ displayName, email, password })
-        : await api.login({ email, password });
+      const session =
+        mode === "register"
+          ? await api.register({ displayName, email, password })
+          : await api.login({ email, password });
 
       onAuthenticated(session);
     } catch (exception) {
@@ -73,13 +74,19 @@ export function AuthPage({ onAuthenticated }: AuthPageProps) {
           {mode === "register" ? (
             <label>
               Display name
-              <input value={displayName} onChange={(event) => setDisplayName(event.target.value)} />
+              <input
+                value={displayName}
+                onChange={(event) => setDisplayName(event.target.value)}
+              />
             </label>
           ) : null}
 
           <label>
             Email
-            <input value={email} onChange={(event) => setEmail(event.target.value)} />
+            <input
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+            />
           </label>
 
           <label>
@@ -101,4 +108,3 @@ export function AuthPage({ onAuthenticated }: AuthPageProps) {
     </main>
   );
 }
-

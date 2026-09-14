@@ -36,7 +36,15 @@ export type ServerEvent = {
   eventType: string;
   conversationId: string | null;
   occurredAt: string;
-  payload: any;
+  payload?: {
+    message?: ChatMessage;
+    reason?: string;
+    agentType?: string;
+    stage?: string;
+    detail?: string;
+    retryAfterMs?: number;
+    [key: string]: unknown;
+  };
 };
 
 export type UserProfile = {

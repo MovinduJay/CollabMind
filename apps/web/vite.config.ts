@@ -11,11 +11,17 @@ export default defineConfig({
     coverage: {
       provider: "v8",
       reporter: ["text", "html", "lcov"],
-      exclude: ["src/test/**", "src/main.tsx"]
-    }
+      exclude: ["src/test/**", "src/main.tsx"],
+      thresholds: {
+        statements: 40,
+        branches: 55,
+        functions: 25,
+        lines: 40,
+      },
+    },
   },
   server: {
     host: "0.0.0.0",
-    port: 5173
-  }
+    port: 5173,
+  },
 });

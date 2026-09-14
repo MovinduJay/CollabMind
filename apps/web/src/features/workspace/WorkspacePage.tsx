@@ -17,7 +17,7 @@ import {
   Send,
   Smile,
   Users,
-  X
+  X,
 } from "lucide-react";
 import { useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
@@ -32,13 +32,34 @@ const quickPrompts = [
   "@ai summarize the key decisions from this room",
   "@ai find me a birthday gift under Rs. 10,000",
   "@ai summarize octocat/Hello-World",
-  "@ai search issues in spring-projects/spring-petclinic about docker"
+  "@ai search issues in spring-projects/spring-petclinic about docker",
 ];
 
 const chatEmojis = [
-  "😀", "😂", "😍", "🥳", "😎", "🤔", "😅", "😭",
-  "👍", "👏", "🙏", "💪", "🙌", "🔥", "❤️", "✨",
-  "✅", "🎉", "💡", "🚀", "👀", "🤝", "💯", "😊"
+  "😀",
+  "😂",
+  "😍",
+  "🥳",
+  "😎",
+  "🤔",
+  "😅",
+  "😭",
+  "👍",
+  "👏",
+  "🙏",
+  "💪",
+  "🙌",
+  "🔥",
+  "❤️",
+  "✨",
+  "✅",
+  "🎉",
+  "💡",
+  "🚀",
+  "👀",
+  "🤝",
+  "💯",
+  "😊",
 ];
 
 function guestEmail() {
@@ -72,7 +93,13 @@ function extractConversationId(input: string) {
 
 function renderMessageContent(content: string) {
   return content.split(/(@(?:ai|kapruka)\b)/gi).map((part, index) =>
-    /^@(?:ai|kapruka)$/i.test(part) ? <strong className="ai-mention" key={index}>{part}</strong> : part
+    /^@(?:ai|kapruka)$/i.test(part) ? (
+      <strong className="ai-mention" key={index}>
+        {part}
+      </strong>
+    ) : (
+      part
+    ),
   );
 }
 
@@ -83,7 +110,10 @@ function agentDisplayName(agentType?: string | null) {
 }
 
 function splitAiResponse(content: string) {
-  const sections = content.split(/\n\s*\n/).map((section) => section.trim()).filter(Boolean);
+  const sections = content
+    .split(/\n\s*\n/)
+    .map((section) => section.trim())
+    .filter(Boolean);
   return sections.length > 0 ? sections : [content];
 }
 
@@ -98,7 +128,8 @@ type KaprukaProduct = {
 };
 
 function parseKaprukaMessage(content: string) {
-  const pattern = /\[\[KAPRUKA_PRODUCTS\]\]([\s\S]*?)\[\[\/KAPRUKA_PRODUCTS\]\]/;
+  const pattern =
+    /\[\[KAPRUKA_PRODUCTS\]\]([\s\S]*?)\[\[\/KAPRUKA_PRODUCTS\]\]/;
   const match = content.match(pattern);
   if (!match) return { text: content, products: [] as KaprukaProduct[] };
 
@@ -106,10 +137,13 @@ function parseKaprukaMessage(content: string) {
     const payload = JSON.parse(match[1]) as { results?: KaprukaProduct[] };
     return {
       text: content.replace(pattern, "").trim(),
-      products: Array.isArray(payload.results) ? payload.results : []
+      products: Array.isArray(payload.results) ? payload.results : [],
     };
   } catch {
-    return { text: content.replace(pattern, "").trim(), products: [] as KaprukaProduct[] };
+    return {
+      text: content.replace(pattern, "").trim(),
+      products: [] as KaprukaProduct[],
+    };
   }
 }
 
@@ -126,7 +160,10 @@ function KaprukaProductCarousel({ products }: { products: KaprukaProduct[] }) {
   const trackRef = useRef<HTMLDivElement>(null);
 
   function move(direction: -1 | 1) {
-    trackRef.current?.scrollBy({ left: direction * trackRef.current.clientWidth, behavior: "smooth" });
+    trackRef.current?.scrollBy({
+      left: direction * trackRef.current.clientWidth,
+      behavior: "smooth",
+    });
   }
 
   return (
@@ -135,26 +172,52 @@ function KaprukaProductCarousel({ products }: { products: KaprukaProduct[] }) {
         <span>{products.length} products from Kapruka</span>
         {products.length > 4 ? (
           <div className="kapruka-carousel-actions">
-            <button onClick={() => move(-1)} aria-label="Previous products"><ChevronLeft size={18} /></button>
-            <button onClick={() => move(1)} aria-label="Next products"><ChevronRight size={18} /></button>
+            <button onClick={() => move(-1)} aria-label="Previous products">
+              <ChevronLeft size={18} />
+            </button>
+            <button onClick={() => move(1)} aria-label="Next products">
+              <ChevronRight size={18} />
+            </button>
           </div>
         ) : null}
       </header>
       <div className="kapruka-products" ref={trackRef}>
         {products.map((product) => (
-          <a className="kapruka-product-card" href={product.url} target="_blank" rel="noreferrer" key={product.id}>
+          <a
+            className="kapruka-product-card"
+            href={product.url}
+            target="_blank"
+            rel="noreferrer"
+            key={product.id}
+          >
             <span className="kapruka-product-image">
-              {product.image_url ? <img src={product.image_url} alt={product.name} loading="lazy" /> : <Bot size={28} />}
+              {product.image_url ? (
+                <img
+                  src={product.image_url}
+                  alt={product.name}
+                  loading="lazy"
+                />
+              ) : (
+                <Bot size={28} />
+              )}
               <span className="kapruka-source">Kapruka</span>
             </span>
             <span className="kapruka-product-copy">
               <strong>{product.name}</strong>
               <span className="kapruka-product-footer">
                 <span>
-                  <b className="kapruka-product-price">{formatKaprukaPrice(product)}</b>
-                  <small className={product.in_stock ? "in-stock" : "out-of-stock"}>{product.in_stock ? "In stock" : "Check availability"}</small>
+                  <b className="kapruka-product-price">
+                    {formatKaprukaPrice(product)}
+                  </b>
+                  <small
+                    className={product.in_stock ? "in-stock" : "out-of-stock"}
+                  >
+                    {product.in_stock ? "In stock" : "Check availability"}
+                  </small>
                 </span>
-                <i aria-hidden="true"><ExternalLink size={16} /></i>
+                <i aria-hidden="true">
+                  <ExternalLink size={16} />
+                </i>
               </span>
             </span>
           </a>
@@ -169,15 +232,21 @@ export function WorkspacePage() {
   const params = useParams();
   const realtime = useRealtimeRoom();
 
-  const [session, setSession] = useState<AuthSession | null>(() => loadSession());
+  const [session, setSession] = useState<AuthSession | null>(() =>
+    loadSession(),
+  );
   const [displayName, setDisplayName] = useState("");
   const [roomName, setRoomName] = useState("Untitled room");
   const [roomLinkInput, setRoomLinkInput] = useState("");
-  const [activeConversationId, setActiveConversationId] = useState(params.conversationId ?? "");
+  const [activeConversationId, setActiveConversationId] = useState(
+    params.conversationId ?? "",
+  );
   const [messageInput, setMessageInput] = useState("");
   const [memberNames, setMemberNames] = useState<Record<string, string>>({});
   const [error, setError] = useState("");
-  const [openMenu, setOpenMenu] = useState<"sidebar" | "conversation" | null>(null);
+  const [openMenu, setOpenMenu] = useState<"sidebar" | "conversation" | null>(
+    null,
+  );
   const [inviteCopied, setInviteCopied] = useState(false);
   const [showParticipants, setShowParticipants] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
@@ -208,7 +277,7 @@ export function WorkspacePage() {
 
     setMemberNames((current) => ({
       ...current,
-      [session.userId]: session.displayName
+      [session.userId]: session.displayName,
     }));
   }, [session]);
 
@@ -220,7 +289,11 @@ export function WorkspacePage() {
     function closeFloatingUi(event: PointerEvent) {
       const target = event.target as HTMLElement;
 
-      if (target.closest(".menu-wrap, .emoji-wrap, .participants-panel, .participants-button")) {
+      if (
+        target.closest(
+          ".menu-wrap, .emoji-wrap, .participants-panel, .participants-button",
+        )
+      ) {
         return;
       }
 
@@ -242,15 +315,16 @@ export function WorkspacePage() {
       new Set(
         realtime.messages
           .filter((message) => message.messageType === "USER")
-          .map((message) => message.senderId)
-      )
+          .map((message) => message.senderId),
+      ),
     ).filter((senderId) => !memberNames[senderId]);
 
     if (missingSenderIds.length === 0) {
       return;
     }
 
-    api.userProfiles(session.accessToken, missingSenderIds)
+    api
+      .userProfiles(session.accessToken, missingSenderIds)
       .then((profiles) => {
         setMemberNames((current) => {
           const next = { ...current };
@@ -268,7 +342,9 @@ export function WorkspacePage() {
       });
   }, [session, realtime.messages, memberNames]);
 
-  async function ensureGuestSession(forceRefresh = false): Promise<AuthSession> {
+  async function ensureGuestSession(
+    forceRefresh = false,
+  ): Promise<AuthSession> {
     if (session && !forceRefresh) {
       return session;
     }
@@ -286,7 +362,7 @@ export function WorkspacePage() {
     const nextSession = await api.register({
       displayName: guestName,
       email: guestEmail(),
-      password: crypto.randomUUID()
+      password: crypto.randomUUID(),
     });
 
     saveSession(nextSession);
@@ -294,7 +370,7 @@ export function WorkspacePage() {
 
     setMemberNames((current) => ({
       ...current,
-      [nextSession.userId]: nextSession.displayName
+      [nextSession.userId]: nextSession.displayName,
     }));
 
     return nextSession;
@@ -317,7 +393,7 @@ export function WorkspacePage() {
   async function loadRoomMemberNames(
     token: string,
     conversationId: string,
-    currentSession: AuthSession
+    currentSession: AuthSession,
   ) {
     try {
       const members = await api.conversationMembers(token, conversationId);
@@ -325,8 +401,8 @@ export function WorkspacePage() {
       const userIds = Array.from(
         new Set([
           currentSession.userId,
-          ...members.map((member) => member.userId)
-        ])
+          ...members.map((member) => member.userId),
+        ]),
       );
 
       const profiles = await api.userProfiles(token, userIds);
@@ -334,7 +410,7 @@ export function WorkspacePage() {
       setMemberNames((current) => {
         const next: Record<string, string> = {
           ...current,
-          [currentSession.userId]: currentSession.displayName
+          [currentSession.userId]: currentSession.displayName,
         };
 
         profiles.forEach((profile) => {
@@ -346,7 +422,7 @@ export function WorkspacePage() {
     } catch {
       setMemberNames((current) => ({
         ...current,
-        [currentSession.userId]: currentSession.displayName
+        [currentSession.userId]: currentSession.displayName,
       }));
     }
   }
@@ -362,7 +438,7 @@ export function WorkspacePage() {
 
       try {
         conversation = await api.createConversation(activeGuest.accessToken, {
-          name: roomName.trim() || "Untitled room"
+          name: roomName.trim() || "Untitled room",
         });
       } catch (exception) {
         if (!(exception instanceof ApiError) || exception.status !== 401) {
@@ -371,7 +447,7 @@ export function WorkspacePage() {
 
         activeGuest = await ensureGuestSession(true);
         conversation = await api.createConversation(activeGuest.accessToken, {
-          name: roomName.trim() || "Untitled room"
+          name: roomName.trim() || "Untitled room",
         });
       }
 
@@ -382,11 +458,19 @@ export function WorkspacePage() {
       realtime.clear();
       realtime.replaceMessages([]);
 
-      await loadRoomMemberNames(activeGuest.accessToken, conversation.id, activeGuest);
+      await loadRoomMemberNames(
+        activeGuest.accessToken,
+        conversation.id,
+        activeGuest,
+      );
 
       realtime.connect(activeGuest.accessToken, conversation.id);
     } catch (exception) {
-      setError(exception instanceof Error ? exception.message : "Could not create room.");
+      setError(
+        exception instanceof Error
+          ? exception.message
+          : "Could not create room.",
+      );
     }
   }
 
@@ -402,26 +486,39 @@ export function WorkspacePage() {
 
       let conversation;
       try {
-        conversation = await api.joinConversation(guest.accessToken, activeConversationId);
+        conversation = await api.joinConversation(
+          guest.accessToken,
+          activeConversationId,
+        );
       } catch (exception) {
         if (!(exception instanceof ApiError) || exception.status !== 401) {
           throw exception;
         }
 
         guest = await ensureGuestSession(true);
-        conversation = await api.joinConversation(guest.accessToken, activeConversationId);
+        conversation = await api.joinConversation(
+          guest.accessToken,
+          activeConversationId,
+        );
       }
 
       setRoomName(conversation.name);
 
-      const history = await api.latestMessages(guest.accessToken, activeConversationId);
+      const history = await api.latestMessages(
+        guest.accessToken,
+        activeConversationId,
+      );
       realtime.replaceMessages(history);
 
       await loadRoomMemberNames(guest.accessToken, activeConversationId, guest);
 
       realtime.connect(guest.accessToken, activeConversationId);
     } catch (exception) {
-      setError(exception instanceof Error ? exception.message : "Could not enter room.");
+      setError(
+        exception instanceof Error
+          ? exception.message
+          : "Could not enter room.",
+      );
     }
   }
 
@@ -430,7 +527,10 @@ export function WorkspacePage() {
       return;
     }
 
-    const sent = realtime.sendMessage(activeConversationId, messageInput.trim());
+    const sent = realtime.sendMessage(
+      activeConversationId,
+      messageInput.trim(),
+    );
 
     if (!sent) {
       setError("Realtime connection is not ready. Click Enter room again.");
@@ -456,11 +556,19 @@ export function WorkspacePage() {
     setSavingRoomName(true);
     setError("");
     try {
-      const conversation = await api.renameConversation(session.accessToken, activeConversationId, name);
+      const conversation = await api.renameConversation(
+        session.accessToken,
+        activeConversationId,
+        name,
+      );
       setRoomName(conversation.name);
       setEditingRoomName(false);
     } catch (exception) {
-      setError(exception instanceof Error ? exception.message : "Could not rename the room.");
+      setError(
+        exception instanceof Error
+          ? exception.message
+          : "Could not rename the room.",
+      );
     } finally {
       setSavingRoomName(false);
     }
@@ -472,7 +580,9 @@ export function WorkspacePage() {
   }
 
   function selectMention(mention: "ai" | "kapruka") {
-    setMessageInput((current) => current.replace(/(^|\s)@[a-z]*$/i, `$1@${mention} `));
+    setMessageInput((current) =>
+      current.replace(/(^|\s)@[a-z]*$/i, `$1@${mention} `),
+    );
   }
 
   async function copyLink() {
@@ -523,12 +633,19 @@ export function WorkspacePage() {
   }
 
   const hasRoom = Boolean(activeConversationId);
-  const isInRoom = Boolean(session && hasRoom && realtime.status === "CONNECTED");
+  const isInRoom = Boolean(
+    session && hasRoom && realtime.status === "CONNECTED",
+  );
   const showAiSuggestion = /(^|\s)@[a-z]*$/i.test(messageInput);
-  const mentionQuery = messageInput.match(/(?:^|\s)@([a-z]*)$/i)?.[1]?.toLowerCase() ?? "";
+  const mentionQuery =
+    messageInput.match(/(?:^|\s)@([a-z]*)$/i)?.[1]?.toLowerCase() ?? "";
   const mentionOptions = [
     { id: "ai" as const, label: "@ai", description: "Ask the AI assistant" },
-    { id: "kapruka" as const, label: "@kapruka", description: "Search live Kapruka products" }
+    {
+      id: "kapruka" as const,
+      label: "@kapruka",
+      description: "Search live Kapruka products",
+    },
   ].filter((option) => option.id.startsWith(mentionQuery));
   const initials = (session?.displayName || displayName || "CM")
     .split(" ")
@@ -543,13 +660,19 @@ export function WorkspacePage() {
         <section className="landing-hero">
           <div className="landing-intro">
             <div className="brand-pill">
-              <span className="landing-logo"><MessageSquare size={18} /></span>
+              <span className="landing-logo">
+                <MessageSquare size={18} />
+              </span>
               CollabMind
             </div>
 
             <div className="landing-copy">
               <span className="eyebrow">AI-powered group chat</span>
-              <h1>Think better,<br />together.</h1>
+              <h1>
+                Think better,
+                <br />
+                together.
+              </h1>
               <p>
                 Open a private room, invite your team, and bring AI into the
                 conversation whenever you need it.
@@ -557,15 +680,23 @@ export function WorkspacePage() {
             </div>
 
             <div className="landing-features">
-              <span><MessageSquare size={16} /> Real-time chat</span>
-              <span><Bot size={16} /> AI on demand</span>
-              <span><Link2 size={16} /> One-link invites</span>
+              <span>
+                <MessageSquare size={16} /> Real-time chat
+              </span>
+              <span>
+                <Bot size={16} /> AI on demand
+              </span>
+              <span>
+                <Link2 size={16} /> One-link invites
+              </span>
             </div>
           </div>
 
           <div className="create-card">
             <div className="create-card-heading">
-              <span className="card-icon"><Plus size={19} /></span>
+              <span className="card-icon">
+                <Plus size={19} />
+              </span>
               <div>
                 <h2>Start a new room</h2>
                 <p>No account needed. Just add your name.</p>
@@ -622,7 +753,9 @@ export function WorkspacePage() {
 
             {error ? <div className="error-box">{error}</div> : null}
 
-            <small className="privacy-note">Temporary rooms automatically expire after inactivity.</small>
+            <small className="privacy-note">
+              Temporary rooms automatically expire after inactivity.
+            </small>
           </div>
         </section>
       </main>
@@ -667,7 +800,9 @@ export function WorkspacePage() {
       <aside className="chat-sidebar">
         <header className="sidebar-header">
           <div className="brand-lockup">
-            <span className="brand-logo"><MessageSquare size={19} /></span>
+            <span className="brand-logo">
+              <MessageSquare size={19} />
+            </span>
             <strong>CollabMind</strong>
           </div>
           <div className="menu-wrap">
@@ -675,12 +810,24 @@ export function WorkspacePage() {
               className={`icon-button ${openMenu === "sidebar" ? "selected" : ""}`}
               aria-label="More options"
               aria-expanded={openMenu === "sidebar"}
-              onClick={() => { setOpenMenu((current) => current === "sidebar" ? null : "sidebar"); setShowEmojiPicker(false); setShowParticipants(false); }}
-            ><MoreVertical size={20} /></button>
+              onClick={() => {
+                setOpenMenu((current) =>
+                  current === "sidebar" ? null : "sidebar",
+                );
+                setShowEmojiPicker(false);
+                setShowParticipants(false);
+              }}
+            >
+              <MoreVertical size={20} />
+            </button>
             {openMenu === "sidebar" ? (
               <div className="dropdown-menu sidebar-menu">
-                <button onClick={goToNewRoom}><Plus size={16} /> New room</button>
-                <button className="menu-danger" onClick={leaveRoom}><LogOut size={16} /> Leave room</button>
+                <button onClick={goToNewRoom}>
+                  <Plus size={16} /> New room
+                </button>
+                <button className="menu-danger" onClick={leaveRoom}>
+                  <LogOut size={16} /> Leave room
+                </button>
               </div>
             ) : null}
           </div>
@@ -688,27 +835,41 @@ export function WorkspacePage() {
 
         <div className="sidebar-search">
           <Search size={17} />
-          <input aria-label="Search conversations" placeholder="Search conversations" />
+          <input
+            aria-label="Search conversations"
+            placeholder="Search conversations"
+          />
         </div>
 
         <div className="conversation-label">Conversations</div>
         <button className="conversation-item active">
-          <span className="room-avatar"><Users size={19} /></span>
+          <span className="room-avatar">
+            <Users size={19} />
+          </span>
           <span className="conversation-copy">
             <span className="conversation-title">
               <strong>{roomName || "Temporary room"}</strong>
               <small>now</small>
             </span>
             <span className="conversation-preview">
-              {realtime.messages[realtime.messages.length - 1]?.content || "Start the conversation"}
+              {realtime.messages[realtime.messages.length - 1]?.content ||
+                "Start the conversation"}
             </span>
           </span>
         </button>
 
         <footer className="sidebar-profile">
           <span className="user-avatar">{initials}</span>
-          <span><strong>{session?.displayName}</strong><small>Online</small></span>
-          <button className="icon-button" onClick={leaveRoom} aria-label="Leave room" title="Leave room">
+          <span>
+            <strong>{session?.displayName}</strong>
+            <small>Online</small>
+          </span>
+          <button
+            className="icon-button"
+            onClick={leaveRoom}
+            aria-label="Leave room"
+            title="Leave room"
+          >
             <LogOut size={18} />
           </button>
         </footer>
@@ -716,7 +877,9 @@ export function WorkspacePage() {
 
       <section className="chat-main">
         <header className="chat-header">
-          <span className="room-avatar"><Users size={19} /></span>
+          <span className="room-avatar">
+            <Users size={19} />
+          </span>
           <div className="chat-heading">
             {editingRoomName ? (
               <input
@@ -734,17 +897,36 @@ export function WorkspacePage() {
                 }}
               />
             ) : (
-              <button className="room-name-button" onClick={beginRoomNameEdit} title="Edit room title">
-                <strong>{roomName || "Temporary room"}</strong><Pencil size={13} />
+              <button
+                className="room-name-button"
+                onClick={beginRoomNameEdit}
+                title="Edit room title"
+              >
+                <strong>{roomName || "Temporary room"}</strong>
+                <Pencil size={13} />
               </button>
             )}
             <span>{isInRoom ? "online" : "connecting..."}</span>
           </div>
           <div className="chat-header-actions">
-            <button className="header-action participants-button" onClick={() => { setShowParticipants((current) => !current); setOpenMenu(null); setShowEmojiPicker(false); }} title="View participants">
-              <Users size={18} /><span>Participants</span>
+            <button
+              className="header-action participants-button"
+              onClick={() => {
+                setShowParticipants((current) => !current);
+                setOpenMenu(null);
+                setShowEmojiPicker(false);
+              }}
+              title="View participants"
+            >
+              <Users size={18} />
+              <span>Participants</span>
             </button>
-            <button className={`header-action ${inviteCopied ? "copied" : ""}`} onClick={copyLink} disabled={!shareUrl} title="Copy invite link">
+            <button
+              className={`header-action ${inviteCopied ? "copied" : ""}`}
+              onClick={copyLink}
+              disabled={!shareUrl}
+              title="Copy invite link"
+            >
               {inviteCopied ? <Check size={18} /> : <Copy size={18} />}
               <span>{inviteCopied ? "Copied" : "Invite"}</span>
             </button>
@@ -753,13 +935,27 @@ export function WorkspacePage() {
                 className={`icon-button ${openMenu === "conversation" ? "selected" : ""}`}
                 aria-label="Conversation options"
                 aria-expanded={openMenu === "conversation"}
-                onClick={() => { setOpenMenu((current) => current === "conversation" ? null : "conversation"); setShowEmojiPicker(false); setShowParticipants(false); }}
-              ><MoreVertical size={20} /></button>
+                onClick={() => {
+                  setOpenMenu((current) =>
+                    current === "conversation" ? null : "conversation",
+                  );
+                  setShowEmojiPicker(false);
+                  setShowParticipants(false);
+                }}
+              >
+                <MoreVertical size={20} />
+              </button>
               {openMenu === "conversation" ? (
                 <div className="dropdown-menu conversation-menu">
-                  <button onClick={copyInviteFromMenu}><Copy size={16} /> Copy invite link</button>
-                  <button onClick={goToNewRoom}><Plus size={16} /> New room</button>
-                  <button className="menu-danger" onClick={leaveRoom}><LogOut size={16} /> Leave room</button>
+                  <button onClick={copyInviteFromMenu}>
+                    <Copy size={16} /> Copy invite link
+                  </button>
+                  <button onClick={goToNewRoom}>
+                    <Plus size={16} /> New room
+                  </button>
+                  <button className="menu-danger" onClick={leaveRoom}>
+                    <LogOut size={16} /> Leave room
+                  </button>
                 </div>
               ) : null}
             </div>
@@ -768,24 +964,49 @@ export function WorkspacePage() {
 
         {showParticipants ? (
           <>
-            <button className="panel-backdrop" aria-label="Close participants" onClick={() => setShowParticipants(false)} />
-            <aside className="participants-panel" aria-label="Room participants">
+            <button
+              className="panel-backdrop"
+              aria-label="Close participants"
+              onClick={() => setShowParticipants(false)}
+            />
+            <aside
+              className="participants-panel"
+              aria-label="Room participants"
+            >
               <header>
                 <div>
                   <h2>Participants</h2>
                   <p>{Object.keys(memberNames).length} in this room</p>
                 </div>
-                <button className="icon-button" onClick={() => setShowParticipants(false)} aria-label="Close participants"><X size={20} /></button>
+                <button
+                  className="icon-button"
+                  onClick={() => setShowParticipants(false)}
+                  aria-label="Close participants"
+                >
+                  <X size={20} />
+                </button>
               </header>
               <div className="participant-list">
                 {Object.entries(memberNames).map(([userId, name]) => {
-                  const participantInitials = name.split(" ").map((part) => part[0]).join("").slice(0, 2).toUpperCase();
+                  const participantInitials = name
+                    .split(" ")
+                    .map((part) => part[0])
+                    .join("")
+                    .slice(0, 2)
+                    .toUpperCase();
                   return (
                     <div className="participant-item" key={userId}>
-                      <span className="participant-avatar">{participantInitials}</span>
+                      <span className="participant-avatar">
+                        {participantInitials}
+                      </span>
                       <span className="participant-name">
-                        <strong>{name}{userId === session?.userId ? " (you)" : ""}</strong>
-                        <small><i /> Online</small>
+                        <strong>
+                          {name}
+                          {userId === session?.userId ? " (you)" : ""}
+                        </strong>
+                        <small>
+                          <i /> Online
+                        </small>
                       </span>
                     </div>
                   );
@@ -796,20 +1017,31 @@ export function WorkspacePage() {
         ) : null}
 
         <div className="message-area">
-          {(error || realtime.lastError) ? (
+          {error || realtime.lastError ? (
             <div className="error-box">{error || realtime.lastError}</div>
           ) : null}
 
-          <div className="day-divider"><span>Today</span></div>
+          <div className="day-divider">
+            <span>Today</span>
+          </div>
 
           {realtime.messages.length === 0 ? (
             <div className="welcome-message">
-              <span className="welcome-icon"><Bot size={25} /></span>
+              <span className="welcome-icon">
+                <Bot size={25} />
+              </span>
               <h2>Start a conversation</h2>
-              <p>Chat with your team, or mention <strong>@ai</strong> to bring an AI agent into the discussion.</p>
+              <p>
+                Chat with your team, or mention <strong>@ai</strong> to bring an
+                AI agent into the discussion.
+              </p>
               <div className="prompt-row">
                 {quickPrompts.slice(0, 3).map((prompt) => (
-                  <button key={prompt} className="prompt-chip" onClick={() => setMessageInput(prompt)}>
+                  <button
+                    key={prompt}
+                    className="prompt-chip"
+                    onClick={() => setMessageInput(prompt)}
+                  >
                     {prompt.replace("@ai ", "")}
                   </button>
                 ))}
@@ -817,18 +1049,35 @@ export function WorkspacePage() {
             </div>
           ) : (
             realtime.messages.map((message) => {
-              const isOwn = message.messageType === "USER" && message.senderId === session?.userId;
-              const kapruka = message.messageType === "AI"
-                ? parseKaprukaMessage(message.content)
-                : { text: message.content, products: [] as KaprukaProduct[] };
-              const messageParts = message.messageType === "AI"
-                ? (kapruka.products.length > 0 ? [] : splitAiResponse(kapruka.text))
-                : [message.content];
+              const isOwn =
+                message.messageType === "USER" &&
+                message.senderId === session?.userId;
+              const kapruka =
+                message.messageType === "AI"
+                  ? parseKaprukaMessage(message.content)
+                  : { text: message.content, products: [] as KaprukaProduct[] };
+              const messageParts =
+                message.messageType === "AI"
+                  ? kapruka.products.length > 0
+                    ? []
+                    : splitAiResponse(kapruka.text)
+                  : [message.content];
               return (
-                <article key={message.id} className={`message-row ${isOwn ? "own" : ""}`}>
+                <article
+                  key={message.id}
+                  className={`message-row ${isOwn ? "own" : ""}`}
+                >
                   {!isOwn ? (
-                    <span className={`message-avatar ${message.messageType === "AI" ? "ai" : ""}`}>
-                      {message.messageType === "AI" ? <Bot size={17} /> : displaySenderName(message.senderId).slice(0, 1).toUpperCase()}
+                    <span
+                      className={`message-avatar ${message.messageType === "AI" ? "ai" : ""}`}
+                    >
+                      {message.messageType === "AI" ? (
+                        <Bot size={17} />
+                      ) : (
+                        displaySenderName(message.senderId)
+                          .slice(0, 1)
+                          .toUpperCase()
+                      )}
                     </span>
                   ) : null}
                   <div className="message-stack">
@@ -842,9 +1091,19 @@ export function WorkspacePage() {
                       <div
                         className={`chat-message ${message.messageType.toLowerCase()} ${partIndex > 0 ? "continued" : ""}`}
                         key={`${message.id}-${partIndex}`}
-                        style={message.messageType === "AI" ? { animationDelay: `${partIndex * 160}ms` } : undefined}
+                        style={
+                          message.messageType === "AI"
+                            ? { animationDelay: `${partIndex * 160}ms` }
+                            : undefined
+                        }
                       >
-                        {!isOwn && partIndex === 0 ? <strong>{message.messageType === "AI" ? agentDisplayName(message.agentType) : displaySenderName(message.senderId)}</strong> : null}
+                        {!isOwn && partIndex === 0 ? (
+                          <strong>
+                            {message.messageType === "AI"
+                              ? agentDisplayName(message.agentType)
+                              : displaySenderName(message.senderId)}
+                          </strong>
+                        ) : null}
                         <pre>{renderMessageContent(part)}</pre>
                       </div>
                     ))}
@@ -857,9 +1116,18 @@ export function WorkspacePage() {
             })
           )}
           {realtime.isAiTyping ? (
-            <div className="message-row ai-typing-row" aria-label="AI is typing">
-              <span className="message-avatar ai"><Bot size={17} /></span>
-              <div className="typing-bubble"><span /><span /><span /></div>
+            <div
+              className="message-row ai-typing-row"
+              aria-label="AI is typing"
+            >
+              <span className="message-avatar ai">
+                <Bot size={17} />
+              </span>
+              <div className="typing-bubble">
+                <span />
+                <span />
+                <span />
+              </div>
             </div>
           ) : null}
         </div>
@@ -868,9 +1136,17 @@ export function WorkspacePage() {
           {showAiSuggestion ? (
             <div className="mention-picker">
               {mentionOptions.map((option) => (
-                <button key={option.id} onClick={() => selectMention(option.id)}>
-                  <span className="mention-avatar"><Bot size={18} /></span>
-                  <span><strong>{option.label}</strong><small>{option.description}</small></span>
+                <button
+                  key={option.id}
+                  onClick={() => selectMention(option.id)}
+                >
+                  <span className="mention-avatar">
+                    <Bot size={18} />
+                  </span>
+                  <span>
+                    <strong>{option.label}</strong>
+                    <small>{option.description}</small>
+                  </span>
                 </button>
               ))}
             </div>
@@ -880,24 +1156,44 @@ export function WorkspacePage() {
               className={`composer-icon ${showEmojiPicker ? "selected" : ""}`}
               aria-label="Choose emoji"
               aria-expanded={showEmojiPicker}
-              onClick={() => { setShowEmojiPicker((current) => !current); setOpenMenu(null); setShowParticipants(false); }}
-            ><Smile size={21} /></button>
+              onClick={() => {
+                setShowEmojiPicker((current) => !current);
+                setOpenMenu(null);
+                setShowParticipants(false);
+              }}
+            >
+              <Smile size={21} />
+            </button>
             {showEmojiPicker ? (
-              <div className="emoji-picker" role="dialog" aria-label="Emoji picker">
+              <div
+                className="emoji-picker"
+                role="dialog"
+                aria-label="Emoji picker"
+              >
                 <div className="emoji-picker-title">Choose an emoji</div>
                 <div className="emoji-grid">
                   {chatEmojis.map((emoji) => (
-                    <button key={emoji} onClick={() => addEmoji(emoji)} aria-label={`Insert ${emoji}`}>{emoji}</button>
+                    <button
+                      key={emoji}
+                      onClick={() => addEmoji(emoji)}
+                      aria-label={`Insert ${emoji}`}
+                    >
+                      {emoji}
+                    </button>
                   ))}
                 </div>
               </div>
             ) : null}
           </div>
-          <button className="composer-icon attachment" aria-label="Attach file"><Paperclip size={20} /></button>
+          <button className="composer-icon attachment" aria-label="Attach file">
+            <Paperclip size={20} />
+          </button>
           <input
             value={messageInput}
             onChange={(event) => setMessageInput(event.target.value)}
-            placeholder={isInRoom ? "Type a message" : "Enter the room to start chatting"}
+            placeholder={
+              isInRoom ? "Type a message" : "Enter the room to start chatting"
+            }
             onKeyDown={(event) => {
               if (event.key === "Enter" && showAiSuggestion) {
                 event.preventDefault();
@@ -908,17 +1204,21 @@ export function WorkspacePage() {
             }}
           />
           {realtime.status === "CONNECTED" ? (
-            <button className="send-button" onClick={sendMessage} disabled={!messageInput.trim()} aria-label="Send message"><Send size={19} /></button>
+            <button
+              className="send-button"
+              onClick={sendMessage}
+              disabled={!messageInput.trim()}
+              aria-label="Send message"
+            >
+              <Send size={19} />
+            </button>
           ) : (
-            <button className="enter-button" onClick={enterRoom}>Enter room</button>
+            <button className="enter-button" onClick={enterRoom}>
+              Enter room
+            </button>
           )}
         </div>
       </section>
     </main>
   );
 }
-
-
-
-
-

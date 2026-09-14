@@ -14,7 +14,7 @@ export function Panel({
   description,
   children,
   action,
-  className = ""
+  className = "",
 }: PanelProps) {
   return (
     <section className={`panel ${className}`}>
@@ -29,4 +29,3 @@ export function Panel({
     </section>
   );
 }
-
