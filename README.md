@@ -248,6 +248,12 @@ Kubernetes deployment architecture and beginner guide:
 ```text
 docs/KUBERNETES.md
 ```
+
+Complete CI/CD and release controls:
+
+```text
+docs/CI_CD.md
+```
 ```
 
 

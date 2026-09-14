@@ -1,0 +1,82 @@
+name: Deploy
+
+on:
+  workflow_run:
+    workflows: [Container Images]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: Immutable image tag to deploy
+        required: true
+
+permissions:
+  contents: read
+  packages: read
+
+jobs:
+  staging:
+    if: >-
+      (github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success') &&
+      vars.ENABLE_STAGING_DEPLOY == 'true'
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - uses: actions/checkout@v4
+      - uses: azure/setup-kubectl@v4
+        with: { version: latest }
+      - name: Configure cluster access
+        run: |
+          mkdir -p "$HOME/.kube"
+          echo '${{ secrets.KUBE_CONFIG }}' | base64 --decode > "$HOME/.kube/config"
+          chmod 600 "$HOME/.kube/config"
+      - name: Select immutable release images
+        env:
+          IMAGE_TAG: "${{ inputs.image_tag || github.event.workflow_run.head_sha }}"
+        run: bash scripts/ci/set-kubernetes-images.sh "$IMAGE_TAG"
+      - name: Deploy staging
+        run: kubectl apply -k deploy/kubernetes/base
+      - name: Wait and smoke test
+        env: { STAGING_URL: "${{ vars.STAGING_URL }}" }
+        run: |
+          for deployment in web identity-service chat-core realtime-gateway ai-orchestrator tool-mcp-server; do
+            kubectl -n collabmind rollout status "deployment/$deployment" --timeout=5m
+          done
+          curl --fail --retry 12 --retry-delay 5 "$STAGING_URL/healthz"
+      - name: Roll back failed staging release
+        if: failure()
+        run: |
+          for deployment in web identity-service chat-core realtime-gateway ai-orchestrator tool-mcp-server; do
+            kubectl -n collabmind rollout undo "deployment/$deployment" || true
+          done
+
+  production:
+    if: github.event_name == 'workflow_dispatch' && vars.ENABLE_PRODUCTION_DEPLOY == 'true'
+    needs: staging
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+      - uses: azure/setup-kubectl@v4
+        with: { version: latest }
+      - name: Configure cluster access
+        run: |
+          mkdir -p "$HOME/.kube"
+          echo '${{ secrets.KUBE_CONFIG }}' | base64 --decode > "$HOME/.kube/config"
+          chmod 600 "$HOME/.kube/config"
+      - name: Select immutable release images
+        run: bash scripts/ci/set-kubernetes-images.sh '${{ inputs.image_tag }}'
+      - name: Deploy production
+        run: kubectl apply -k deploy/kubernetes/base
+      - name: Verify rollout
+        run: |
+          for deployment in web identity-service chat-core realtime-gateway ai-orchestrator tool-mcp-server; do
+            kubectl -n collabmind rollout status "deployment/$deployment" --timeout=5m
+          done
+      - name: Roll back failed production release
+        if: failure()
+        run: |
+          for deployment in web identity-service chat-core realtime-gateway ai-orchestrator tool-mcp-server; do
+            kubectl -n collabmind rollout undo "deployment/$deployment" || true
+          done

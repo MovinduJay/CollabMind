@@ -1,0 +1,88 @@
+name: Container Images
+
+on:
+  pull_request:
+    branches: [main, web-frontend]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: containers-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  packages: write
+  security-events: write
+
+jobs:
+  build-scan-publish:
+    name: Build and scan ${{ matrix.name }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { name: web, dockerfile: Dockerfile.web, build_args: "" }
+          - {
+              name: identity-service,
+              dockerfile: Dockerfile.service,
+              build_args: "SERVICE_PATH=services/identity-service\nJAVA_VERSION=23",
+            }
+          - {
+              name: chat-core,
+              dockerfile: Dockerfile.service,
+              build_args: "SERVICE_PATH=services/chat-core\nJAVA_VERSION=23",
+            }
+          - {
+              name: realtime-gateway,
+              dockerfile: Dockerfile.service,
+              build_args: "SERVICE_PATH=services/realtime-gateway\nJAVA_VERSION=23",
+            }
+          - {
+              name: ai-orchestrator,
+              dockerfile: Dockerfile.service,
+              build_args: "SERVICE_PATH=services/ai-orchestrator\nJAVA_VERSION=23",
+            }
+          - {
+              name: tool-mcp-server,
+              dockerfile: Dockerfile.service,
+              build_args: "SERVICE_PATH=services/tool-mcp-server\nJAVA_VERSION=23",
+            }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - name: Log in to GHCR
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: "${{ github.actor }}"
+          password: "${{ secrets.GITHUB_TOKEN }}"
+      - name: Build image locally
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: "${{ matrix.dockerfile }}"
+          build-args: "${{ matrix.build_args }}"
+          load: true
+          tags: ghcr.io/movindujay/collabmind-${{ matrix.name }}:${{ github.sha }}
+          cache-from: type=gha,scope=${{ matrix.name }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.name }}
+      - name: Scan image
+        uses: aquasecurity/trivy-action@0.36.0
+        with:
+          image-ref: ghcr.io/movindujay/collabmind-${{ matrix.name }}:${{ github.sha }}
+          format: sarif
+          output: trivy-${{ matrix.name }}.sarif
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: "1"
+      - name: Upload scan to GitHub Security
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with: { sarif_file: "trivy-${{ matrix.name }}.sarif" }
+      - name: Publish immutable image
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        run: docker push ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/collabmind-${{ matrix.name }}:${{ github.sha }}
