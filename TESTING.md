@@ -45,10 +45,13 @@ Install k6, create a user and room, then run:
 ```powershell
 $env:AUTH_TOKEN='<jwt>'
 $env:CONVERSATION_ID='<room-uuid>'
+$env:K6_TARGET_VUS='25'
+$env:K6_RAMP_DURATION='10s'
+$env:K6_SUSTAIN_DURATION='30s'
 k6 run tests\load\realtime-websocket.js
 ```
 
-The scenario ramps to ten concurrent WebSocket users and enforces acknowledgement and p95 latency thresholds. Establish a baseline in a non-production environment before raising the load.
+The scenario defaults to ten concurrent WebSocket users and enforces acknowledgement and p95 latency thresholds. `K6_TARGET_VUS`, `K6_RAMP_DURATION`, and `K6_SUSTAIN_DURATION` make larger benchmark runs reproducible without changing the test source. Establish a baseline in a non-production environment before raising the load.
 
 ## CI evidence
 

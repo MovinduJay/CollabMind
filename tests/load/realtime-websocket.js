@@ -9,6 +9,9 @@ const acknowledgementLatency = new Trend(
 );
 
 const smoke = __ENV.K6_SMOKE === "true";
+const targetVUs = Number.parseInt(__ENV.K6_TARGET_VUS || "10", 10);
+const rampDuration = __ENV.K6_RAMP_DURATION || "20s";
+const sustainDuration = __ENV.K6_SUSTAIN_DURATION || "40s";
 
 function randomUuid() {
   return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (character) => {
@@ -40,9 +43,9 @@ export const options = smoke
           executor: "ramping-vus",
           startVUs: 0,
           stages: [
-            { duration: "20s", target: 10 },
-            { duration: "40s", target: 10 },
-            { duration: "20s", target: 0 },
+            { duration: rampDuration, target: targetVUs },
+            { duration: sustainDuration, target: targetVUs },
+            { duration: rampDuration, target: 0 },
           ],
         },
       },
