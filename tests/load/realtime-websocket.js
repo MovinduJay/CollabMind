@@ -48,27 +48,37 @@ export default function () {
     throw new Error("AUTH_TOKEN and CONVERSATION_ID are required");
 
   const started = Date.now();
+  const commandId = (kind) => `${kind}-${__VU}-${__ITER}-${Date.now()}`;
   const response = ws.connect(
     `${gateway}?token=${encodeURIComponent(token)}`,
     {},
     (socket) => {
       socket.on("open", () => {
         socket.send(
-          JSON.stringify({ type: "SUBSCRIBE", payload: { conversationId } }),
-        );
-        socket.send(
           JSON.stringify({
-            type: "SEND_MESSAGE",
-            payload: {
-              conversationId,
-              content: `k6 message ${__VU}-${__ITER}`,
-            },
+            commandId: commandId("subscribe"),
+            commandType: "SUBSCRIBE_CONVERSATION",
+            conversationId,
+            payload: {},
           }),
         );
+        socket.setTimeout(() => {
+          socket.send(
+            JSON.stringify({
+              commandId: commandId("message"),
+              commandType: "SEND_MESSAGE",
+              conversationId,
+              payload: {
+                clientMessageId: commandId("client-message"),
+                content: `k6 message ${__VU}-${__ITER}`,
+              },
+            }),
+          );
+        }, 250);
       });
       socket.on("message", (raw) => {
         const event = JSON.parse(raw);
-        if (event.type === "MESSAGE_CREATED") {
+        if (event.eventType === "MESSAGE_CREATED") {
           acknowledgements.add(1);
           acknowledgementLatency.add(Date.now() - started);
           socket.close();
