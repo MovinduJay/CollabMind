@@ -10,6 +10,14 @@ const acknowledgementLatency = new Trend(
 
 const smoke = __ENV.K6_SMOKE === "true";
 
+function randomUuid() {
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (character) => {
+    const value = Math.floor(Math.random() * 16);
+    const nibble = character === "x" ? value : (value & 0x3) | 0x8;
+    return nibble.toString(16);
+  });
+}
+
 export const options = smoke
   ? {
       scenarios: {
@@ -74,7 +82,7 @@ export default function () {
               commandType: "SEND_MESSAGE",
               conversationId,
               payload: {
-                clientMessageId: commandId("client-message"),
+                clientMessageId: randomUuid(),
                 content: `k6 message ${__VU}-${__ITER}`,
               },
             }),
