@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: collabmind-config
+  namespace: collabmind
+data:
+  REDIS_HOST: redis.example.internal
+  REDIS_PORT: "6379"
+  KAFKA_BOOTSTRAP_SERVERS: kafka.example.internal:9092
+  SPRING_JPA_HIBERNATE_DDL_AUTO: validate
+  SPRING_FLYWAY_ENABLED: "true"
+  SPRING_JPA_SHOW_SQL: "false"
+  COLLABMIND_AI_PROVIDER: openai
+  COLLABMIND_AI_FALLBACK_PROVIDER: mock
+  COLLABMIND_AI_FALLBACK_ENABLED: "false"
+  OPENAI_MODEL: gpt-5-nano
+  COLLABMIND_CHAT_CORE_BASE_URL: http://chat-core:8081
+  COLLABMIND_AI_ORCHESTRATOR_BASE_URL: http://ai-orchestrator:8084
+  COLLABMIND_TOOLS_MCP_SHOPPING_BASE_URL: http://tool-mcp-server:8085
+  COLLABMIND_TOOLS_MCP_GITHUB_BASE_URL: http://tool-mcp-server:8085
+  COLLABMIND_TOOLS_MCP_KAPRUKA_BASE_URL: http://tool-mcp-server:8085
+  KAPRUKA_TOOL_BRIDGE_URL: http://tool-mcp-server:8085
+  KAPRUKA_MCP_URL: https://mcp.kapruka.com/mcp

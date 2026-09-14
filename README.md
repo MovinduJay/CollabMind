@@ -242,6 +242,12 @@ More details:
 
 ```text
 docs/MCP_INTEGRATION.md
+
+Kubernetes deployment architecture and beginner guide:
+
+```text
+docs/KUBERNETES.md
+```
 ```
 
 
