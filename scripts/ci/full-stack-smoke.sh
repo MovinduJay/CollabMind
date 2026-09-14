@@ -12,6 +12,8 @@ wait_for() {
     sleep 2
   done
   echo "$name did not become ready: $url" >&2
+  docker compose ps >&2
+  docker compose logs --no-color --tail=200 "$name" >&2 || true
   return 1
 }
 
