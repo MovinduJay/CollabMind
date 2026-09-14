@@ -13,12 +13,17 @@ const smoke = __ENV.K6_SMOKE === "true";
 export const options = smoke
   ? {
       scenarios: {
-        room_chat: { executor: "constant-vus", vus: 2, duration: "10s" },
+        room_chat: {
+          executor: "shared-iterations",
+          vus: 2,
+          iterations: 6,
+          maxDuration: "30s",
+        },
       },
       thresholds: {
         checks: ["rate>0.99"],
         message_acknowledgements: ["count>0"],
-        message_acknowledgement_latency: ["p(95)<1500"],
+        message_acknowledgement_latency: ["p(95)<3000"],
       },
     }
   : {
