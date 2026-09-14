@@ -54,7 +54,7 @@ jobs:
           - { service: tool-mcp-server, java: "23" }
     steps:
       - uses: actions/checkout@v6
-      - uses: actions/setup-java@v5
+      - uses: actions/setup-java@v6
         with:
           {
             distribution: temurin,
@@ -77,7 +77,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-      - uses: actions/setup-java@v5
+      - uses: actions/setup-java@v6
         with: { distribution: temurin, java-version: "21", cache: maven }
       - name: Run Testcontainers suite
         working-directory: services/realtime-gateway
