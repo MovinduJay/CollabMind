@@ -1,7 +1,8 @@
 import React from "react";
 type StatusBadgeProps = {
   label: string;
-  status: "UP" | "DOWN" | "CHECKING" | "CONNECTED" | "DISCONNECTED" | "CONNECTING";
+  status:
+    "UP" | "DOWN" | "CHECKING" | "CONNECTED" | "DISCONNECTED" | "CONNECTING";
 };
 
 export function StatusBadge({ label, status }: StatusBadgeProps) {
@@ -13,4 +14,3 @@ export function StatusBadge({ label, status }: StatusBadgeProps) {
     </div>
   );
 }
-

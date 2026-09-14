@@ -1,0 +1,73 @@
+name: Security
+
+on:
+  push:
+    branches: [main, web-frontend]
+  pull_request:
+    branches: [main, web-frontend]
+  schedule:
+    - cron: "17 3 * * 1"
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  codeql:
+    name: CodeQL (${{ matrix.language }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix: { language: [java-kotlin, javascript-typescript] }
+    steps:
+      - uses: actions/checkout@v6
+      - uses: github/codeql-action/init@v4
+        with: { languages: "${{ matrix.language }}", build-mode: none }
+      - uses: github/codeql-action/analyze@v4
+
+  secrets-and-filesystem:
+    name: Secret and dependency scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with: { fetch-depth: 0 }
+      - name: Scan Git history for secrets
+        uses: gitleaks/gitleaks-action@v3
+        env: { GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}" }
+      - name: Scan repository dependencies
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          scanners: vuln
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          trivyignores: .trivyignore.yaml
+          exit-code: "1"
+
+  dependency-review:
+    if: github.event_name == 'pull_request' && vars.ENABLE_DEPENDENCY_REVIEW == 'true'
+    name: Dependency change review
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/dependency-review-action@v4
+        with: { fail-on-severity: high }
+
+  sbom:
+    name: Generate software bill of materials
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: anchore/sbom-action@v0
+        with:
+          path: .
+          format: spdx-json
+          output-file: collabmind-sbom.spdx.json
+      - uses: actions/upload-artifact@v7
+        with:
+          {
+            name: collabmind-sbom,
+            path: collabmind-sbom.spdx.json,
+            retention-days: 30,
+          }

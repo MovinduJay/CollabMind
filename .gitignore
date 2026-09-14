@@ -1,6 +1,10 @@
 .env
 application-local.properties
+deploy/kubernetes/secrets.env
 node_modules
+apps/web/coverage/
+apps/web/playwright-report/
+apps/web/test-results/
 
 # Maven build output
 **/target/

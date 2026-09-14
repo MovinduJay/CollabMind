@@ -1,0 +1,23 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: collabmind
+  namespace: collabmind
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts: [chat.example.com]
+      secretName: collabmind-tls
+  rules:
+    - host: chat.example.com
+      http:
+        paths:
+          - { path: /api/auth, pathType: Prefix, backend: { service: { name: identity-service, port: { number: 8082 } } } }
+          - { path: /api/users, pathType: Prefix, backend: { service: { name: identity-service, port: { number: 8082 } } } }
+          - { path: /api/conversations, pathType: Prefix, backend: { service: { name: chat-core, port: { number: 8081 } } } }
+          - { path: /ws/chat, pathType: Prefix, backend: { service: { name: realtime-gateway, port: { number: 8083 } } } }
+          - { path: /mcp, pathType: Prefix, backend: { service: { name: tool-mcp-server, port: { number: 8085 } } } }
+          - { path: /, pathType: Prefix, backend: { service: { name: web, port: { number: 80 } } } }

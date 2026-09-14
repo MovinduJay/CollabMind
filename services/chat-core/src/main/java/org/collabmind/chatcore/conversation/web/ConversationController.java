@@ -36,6 +36,19 @@ public class ConversationController {
         );
     }
 
+    @PatchMapping("/{conversationId}")
+    public ConversationResponse renameConversation(
+            @PathVariable UUID conversationId,
+            @Valid @RequestBody UpdateConversationRequest request,
+            Authentication authentication
+    ) {
+        return conversationService.renameConversation(
+                conversationId,
+                request.name(),
+                authenticatedUserId(authentication)
+        );
+    }
+
     @PostMapping("/{conversationId}/members")
     public ConversationResponse joinConversation(
             @PathVariable UUID conversationId,

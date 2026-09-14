@@ -48,6 +48,13 @@ public class Conversation {
         return allocatedSequence;
     }
 
+    public void rename(String name) {
+        if (name == null || name.isBlank()) {
+            throw new IllegalArgumentException("Conversation name cannot be blank");
+        }
+        this.name = name.trim();
+    }
+
     public UUID getId() {
         return id;
     }

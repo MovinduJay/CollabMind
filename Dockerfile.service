@@ -21,6 +21,15 @@ WORKDIR /app
 
 COPY --from=build /workspace/app.jar app.jar
 
+RUN apt-get update && \
+    apt-get dist-upgrade -y --no-install-recommends && \
+    rm -rf /var/lib/apt/lists/* && \
+    groupadd --gid 10001 collabmind && \
+    useradd --uid 10001 --gid 10001 --no-create-home --home-dir /app collabmind && \
+    chown 10001:10001 /app/app.jar
+
 EXPOSE 8080
+
+USER 10001:10001
 
 ENTRYPOINT ["java", "-jar", "/app/app.jar"]

@@ -1,0 +1,36 @@
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata: { name: realtime-gateway, namespace: collabmind }
+spec:
+  minAvailable: 2
+  selector: { matchLabels: { app.kubernetes.io/name: realtime-gateway } }
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata: { name: realtime-gateway, namespace: collabmind }
+spec:
+  scaleTargetRef: { apiVersion: apps/v1, kind: Deployment, name: realtime-gateway }
+  minReplicas: 3
+  maxReplicas: 12
+  behavior:
+    scaleDown: { stabilizationWindowSeconds: 300 }
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target: { type: Utilization, averageUtilization: 65 }
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata: { name: ai-orchestrator, namespace: collabmind }
+spec:
+  scaleTargetRef: { apiVersion: apps/v1, kind: Deployment, name: ai-orchestrator }
+  minReplicas: 2
+  maxReplicas: 8
+  behavior:
+    scaleDown: { stabilizationWindowSeconds: 300 }
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target: { type: Utilization, averageUtilization: 70 }

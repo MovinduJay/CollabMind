@@ -1,0 +1,39 @@
+import eslint from "@eslint/js";
+import reactHooks from "eslint-plugin-react-hooks";
+import reactRefresh from "eslint-plugin-react-refresh";
+import tseslint from "typescript-eslint";
+
+export default tseslint.config(
+  { ignores: ["dist", "coverage", "playwright-report", "test-results"] },
+  eslint.configs.recommended,
+  ...tseslint.configs.recommended,
+  {
+    files: ["**/*.{ts,tsx}"],
+    languageOptions: {
+      ecmaVersion: 2022,
+      globals: {
+        document: "readonly",
+        window: "readonly",
+        localStorage: "readonly",
+        navigator: "readonly",
+        crypto: "readonly",
+        WebSocket: "readonly",
+        fetch: "readonly",
+        RequestInit: "readonly",
+        HeadersInit: "readonly",
+        setTimeout: "readonly",
+        console: "readonly",
+        process: "readonly"
+      }
+    },
+    plugins: {
+      "react-hooks": reactHooks,
+      "react-refresh": reactRefresh
+    },
+    rules: {
+      ...reactHooks.configs.flat.recommended.rules,
+      "react-hooks/set-state-in-effect": "off",
+      "react-refresh/only-export-components": ["warn", { allowConstantExport: true }]
+    }
+  }
+);

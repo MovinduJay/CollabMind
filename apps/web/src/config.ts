@@ -1,7 +1,23 @@
+const local =
+  window.location.hostname === "localhost" ||
+  window.location.hostname === "127.0.0.1";
+const httpOrigin = window.location.origin;
+const wsOrigin = `${window.location.protocol === "https:" ? "wss:" : "ws:"}//${window.location.host}`;
+
 export const config = {
-  identityApi: import.meta.env.VITE_IDENTITY_API ?? "http://localhost:8082",
-  chatApi: import.meta.env.VITE_CHAT_API ?? "http://localhost:8081",
-  realtimeWs: import.meta.env.VITE_REALTIME_WS ?? "ws://localhost:8083/ws/chat",
-  aiApi: import.meta.env.VITE_AI_API ?? "http://localhost:8084",
-  mcpApi: import.meta.env.VITE_MCP_API ?? "http://localhost:8085"
+  identityApi:
+    import.meta.env.VITE_IDENTITY_API ??
+    (local ? "http://localhost:8082" : httpOrigin),
+  chatApi:
+    import.meta.env.VITE_CHAT_API ??
+    (local ? "http://localhost:8081" : httpOrigin),
+  realtimeWs:
+    import.meta.env.VITE_REALTIME_WS ??
+    (local ? "ws://localhost:8083/ws/chat" : `${wsOrigin}/ws/chat`),
+  aiApi:
+    import.meta.env.VITE_AI_API ??
+    (local ? "http://localhost:8084" : httpOrigin),
+  mcpApi:
+    import.meta.env.VITE_MCP_API ??
+    (local ? "http://localhost:8085" : httpOrigin),
 };
