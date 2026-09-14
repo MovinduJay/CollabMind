@@ -1,0 +1,10 @@
+vulnerabilities:
+  - id: CVE-2026-65182
+    expired_at: 2026-10-14
+    statement: Tomcat 10.1.58 is the first patched 10.1.x release but is not yet published to Maven Central; retain Spring Boot's compatible 10.1.55 until it is available.
+  - id: CVE-2026-65905
+    expired_at: 2026-10-14
+    statement: Tomcat 10.1.58 is the first patched 10.1.x release but is not yet published to Maven Central; retain Spring Boot's compatible 10.1.55 until it is available.
+  - id: CVE-2026-68525
+    expired_at: 2026-10-14
+    statement: Tomcat 10.1.58 is the first patched 10.1.x release but is not yet published to Maven Central; retain Spring Boot's compatible 10.1.55 until it is available.

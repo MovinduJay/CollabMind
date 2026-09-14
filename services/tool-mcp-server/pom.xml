@@ -12,6 +12,11 @@
 
     <properties>
         <java.version>23</java.version>
+        <jackson-bom.version>2.21.4</jackson-bom.version>
+        <kafka.version>3.9.2</kafka.version>
+        <micrometer.version>1.15.12</micrometer.version>
+        <netty.version>4.1.137.Final</netty.version>
+        <postgresql.version>42.7.12</postgresql.version>
     </properties>
 
     <parent>
