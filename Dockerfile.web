@@ -5,7 +5,7 @@ RUN npm ci
 COPY apps/web/ ./
 RUN npm run build
 
-FROM nginx:1.29-alpine
+FROM nginx:1.31-alpine
 RUN apk upgrade --no-cache
 COPY deploy/nginx/nginx.conf /etc/nginx/nginx.conf
 COPY deploy/nginx/default.conf /etc/nginx/conf.d/default.conf
