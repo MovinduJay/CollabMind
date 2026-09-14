@@ -1,6 +1,9 @@
 .env
 application-local.properties
 node_modules
+apps/web/coverage/
+apps/web/playwright-report/
+apps/web/test-results/
 
 # Maven build output
 **/target/
