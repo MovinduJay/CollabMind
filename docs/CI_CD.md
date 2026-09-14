@@ -12,6 +12,8 @@ The repository uses separate workflows so a failure has a clear owner and privil
 
 Dependabot opens weekly grouped updates for npm, every Maven service, Docker, and GitHub Actions.
 
+GitHub's Dependency Review API is currently disabled for this repository. Enable the Dependency Graph under repository security settings, then add repository variable `ENABLE_DEPENDENCY_REVIEW=true`; until then, that one job is explicitly skipped while CodeQL, Trivy, Gitleaks, npm audit, and Dependabot remain active.
+
 ## Main-branch delivery
 
 After merge, `Container Images` rebuilds and scans all six images and publishes them to GHCR with the immutable Git commit SHA. No `latest` tag is used, so a deployment is reproducible and auditable.
