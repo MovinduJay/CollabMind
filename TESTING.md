@@ -65,6 +65,22 @@ k6 run tests\load\websocket-connections.js
 
 The gradual connection ramp avoids measuring only the HTTP server's accept backlog. Every connection must upgrade successfully and the p95 setup latency must remain below two seconds.
 
+Measure Redis-to-WebSocket broadcast fanout independently from database-backed chat persistence:
+
+```powershell
+$env:AUTH_TOKEN='<jwt>'
+$env:K6_TARGET_CONNECTIONS='1000'
+$env:K6_PRODUCERS='2'
+$env:K6_MESSAGES_PER_SECOND='10'
+$env:K6_CONNECTION_RAMP_MS='40000'
+$env:K6_WARMUP_MS='3000'
+$env:K6_SUSTAIN_MS='30000'
+$env:K6_DRAIN_MS='5000'
+k6 run tests\load\websocket-broadcast.js
+```
+
+This profile opens all connections before publishing, sends a fixed number of broadcasts through Redis, and verifies the expected delivery on every client. Report the original broadcast rate separately from fanout delivery throughput (`broadcasts × connected clients`) and do not present either as PostgreSQL/Kafka chat throughput.
+
 ## CI evidence
 
 GitHub Actions runs backend tests, coverage-enabled frontend tests, the production build, Chromium Playwright journeys, and Redis/Kafka container integration tests. Failed browser runs retain screenshots, video, traces, and an HTML report for 14 days.

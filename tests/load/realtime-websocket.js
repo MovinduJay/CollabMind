@@ -15,11 +15,14 @@ const rampDuration = __ENV.K6_RAMP_DURATION || "20s";
 const sustainDuration = __ENV.K6_SUSTAIN_DURATION || "40s";
 
 function randomUuid() {
-  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (character) => {
-    const value = Math.floor(Math.random() * 16);
-    const nibble = character === "x" ? value : (value & 0x3) | 0x8;
-    return nibble.toString(16);
-  });
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(
+    /[xy]/g,
+    (character) => {
+      const value = Math.floor(Math.random() * 16);
+      const nibble = character === "x" ? value : (value & 0x3) | 0x8;
+      return nibble.toString(16);
+    },
+  );
 }
 
 export const options = smoke
