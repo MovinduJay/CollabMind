@@ -53,6 +53,18 @@ k6 run tests\load\realtime-websocket.js
 
 The scenario defaults to ten concurrent WebSocket users and enforces acknowledgement and p95 latency thresholds. `K6_TARGET_VUS`, `K6_RAMP_DURATION`, and `K6_SUSTAIN_DURATION` make larger benchmark runs reproducible without changing the test source. Establish a baseline in a non-production environment before raising the load.
 
+Measure simultaneously held connection capacity separately from message throughput:
+
+```powershell
+$env:AUTH_TOKEN='<jwt>'
+$env:K6_TARGET_CONNECTIONS='1000'
+$env:K6_CONNECTION_RAMP_MS='40000'
+$env:K6_HOLD_DURATION_MS='40000'
+k6 run tests\load\websocket-connections.js
+```
+
+The gradual connection ramp avoids measuring only the HTTP server's accept backlog. Every connection must upgrade successfully and the p95 setup latency must remain below two seconds.
+
 ## CI evidence
 
 GitHub Actions runs backend tests, coverage-enabled frontend tests, the production build, Chromium Playwright journeys, and Redis/Kafka container integration tests. Failed browser runs retain screenshots, video, traces, and an HTML report for 14 days.
