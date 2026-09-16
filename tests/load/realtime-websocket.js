@@ -1,21 +1,28 @@
 import ws from "k6/ws";
 import { check } from "k6";
-import { Counter, Trend } from "k6/metrics";
+import { Counter, Rate, Trend } from "k6/metrics";
 
 const acknowledgements = new Counter("message_acknowledgements");
+const acknowledgementSuccess = new Rate("message_acknowledgement_success");
 const acknowledgementLatency = new Trend(
   "message_acknowledgement_latency",
   true,
 );
 
 const smoke = __ENV.K6_SMOKE === "true";
+const targetVUs = Number.parseInt(__ENV.K6_TARGET_VUS || "10", 10);
+const rampDuration = __ENV.K6_RAMP_DURATION || "20s";
+const sustainDuration = __ENV.K6_SUSTAIN_DURATION || "40s";
 
 function randomUuid() {
-  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (character) => {
-    const value = Math.floor(Math.random() * 16);
-    const nibble = character === "x" ? value : (value & 0x3) | 0x8;
-    return nibble.toString(16);
-  });
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(
+    /[xy]/g,
+    (character) => {
+      const value = Math.floor(Math.random() * 16);
+      const nibble = character === "x" ? value : (value & 0x3) | 0x8;
+      return nibble.toString(16);
+    },
+  );
 }
 
 export const options = smoke
@@ -31,6 +38,7 @@ export const options = smoke
       thresholds: {
         checks: ["rate>0.99"],
         message_acknowledgements: ["count>0"],
+        message_acknowledgement_success: ["rate>0.99"],
         message_acknowledgement_latency: ["p(95)<3000"],
       },
     }
@@ -40,15 +48,16 @@ export const options = smoke
           executor: "ramping-vus",
           startVUs: 0,
           stages: [
-            { duration: "20s", target: 10 },
-            { duration: "40s", target: 10 },
-            { duration: "20s", target: 0 },
+            { duration: rampDuration, target: targetVUs },
+            { duration: sustainDuration, target: targetVUs },
+            { duration: rampDuration, target: 0 },
           ],
         },
       },
       thresholds: {
         checks: ["rate>0.99"],
         message_acknowledgements: ["count>0"],
+        message_acknowledgement_success: ["rate>0.99"],
         message_acknowledgement_latency: ["p(95)<1500"],
       },
     };
@@ -60,7 +69,9 @@ export default function () {
   if (!token || !conversationId)
     throw new Error("AUTH_TOKEN and CONVERSATION_ID are required");
 
-  const started = Date.now();
+  let sentAt;
+  let acknowledged = false;
+  const clientMessageId = randomUuid();
   const commandId = (kind) => `${kind}-${__VU}-${__ITER}-${Date.now()}`;
   const response = ws.connect(
     `${gateway}?token=${encodeURIComponent(token)}`,
@@ -76,13 +87,14 @@ export default function () {
           }),
         );
         socket.setTimeout(() => {
+          sentAt = Date.now();
           socket.send(
             JSON.stringify({
               commandId: commandId("message"),
               commandType: "SEND_MESSAGE",
               conversationId,
               payload: {
-                clientMessageId: randomUuid(),
+                clientMessageId,
                 content: `k6 message ${__VU}-${__ITER}`,
               },
             }),
@@ -91,9 +103,13 @@ export default function () {
       });
       socket.on("message", (raw) => {
         const event = JSON.parse(raw);
-        if (event.eventType === "MESSAGE_CREATED") {
+        if (
+          event.eventType === "MESSAGE_CREATED" &&
+          event.payload?.message?.clientMessageId === clientMessageId
+        ) {
           acknowledgements.add(1);
-          acknowledgementLatency.add(Date.now() - started);
+          acknowledgementLatency.add(Date.now() - sentAt);
+          acknowledged = true;
           socket.close();
         }
       });
@@ -104,4 +120,5 @@ export default function () {
   check(response, {
     "websocket upgraded": (result) => result && result.status === 101,
   });
+  acknowledgementSuccess.add(acknowledged);
 }

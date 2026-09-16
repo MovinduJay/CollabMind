@@ -45,10 +45,41 @@ Install k6, create a user and room, then run:
 ```powershell
 $env:AUTH_TOKEN='<jwt>'
 $env:CONVERSATION_ID='<room-uuid>'
+$env:K6_TARGET_VUS='25'
+$env:K6_RAMP_DURATION='10s'
+$env:K6_SUSTAIN_DURATION='30s'
 k6 run tests\load\realtime-websocket.js
 ```
 
-The scenario ramps to ten concurrent WebSocket users and enforces acknowledgement and p95 latency thresholds. Establish a baseline in a non-production environment before raising the load.
+The scenario defaults to ten concurrent WebSocket users and enforces acknowledgement and p95 latency thresholds. `K6_TARGET_VUS`, `K6_RAMP_DURATION`, and `K6_SUSTAIN_DURATION` make larger benchmark runs reproducible without changing the test source. Establish a baseline in a non-production environment before raising the load.
+
+Measure simultaneously held connection capacity separately from message throughput:
+
+```powershell
+$env:AUTH_TOKEN='<jwt>'
+$env:K6_TARGET_CONNECTIONS='1000'
+$env:K6_CONNECTION_RAMP_MS='40000'
+$env:K6_HOLD_DURATION_MS='40000'
+k6 run tests\load\websocket-connections.js
+```
+
+The gradual connection ramp avoids measuring only the HTTP server's accept backlog. Every connection must upgrade successfully and the p95 setup latency must remain below two seconds.
+
+Measure Redis-to-WebSocket broadcast fanout independently from database-backed chat persistence:
+
+```powershell
+$env:AUTH_TOKEN='<jwt>'
+$env:K6_TARGET_CONNECTIONS='1000'
+$env:K6_PRODUCERS='2'
+$env:K6_MESSAGES_PER_SECOND='10'
+$env:K6_CONNECTION_RAMP_MS='40000'
+$env:K6_WARMUP_MS='3000'
+$env:K6_SUSTAIN_MS='30000'
+$env:K6_DRAIN_MS='5000'
+k6 run tests\load\websocket-broadcast.js
+```
+
+This profile opens all connections before publishing, sends a fixed number of broadcasts through Redis, and verifies the expected delivery on every client. Report the original broadcast rate separately from fanout delivery throughput (`broadcasts × connected clients`) and do not present either as PostgreSQL/Kafka chat throughput.
 
 ## CI evidence
 
