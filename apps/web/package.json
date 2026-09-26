@@ -16,7 +16,6 @@
     "format:check": "prettier --check src e2e *.ts *.json"
   },
   "dependencies": {
-    "@tanstack/react-query": "^5.0.0",
     "@vitejs/plugin-react": "^6.1.1",
     "lucide-react": "^0.468.0",
     "react": "^18.3.0",
