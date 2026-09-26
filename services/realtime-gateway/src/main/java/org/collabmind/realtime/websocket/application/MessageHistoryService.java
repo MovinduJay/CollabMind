@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.collabmind.realtime.chatcore.client.ChatCoreClient;
 import org.collabmind.realtime.chatcore.client.ChatCoreMessageResponse;
 import org.collabmind.realtime.websocket.protocol.ClientCommand;
+import org.collabmind.realtime.websocket.protocol.FetchMessagesPayload;
 import org.collabmind.realtime.websocket.protocol.ServerEvent;
 import org.collabmind.realtime.websocket.session.ConnectedClient;
 import org.springframework.stereotype.Service;
@@ -42,11 +43,15 @@ public class MessageHistoryService {
             }
 
             FetchMessagesPayload payload = command.payload() == null
-                    ? new FetchMessagesPayload(0, DEFAULT_LIMIT)
+                    ? new FetchMessagesPayload(0L, DEFAULT_LIMIT)
                     : objectMapper.treeToValue(command.payload(), FetchMessagesPayload.class);
 
-            long afterSequence = payload == null ? 0 : payload.afterSequence();
-            int requestedLimit = payload == null ? DEFAULT_LIMIT : payload.limit();
+            long afterSequence = payload == null || payload.afterSequence() == null
+                    ? 0
+                    : payload.afterSequence();
+            int requestedLimit = payload == null || payload.limit() == null
+                    ? DEFAULT_LIMIT
+                    : payload.limit();
             int safeLimit = Math.max(1, Math.min(requestedLimit, MAX_LIMIT));
 
             UUID conversationId = UUID.fromString(command.conversationId());
@@ -108,11 +113,5 @@ public class MessageHistoryService {
                         payload
                 )
         );
-    }
-
-    private record FetchMessagesPayload(
-            long afterSequence,
-            int limit
-    ) {
     }
 }
