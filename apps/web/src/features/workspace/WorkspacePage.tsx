@@ -19,7 +19,7 @@ import {
   Users,
   X,
 } from "lucide-react";
-import { useRef } from "react";
+import { useRef, type SyntheticEvent } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { api, ApiError } from "../../api/client";
 import { useRealtimeRoom } from "../../hooks/useRealtimeRoom";
@@ -253,6 +253,9 @@ export function WorkspacePage() {
   const [editingRoomName, setEditingRoomName] = useState(false);
   const [roomNameDraft, setRoomNameDraft] = useState("");
   const [savingRoomName, setSavingRoomName] = useState(false);
+  const [pendingAction, setPendingAction] = useState<"create" | "join" | null>(
+    null,
+  );
 
   const shareUrl = useMemo(() => {
     if (!activeConversationId) {
@@ -376,7 +379,8 @@ export function WorkspacePage() {
     return nextSession;
   }
 
-  function openSharedRoom() {
+  function openSharedRoom(event?: SyntheticEvent) {
+    event?.preventDefault();
     setError("");
 
     const conversationId = extractConversationId(roomLinkInput);
@@ -427,8 +431,12 @@ export function WorkspacePage() {
     }
   }
 
-  async function createRoom() {
+  async function createRoom(event?: SyntheticEvent) {
+    event?.preventDefault();
+    if (pendingAction) return;
+
     setError("");
+    setPendingAction("create");
 
     try {
       const guest = await ensureGuestSession();
@@ -471,11 +479,17 @@ export function WorkspacePage() {
           ? exception.message
           : "Could not create room.",
       );
+    } finally {
+      setPendingAction(null);
     }
   }
 
-  async function enterRoom() {
+  async function enterRoom(event?: SyntheticEvent) {
+    event?.preventDefault();
+    if (pendingAction) return;
+
     setError("");
+    setPendingAction("join");
 
     try {
       let guest = await ensureGuestSession();
@@ -519,6 +533,8 @@ export function WorkspacePage() {
           ? exception.message
           : "Could not enter room.",
       );
+    } finally {
+      setPendingAction(null);
     }
   }
 
@@ -703,28 +719,36 @@ export function WorkspacePage() {
               </div>
             </div>
 
-            <label>
-              Your name
-              <input
-                value={displayName}
-                onChange={(event) => setDisplayName(event.target.value)}
-                placeholder="Movindu"
-              />
-            </label>
+            <form className="room-form" onSubmit={createRoom}>
+              <label>
+                Your name
+                <input
+                  value={displayName}
+                  onChange={(event) => setDisplayName(event.target.value)}
+                  placeholder="Movindu"
+                  autoComplete="name"
+                  maxLength={80}
+                  required
+                />
+              </label>
 
-            <label>
-              Room name
-              <input
-                value={roomName}
-                onChange={(event) => setRoomName(event.target.value)}
-                placeholder="Project discussion"
-              />
-            </label>
+              <label>
+                Room name
+                <input
+                  value={roomName}
+                  onChange={(event) => setRoomName(event.target.value)}
+                  placeholder="Project discussion"
+                  maxLength={120}
+                />
+              </label>
 
-            <button onClick={createRoom}>
-              <Plus size={18} />
-              Create and enter room
-            </button>
+              <button type="submit" disabled={pendingAction !== null}>
+                <Plus size={18} />
+                {pendingAction === "create"
+                  ? "Creating room..."
+                  : "Create and enter room"}
+              </button>
+            </form>
 
             <div className="room-divider">
               <span />
@@ -732,26 +756,29 @@ export function WorkspacePage() {
               <span />
             </div>
 
-            <label>
-              Room link or room ID
-              <input
-                value={roomLinkInput}
-                onChange={(event) => setRoomLinkInput(event.target.value)}
-                placeholder="Paste a shared room link"
-                onKeyDown={(event) => {
-                  if (event.key === "Enter") {
-                    openSharedRoom();
-                  }
-                }}
-              />
-            </label>
+            <form className="room-form" onSubmit={openSharedRoom}>
+              <label>
+                Room link or room ID
+                <input
+                  value={roomLinkInput}
+                  onChange={(event) => setRoomLinkInput(event.target.value)}
+                  placeholder="Paste a shared room link"
+                  autoComplete="off"
+                  required
+                />
+              </label>
 
-            <button className="secondary-button" onClick={openSharedRoom}>
-              <Link2 size={18} />
-              Join existing room
-            </button>
+              <button className="secondary-button" type="submit">
+                <Link2 size={18} />
+                Join existing room
+              </button>
+            </form>
 
-            {error ? <div className="error-box">{error}</div> : null}
+            {error ? (
+              <div className="error-box" role="alert">
+                {error}
+              </div>
+            ) : null}
 
             <small className="privacy-note">
               Temporary rooms automatically expire after inactivity.
@@ -775,21 +802,31 @@ export function WorkspacePage() {
 
           <p>Add your name to join this temporary conversation.</p>
 
-          <label>
-            Your name
-            <input
-              value={displayName}
-              onChange={(event) => setDisplayName(event.target.value)}
-              placeholder="Your name"
-            />
-          </label>
+          <form className="room-form" onSubmit={enterRoom}>
+            <label>
+              Your name
+              <input
+                value={displayName}
+                onChange={(event) => setDisplayName(event.target.value)}
+                placeholder="Your name"
+                autoComplete="name"
+                maxLength={80}
+                required
+                autoFocus
+              />
+            </label>
 
-          {error ? <div className="error-box">{error}</div> : null}
+            {error ? (
+              <div className="error-box" role="alert">
+                {error}
+              </div>
+            ) : null}
 
-          <button onClick={enterRoom}>
-            <MessageSquare size={18} />
-            Join room
-          </button>
+            <button type="submit" disabled={pendingAction !== null}>
+              <MessageSquare size={18} />
+              {pendingAction === "join" ? "Joining room..." : "Join room"}
+            </button>
+          </form>
         </section>
       </main>
     );
@@ -911,6 +948,7 @@ export function WorkspacePage() {
           <div className="chat-header-actions">
             <button
               className="header-action participants-button"
+              aria-label="Participants"
               onClick={() => {
                 setShowParticipants((current) => !current);
                 setOpenMenu(null);
@@ -925,7 +963,8 @@ export function WorkspacePage() {
               className={`header-action ${inviteCopied ? "copied" : ""}`}
               onClick={copyLink}
               disabled={!shareUrl}
-              title="Copy invite link"
+              aria-label={inviteCopied ? "Invite link copied" : "Invite people"}
+              title={inviteCopied ? "Invite link copied" : "Invite people"}
             >
               {inviteCopied ? <Check size={18} /> : <Copy size={18} />}
               <span>{inviteCopied ? "Copied" : "Invite"}</span>

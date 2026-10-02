@@ -5,6 +5,7 @@ import org.collabmind.realtime.chatcore.client.ChatCoreClient;
 import org.collabmind.realtime.chatcore.client.ChatCoreMessageResponse;
 import org.collabmind.realtime.chatcore.client.ChatCoreSendMessageRequest;
 import org.collabmind.realtime.websocket.protocol.ClientCommand;
+import org.collabmind.realtime.websocket.protocol.SendMessagePayload;
 import org.collabmind.realtime.websocket.protocol.ServerEvent;
 import org.collabmind.realtime.websocket.session.ConnectedClient;
 import org.collabmind.realtime.event.RealtimeEventPublisher;
@@ -86,10 +87,6 @@ public class MessageRelayService {
                     chatCoreRequest
             );
 
-            Map<String, Object> messagePayload = new HashMap<>();
-            messagePayload.put("commandId", command.commandId());
-            messagePayload.put("message", savedMessage);
-
             eventPublisher.messageCreated(command.commandId(), savedMessage);
 
             Optional<String> agentType = aiMentionService.detectAgentType(savedMessage.content());
@@ -153,11 +150,5 @@ public class MessageRelayService {
                         payload
                 )
         );
-    }
-
-    private record SendMessagePayload(
-            UUID clientMessageId,
-            String content
-    ) {
     }
 }

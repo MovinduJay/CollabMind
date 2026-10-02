@@ -15,23 +15,7 @@ public class AiMentionService {
         return findMentionedAgentType(content);
     }
 
-    public Optional<String> findAgentType(String content) {
-        return findMentionedAgentType(content);
-    }
-
-    public Optional<String> extractAgentType(String content) {
-        return findMentionedAgentType(content);
-    }
-
-    public Optional<String> detectMentionedAgentType(String content) {
-        return findMentionedAgentType(content);
-    }
-
-    public Optional<String> extractMentionedAgentType(String content) {
-        return findMentionedAgentType(content);
-    }
-
-    public Optional<String> findMentionedAgentType(String content) {
+    private Optional<String> findMentionedAgentType(String content) {
         if (content == null || content.isBlank()) {
             return Optional.empty();
         }

@@ -192,8 +192,11 @@ label input:focus {
   border-color: #6574e8;
   box-shadow: 0 0 0 3px rgba(101, 116, 232, 0.12);
 }
-.create-card > button,
-.join-card > button {
+.room-form {
+  display: grid;
+  gap: 14px;
+}
+.room-form > button {
   border: 0;
   border-radius: 9px;
   padding: 11px 15px;
@@ -206,8 +209,7 @@ label input:focus {
   font-size: 13px;
   font-weight: 750;
 }
-.create-card > button:hover,
-.join-card > button:hover {
+.room-form > button:hover:not(:disabled) {
   background: #4d59c8;
 }
 .secondary-button {
